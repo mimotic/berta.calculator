@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Dieta Berta</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f9f8f6;
+      --surface: #ffffff;
+      --surface2: #f2f0ec;
+      --border: rgba(0,0,0,0.1);
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b67;
+      --green: #1D9E75;
+      --green-bg: #e1f5ee;
+      --amber: #EF9F27;
+      --amber-bg: #faeeda;
+      --red: #E24B4A;
+      --red-bg: #fcebeb;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    body {
+      font-family: 'Georgia', serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: normal;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    header p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    .group-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin: 0.8rem 0 0.4rem;
+      font-family: Georgia, serif;
+    }
+
+    .group-label:first-child { margin-top: 0; }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .row label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      width: 165px;
+      flex-shrink: 0;
+      font-family: Georgia, serif;
+    }
+
+    .row input[type=range] {
+      flex: 1;
+      height: 3px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .row input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--text-primary);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .row input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .row .num {
+      width: 56px;
+      text-align: right;
+      font-size: 13px;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+      color: var(--text-primary);
+    }
+
+    .row .kcal-tag {
+      width: 44px;
+      text-align: right;
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-family: 'Courier New', monospace;
+    }
+
+    .macros-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .minerals-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .stat {
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 0.6rem;
+      text-align: center;
+    }
+
+    .stat .sv {
+      font-size: 20px;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .stat .sl {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-family: Georgia, serif;
+    }
+
+    .target-bar {
+      height: 3px;
+      border-radius: 2px;
+      background: var(--border);
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .target-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.25s ease;
+    }
+
+    .bar-label {
+      font-size: 9px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .alerts {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 0.75rem;
+    }
+
+    .alert {
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-family: Georgia, serif;
+    }
+
+    .alert-ok     { background: var(--green-bg); color: #0f6e56; }
+    .alert-warn   { background: var(--amber-bg); color: #854f0b; }
+    .alert-danger { background: var(--red-bg);   color: #a32d2d; }
+
+    .note {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 0.75rem;
+      line-height: 1.6;
+      font-style: italic;
+      font-family: Georgia, serif;
+    }
+
+    hr {
+      border: none;
+      border-top: 0.5px solid var(--border);
+      margin: 1.25rem 0;
+    }
+
+    @media (max-width: 520px) {
+      .macros-grid { grid-template-columns: repeat(3, 1fr); }
+      .minerals-grid { grid-template-columns: repeat(2, 1fr); }
+      .row label { width: 130px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Calculadora dieta Berta</h1>
+    <p>objetivo: 210 kcal · fósforo &lt;100mg · potasio 100–200mg</p>
+  </header>
+
+  <div class="card">
+    <div class="section-title">Ingredientes</div>
+    <div class="group-label">Hidratos</div>
+    <div id="sliders-hc"></div>
+    <div class="group-label">Proteína</div>
+    <div id="sliders-prot"></div>
+    <div class="group-label">Grasa</div>
+    <div id="sliders-fat"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Energía y macros</div>
+    <div class="macros-grid" id="macros"></div>
+
+    <hr>
+
+    <div class="section-title">Minerales renales</div>
+    <div class="minerals-grid" id="minerals"></div>
+
+    <div class="alerts" id="alerts"></div>
+    <p class="note">Fósforo y potasio calculados con reducción por hervido (~30%). Referencia renal canina orientativa: fósforo &lt;100mg/día, potasio 100–200mg/día.</p>
+  </div>
+
+</div>
+
+<script>
+const TARGET   = 210;
+const FAT_MAX  = 5.0;
+const PHOS_MAX = 100;
+const POT_MIN  = 100;
+const POT_MAX  = 200;
+
+const ingredients = [
+  { id:'patata',    label:'Patata cocida',       group:'hc',   val:100,  max:150, step:5,    isOil:false, kcal:77,  prot:2.0,  fat:0.1,  phos:40,  pot:328, carb:17.5 },
+  { id:'arroz',     label:'Arroz blanco cocido', group:'hc',   val:0,  max:150, step:5,    isOil:false, kcal:130, prot:2.7,  fat:0.3,  phos:35,  pot:35,  carb:28.2 },
+  { id:'calabacin', label:'Calabacín cocido',    group:'hc',   val:60,  max:150, step:5,    isOil:false, kcal:17,  prot:1.2,  fat:0.2,  phos:32,  pot:261, carb:3.1  },
+  { id:'zanahoria', label:'Zanahoria cocida',    group:'hc',   val:20,  max:80,  step:5,    isOil:false, kcal:35,  prot:0.8,  fat:0.2,  phos:30,  pot:235, carb:7.9  },
+  { id:'merluza',   label:'Merluza cocida',      group:'prot', val:70,  max:120, step:5,    isOil:false, kcal:82,  prot:17.5, fat:1.3,  phos:140, pot:302, carb:0    },
+  { id:'clara',     label:'Clara de huevo',      group:'prot', val:35,  max:80,  step:5,    isOil:false, kcal:52,  prot:10.9, fat:0.2,  phos:15,  pot:163, carb:0.7  },
+  { id:'yema',      label:'Yema de huevo',       group:'prot', val:5,   max:20,  step:1,    isOil:false, kcal:322, prot:15.9, fat:26.5, phos:390, pot:109, carb:3.6  },
+  { id:'aceite',    label:'Aceite oliva (ml)',   group:'fat',  val:0.5,   max:5,   step:0.25, isOil:true,  kcal:884, prot:0,    fat:100,  phos:0,   pot:1,   carb:0    },
+];
+
+const state = {};
+ingredients.forEach(i => state[i.id] = i.val);
+
+function calc() {
+  let kcal=0, prot=0, fat=0, carb=0, phos=0, pot=0;
+  ingredients.forEach(ing => {
+    const g = state[ing.id];
+    kcal += (g/100)*ing.kcal;
+    prot += (g/100)*ing.prot;
+    fat  += (g/100)*ing.fat;
+    carb += (g/100)*(ing.carb||0);
+    phos += (g/100)*ing.phos;
+    pot  += (g/100)*ing.pot;
+  });
+  return { kcal, prot, fat, carb, phos, pot };
+}
+
+function render() {
+  const r = calc();
+  const diffK = r.kcal - TARGET;
+  const pct = Math.min(100, (r.kcal/TARGET)*100);
+  const ck = Math.abs(diffK) <= 8 ? '#1D9E75' : diffK < 0 ? '#EF9F27' : '#E24B4A';
+
+  const totalG = ingredients.reduce((s,i) => s + state[i.id], 0);
+
+  document.getElementById('macros').innerHTML = `
+    <div class="stat">
+      <div class="sv" style="color:${ck}">${r.kcal.toFixed(1)}</div>
+      <div class="sl">kcal</div>
+      <div class="target-bar"><div class="target-fill" style="width:${pct}%;background:${ck}"></div></div>
+      <div class="bar-label">obj. ${TARGET}</div>
+    </div>
+    <div class="stat"><div class="sv">${r.prot.toFixed(1)}</div><div class="sl">proteína g</div></div>
+    <div class="stat"><div class="sv" style="color:${r.fat>FAT_MAX?'#E24B4A':'inherit'}">${r.fat.toFixed(2)}</div><div class="sl">grasa g</div></div>
+    <div class="stat"><div class="sv">${r.carb.toFixed(1)}</div><div class="sl">hidratos g</div></div>
+    <div class="stat"><div class="sv">${totalG.toFixed(0)}</div><div class="sl">peso total g</div></div>
+  `;
+
+  const cp  = r.phos > PHOS_MAX ? '#E24B4A' : r.phos > PHOS_MAX*0.85 ? '#EF9F27' : '#1D9E75';
+  const ck2 = (r.pot >= POT_MIN && r.pot <= POT_MAX) ? '#1D9E75' : '#EF9F27';
+
+  document.getElementById('minerals').innerHTML = `
+    <div class="stat">
+      <div class="sv" style="color:${cp}">${r.phos.toFixed(1)}</div>
+      <div class="sl">fósforo mg</div>
+      <div class="target-bar"><div class="target-fill" style="width:${Math.min(100,(r.phos/PHOS_MAX)*100)}%;background:${cp}"></div></div>
+      <div class="bar-label">límite ~100mg</div>
+    </div>
+    <div class="stat">
+      <div class="sv" style="color:${ck2}">${r.pot.toFixed(1)}</div>
+      <div class="sl">potasio mg</div>
+      <div class="target-bar"><div class="target-fill" style="width:${Math.min(100,(r.pot/POT_MAX)*100)}%;background:${ck2}"></div></div>
+      <div class="bar-label">rango 100–200</div>
+    </div>
+    <div class="stat">
+      <div class="sv">${r.phos>0?(r.prot/r.phos*1000).toFixed(0):'—'}</div>
+      <div class="sl">ratio prot:P ×10</div>
+    </div>
+  `;
+
+  const alerts = [];
+  if (Math.abs(diffK) <= 5)        alerts.push(['ok',     `✓ Calorías en objetivo (${r.kcal.toFixed(1)} kcal)`]);
+  else if (diffK < 0)              alerts.push(['warn',   `Faltan ${Math.abs(diffK).toFixed(1)} kcal para llegar a ${TARGET}`]);
+  else                             alerts.push(['danger', `${diffK.toFixed(1)} kcal por encima del objetivo`]);
+
+  if (r.fat > FAT_MAX)             alerts.push(['danger', `Grasa ${r.fat.toFixed(2)}g — supera el límite de ${FAT_MAX}g`]);
+  else                             alerts.push(['ok',     `✓ Grasa dentro del límite (${r.fat.toFixed(2)}g)`]);
+
+  if (r.phos > PHOS_MAX)           alerts.push(['danger', `Fósforo ${r.phos.toFixed(1)}mg — supera el límite renal`]);
+  else if (r.phos > PHOS_MAX*0.85) alerts.push(['warn',   `Fósforo ${r.phos.toFixed(1)}mg — cerca del límite`]);
+  else                             alerts.push(['ok',     `✓ Fósforo controlado (${r.phos.toFixed(1)}mg)`]);
+
+  if (r.pot < POT_MIN)             alerts.push(['warn',   `Potasio ${r.pot.toFixed(1)}mg — por debajo del rango`]);
+  else if (r.pot > POT_MAX)        alerts.push(['warn',   `Potasio ${r.pot.toFixed(1)}mg — por encima del rango`]);
+  else                             alerts.push(['ok',     `✓ Potasio en rango (${r.pot.toFixed(1)}mg)`]);
+
+  document.getElementById('alerts').innerHTML = alerts.map(([t,m]) =>
+    `<div class="alert alert-${t}">${m}</div>`).join('');
+
+  ingredients.forEach(ing => {
+    const g = state[ing.id];
+    const ni = document.getElementById('num_'+ing.id);
+    const ki = document.getElementById('kcal_'+ing.id);
+    if (ni) ni.textContent = ing.isOil ? g.toFixed(2)+' ml' : g+' g';
+    if (ki) ki.textContent = ((g/100)*ing.kcal).toFixed(1)+'k';
+  });
+}
+
+['hc','prot','fat'].forEach(group => {
+  const container = document.getElementById('sliders-'+group);
+  ingredients.filter(i => i.group === group).forEach(ing => {
+    const div = document.createElement('div');
+    div.className = 'row';
+    div.innerHTML = `
+      <label for="sl_${ing.id}">${ing.label}</label>
+      <input type="range" id="sl_${ing.id}" min="0" max="${ing.max}" step="${ing.step}" value="${ing.val}">
+      <span class="num" id="num_${ing.id}"></span>
+      <span class="kcal-tag" id="kcal_${ing.id}"></span>
+    `;
+    container.appendChild(div);
+    div.querySelector('input').addEventListener('input', e => {
+      state[ing.id] = parseFloat(e.target.value);
+      render();
+    });
+  });
+});
+
+render();
+</script>
+</body>
+</html>
