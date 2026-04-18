@@ -75,54 +75,22 @@ export default function FoodCalculator() {
         <div className="bg-white border border-black/10 rounded-xl overflow-hidden">
           <div className="grid grid-cols-[2fr_1px_1fr] max-[720px]:grid-cols-1">
 
-          <div className="p-5 flex flex-col gap-5">
-            <div>
-              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
-                Ingredientes
-              </div>
-              <SliderGroup label="Hidratos"  group="hc"   values={values} onChange={handleChange} />
-              <div className="mt-3">
-                <SliderGroup label="Proteína" group="prot" values={values} onChange={handleChange} />
-              </div>
-              <div className="mt-3">
-                <SliderGroup label="Grasa"    group="fat"  values={values} onChange={handleChange} />
-              </div>
+          <div className="p-5 max-[720px]:order-1">
+            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
+              Ingredientes
             </div>
-
-            <hr className="border-0 border-t border-black/10" />
-
-            <div>
-              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
-                Minerales renales
-              </div>
-              <div className="grid grid-cols-3 max-[520px]:grid-cols-2 gap-2">
-                <StatCard
-                  value={r.phos.toFixed(1)} valueColor={phosColor} label="fósforo mg"
-                  barPct={Math.min(100, (r.phos / PHOS_MAX) * 100)} barColor={phosColor} barLabel="límite ~100mg"
-                />
-                <StatCard
-                  value={r.pot.toFixed(1)} valueColor={potColor} label="potasio mg"
-                  barPct={Math.min(100, (r.pot / POT_MAX) * 100)} barColor={potColor} barLabel="rango 100–200"
-                />
-                <StatCard
-                  value={r.phos > 0 ? (r.prot / r.phos * 1000).toFixed(0) : '—'}
-                  label="ratio prot:P ×10"
-                />
-              </div>
-
-              <div className="flex flex-col gap-[5px] mt-3">
-                {alerts.map(([type, msg], i) => (
-                  <div key={i} className={`text-xs py-1.5 px-3 rounded-md font-serif ${alertClass[type]}`}>
-                    {msg}
-                  </div>
-                ))}
-              </div>
+            <SliderGroup label="Hidratos"  group="hc"   values={values} onChange={handleChange} />
+            <div className="mt-3">
+              <SliderGroup label="Proteína" group="prot" values={values} onChange={handleChange} />
+            </div>
+            <div className="mt-3">
+              <SliderGroup label="Grasa"    group="fat"  values={values} onChange={handleChange} />
             </div>
           </div>
 
-          <div className="bg-black/10 max-[720px]:hidden"></div>
+          <div className="bg-black/10 max-[720px]:hidden min-[721px]:row-span-2"></div>
 
-          <div className="p-5 bg-[#fafaf7] flex flex-col gap-5">
+          <div className="p-5 bg-[#fafaf7] flex flex-col gap-5 max-[720px]:order-2 min-[721px]:row-span-2">
             <div>
               <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
                 Energía y macros
@@ -143,6 +111,34 @@ export default function FoodCalculator() {
                 Distribución macros
               </div>
               <MacroDonut r={r} />
+            </div>
+          </div>
+
+          <div className="p-5 max-[720px]:order-3 min-[721px]:border-t min-[721px]:border-black/10">
+            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
+              Minerales renales
+            </div>
+            <div className="grid grid-cols-3 max-[520px]:grid-cols-2 gap-2">
+              <StatCard
+                value={r.phos.toFixed(1)} valueColor={phosColor} label="fósforo mg"
+                barPct={Math.min(100, (r.phos / PHOS_MAX) * 100)} barColor={phosColor} barLabel="límite ~100mg"
+              />
+              <StatCard
+                value={r.pot.toFixed(1)} valueColor={potColor} label="potasio mg"
+                barPct={Math.min(100, (r.pot / POT_MAX) * 100)} barColor={potColor} barLabel="rango 100–200"
+              />
+              <StatCard
+                value={r.phos > 0 ? (r.prot / r.phos * 1000).toFixed(0) : '—'}
+                label="ratio prot:P ×10"
+              />
+            </div>
+
+            <div className="flex flex-col gap-[5px] mt-3">
+              {alerts.map(([type, msg], i) => (
+                <div key={i} className={`text-xs py-1.5 px-3 rounded-md font-serif ${alertClass[type]}`}>
+                  {msg}
+                </div>
+              ))}
             </div>
           </div>
           </div>

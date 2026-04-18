@@ -16,7 +16,7 @@ export function SliderGroup({ label, group, values, onChange }: SliderGroupProps
       {items.map(ing => {
         const g = values[ing.id]
         return (
-          <div key={ing.id} className="flex items-center gap-[10px] mb-[10px]">
+          <div key={ing.id} className="flex items-center gap-[5px] mb-[10px] md:gap-[10px]">
             <label htmlFor={`sl_${ing.id}`} className="text-[13px] text-[#6b6b67] w-[165px] max-[520px]:w-[130px] shrink-0 font-serif">
               {ing.label}
             </label>
@@ -33,7 +33,7 @@ export function SliderGroup({ label, group, values, onChange }: SliderGroupProps
             <span className="w-14 text-right text-[13px] font-bold font-mono text-[#1a1a18]">
               {ing.isOil ? `${g.toFixed(2)} ml` : `${g} g`}
             </span>
-            <span className="w-11 text-right text-[11px] text-[#6b6b67] font-mono">
+            <span className="w-11 text-right text-[11px] text-[#6b6b67] font-mono max-[520px]:hidden">
               {((g / 100) * ing.kcal).toFixed(1)}k
             </span>
           </div>
