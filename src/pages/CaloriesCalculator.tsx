@@ -5,27 +5,26 @@ type ActivityLevel = 'inactivo' | 'baja' | 'moderada' | 'alta'
 type LifeStage = 'cachorro_temprano' | 'cachorro_tardio' | 'adulto' | 'senior'
 type Goal = 'mantenimiento' | 'perdida' | 'ganancia'
 
-const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
-  inactivo: 'Inactivo',
-  baja: 'Actividad baja',
-  moderada: 'Actividad moderada',
-  alta: 'Actividad alta',
+const ACTIVITY: Record<ActivityLevel, { label: string; hint: string }> = {
+  inactivo: { label: 'Inactivo', hint: 'sedentario' },
+  baja:     { label: 'Baja',     hint: '30–60 min' },
+  moderada: { label: 'Moderada', hint: '1–2 h' },
+  alta:     { label: 'Alta',     hint: 'deportivo' },
 }
 
-const LIFE_STAGE_LABELS: Record<LifeStage, string> = {
-  cachorro_temprano: 'Cachorro (< 4 meses)',
-  cachorro_tardio: 'Cachorro (4–12 meses)',
-  adulto: 'Adulto',
-  senior: 'Senior (> 7 años)',
+const LIFE_STAGE: Record<LifeStage, { label: string; hint: string }> = {
+  cachorro_temprano: { label: 'Cachorro', hint: '< 4 meses' },
+  cachorro_tardio:   { label: 'Junior',   hint: '4–12 meses' },
+  adulto:            { label: 'Adulto',   hint: '1–7 años' },
+  senior:            { label: 'Senior',   hint: '> 7 años' },
 }
 
-const GOAL_LABELS: Record<Goal, string> = {
-  mantenimiento: 'Mantenimiento',
-  perdida: 'Pérdida de peso',
-  ganancia: 'Ganancia de peso',
+const GOAL: Record<Goal, { label: string; hint: string }> = {
+  mantenimiento: { label: 'Mantener', hint: 'peso estable' },
+  perdida:       { label: 'Perder',   hint: '1.0 × RER' },
+  ganancia:      { label: 'Ganar',    hint: '+20 %' },
 }
 
-// MER factor = RER × factor (WSAVA/NRC guidelines)
 function getMERFactor(activity: ActivityLevel, neutered: boolean): number {
   if (activity === 'inactivo') return neutered ? 1.2 : 1.4
   if (activity === 'baja')     return neutered ? 1.4 : 1.6
@@ -42,7 +41,6 @@ function calcCalories(
 ) {
   const rer = 70 * Math.pow(weightKg, 0.75)
 
-  // Pérdida de peso: 1.0 × RER (ignora actividad y etapa)
   if (goal === 'perdida') {
     return { rer, mer: rer * 1.0, factor: 1.0 }
   }
@@ -62,92 +60,151 @@ function calcCalories(
   return { rer, mer: rer * factor, factor }
 }
 
+type StepperProps = {
+  value: number
+  onChange: (v: number) => void
+  min?: number
+  max?: number
+  step?: number
+}
+
+function Stepper({ value, onChange, min = 0.5, max = 60, step = 0.5 }: StepperProps) {
+  const dec = () => onChange(Math.max(min, +(value - step).toFixed(1)))
+  const inc = () => onChange(Math.min(max, +(value + step).toFixed(1)))
+  return (
+    <div className="flex items-center border border-black/15 rounded-md bg-white overflow-hidden focus-within:border-black/40 transition-colors">
+      <button onClick={dec} className="w-9 h-10 text-[18px] text-[#6b6b67] hover:bg-black/5 font-mono">−</button>
+      <input
+        type="number"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={e => {
+          const v = parseFloat(e.target.value)
+          if (!isNaN(v)) onChange(v)
+        }}
+        className="flex-1 text-center text-[17px] font-mono font-bold py-2 outline-none bg-transparent w-0 min-w-0"
+      />
+      <span className="pr-3 text-[11px] text-[#6b6b67] font-mono">kg</span>
+      <button onClick={inc} className="w-9 h-10 text-[18px] text-[#6b6b67] hover:bg-black/5 font-mono border-l border-black/10">+</button>
+    </div>
+  )
+}
+
+type ChipProps = {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+  hint?: string
+  disabled?: boolean
+}
+
+function Chip({ active, onClick, children, hint, disabled }: ChipProps) {
+  const base = 'group relative text-left px-2.5 py-1.5 rounded-md text-[12px] border transition-colors'
+  const state = disabled
+    ? 'bg-black/5 text-[#bbb] border-transparent cursor-not-allowed'
+    : active
+    ? 'bg-[#1a1a18] text-white border-[#1a1a18]'
+    : 'bg-white text-[#1a1a18] border-black/15 hover:border-black/40'
+  const hintColor = disabled ? 'text-[#bbb]' : active ? 'text-white/60' : 'text-[#6b6b67]'
+  return (
+    <button onClick={onClick} disabled={disabled} className={`${base} ${state}`}>
+      <div className="font-serif leading-tight">{children}</div>
+      {hint && <div className={`text-[10px] mt-0.5 font-mono leading-tight ${hintColor}`}>{hint}</div>}
+    </button>
+  )
+}
+
+type FieldProps = {
+  label: string
+  note?: string | null
+  children: React.ReactNode
+}
+
+function Field({ label, note, children }: FieldProps) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1.5">
+        <label className="text-[11px] text-[#6b6b67] font-mono uppercase tracking-wider">{label}</label>
+        {note && <span className="text-[10px] text-[#6b6b67] font-mono italic">{note}</span>}
+      </div>
+      {children}
+    </div>
+  )
+}
+
 export default function CaloriesCalculator() {
-  const [weight, setWeight] = useState<string>('')
+  const [weight, setWeight] = useState<number>(8.5)
   const [neutered, setNeutered] = useState<boolean>(true)
   const [activity, setActivity] = useState<ActivityLevel>('moderada')
   const [lifeStage, setLifeStage] = useState<LifeStage>('adulto')
   const [goal, setGoal] = useState<Goal>('mantenimiento')
 
-  const weightNum = parseFloat(weight)
-  const valid = !isNaN(weightNum) && weightNum > 0
-
   const isPuppy = lifeStage === 'cachorro_temprano' || lifeStage === 'cachorro_tardio'
   const isWeightLoss = goal === 'perdida'
+  const activityDisabled = isPuppy || isWeightLoss
 
-  const result = valid ? calcCalories(weightNum, activity, neutered, lifeStage, goal) : null
+  const valid = weight > 0
+  const result = valid ? calcCalories(weight, activity, neutered, lifeStage, goal) : null
+  const accent = '#1D9E75'
 
   return (
     <div className="font-serif bg-[#f9f8f6] text-[#1a1a18] min-h-screen py-8 px-4">
-      <div className="max-w-120 mx-auto">
+      <div className="max-w-115 mx-auto">
 
-        <header className="mb-8">
-          <h1 className="text-[22px] font-normal tracking-tight">Calorías diarias — perro</h1>
-          <p className="text-[13px] text-[#6b6b67] mt-1 font-mono">
-            basado en RER × factor de actividad (WSAVA)
-          </p>
+        <header className="mb-6">
+          <div className="flex items-baseline justify-between gap-4">
+            <h1 className="text-[24px] font-normal tracking-tight leading-tight">Calorías diarias</h1>
+            <span className="text-[11px] text-[#6b6b67] font-mono shrink-0">perro · WSAVA</span>
+          </div>
+          <p className="text-[12px] text-[#6b6b67] mt-1 font-mono">RER × factor de actividad</p>
         </header>
 
-        <div className="bg-white border border-black/10 rounded-[10px] px-6 py-5 mb-4">
-          <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
-            Datos del perro
-          </div>
+        <div className="bg-white border border-black/10 rounded-xl overflow-hidden">
 
-          <div className="flex flex-col gap-5">
+          <div className="p-5">
+            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">Datos</div>
 
-            {/* Peso */}
-            <div>
-              <label className="text-[12px] text-[#6b6b67] font-mono block mb-1">
-                Peso (kg)
-              </label>
-              <input
-                type="number"
-                min="0.1"
-                step="0.1"
-                value={weight}
-                onChange={e => setWeight(e.target.value)}
-                placeholder="ej. 8.5"
-                className="w-full border border-black/15 rounded-md px-3 py-2 text-[15px] font-serif bg-white outline-none focus:border-black/40 placeholder:text-[#bbb]"
-              />
-            </div>
+            <div className="flex flex-col gap-4">
 
-            {/* Etapa vital */}
-            <div>
-              <label className="text-[12px] text-[#6b6b67] font-mono block mb-1">
-                Etapa vital
-              </label>
-              <div className="flex flex-col gap-1.5">
-                {(Object.keys(LIFE_STAGE_LABELS) as LifeStage[]).map(stage => (
-                  <button
-                    key={stage}
-                    onClick={() => setLifeStage(stage)}
-                    className={`text-left px-3 py-2 rounded-md text-[13px] font-serif border transition-colors ${
-                      lifeStage === stage
-                        ? 'bg-[#1a1a18] text-white border-[#1a1a18]'
-                        : 'bg-white text-[#1a1a18] border-black/15 hover:border-black/40'
-                    }`}
-                  >
-                    {LIFE_STAGE_LABELS[stage]}
-                  </button>
-                ))}
-              </div>
-            </div>
+              <Field label="Peso" note="0.5 – 60 kg">
+                <Stepper value={weight} onChange={setWeight} />
+                <input
+                  type="range"
+                  min={0.5}
+                  max={60}
+                  step={0.5}
+                  value={weight}
+                  onChange={e => setWeight(parseFloat(e.target.value))}
+                  className="mt-2.5 w-full"
+                />
+              </Field>
 
-            {/* Castrado — no aplica en cachorros */}
-            {!isPuppy && (
-              <div>
-                <label className="text-[12px] text-[#6b6b67] font-mono block mb-1">
-                  Castrado/a
-                </label>
-                <div className="flex gap-2">
+              <Field label="Etapa vital">
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(Object.keys(LIFE_STAGE) as LifeStage[]).map(s => (
+                    <Chip key={s} active={lifeStage === s} onClick={() => setLifeStage(s)} hint={LIFE_STAGE[s].hint}>
+                      {LIFE_STAGE[s].label}
+                    </Chip>
+                  ))}
+                </div>
+              </Field>
+
+              <div className={`flex items-center justify-between transition-opacity ${activityDisabled ? 'opacity-40' : ''}`}>
+                <label className="text-[11px] text-[#6b6b67] font-mono uppercase tracking-wider">Castrado/a</label>
+                <div className="flex border border-black/15 rounded-md overflow-hidden bg-white">
                   {[true, false].map(val => (
                     <button
                       key={String(val)}
-                      onClick={() => setNeutered(val)}
-                      className={`flex-1 py-2 rounded-md text-[13px] font-mono border transition-colors ${
-                        neutered === val
-                          ? 'bg-[#1a1a18] text-white border-[#1a1a18]'
-                          : 'bg-white text-[#1a1a18] border-black/15 hover:border-black/40'
+                      onClick={() => !activityDisabled && setNeutered(val)}
+                      disabled={activityDisabled}
+                      className={`px-4 py-1.5 text-[12px] font-mono transition-colors ${
+                        neutered === val && !activityDisabled
+                          ? 'bg-[#1a1a18] text-white'
+                          : activityDisabled
+                          ? 'text-[#bbb] cursor-not-allowed'
+                          : 'text-[#1a1a18] hover:bg-black/5'
                       }`}
                     >
                       {val ? 'Sí' : 'No'}
@@ -155,89 +212,98 @@ export default function CaloriesCalculator() {
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* Nivel de actividad — no aplica en cachorros */}
-            {!isPuppy && (
-              <div>
-                <label className="text-[12px] text-[#6b6b67] font-mono block mb-1">
-                  Nivel de actividad
-                </label>
-                <div className="flex flex-col gap-1.5">
-                  {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map(level => (
-                    <button
-                      key={level}
-                      onClick={() => setActivity(level)}
-                      className={`text-left px-3 py-2 rounded-md text-[13px] font-serif border transition-colors ${
-                        activity === level
-                          ? 'bg-[#1a1a18] text-white border-[#1a1a18]'
-                          : 'bg-white text-[#1a1a18] border-black/15 hover:border-black/40'
-                      }`}
-                    >
-                      {ACTIVITY_LABELS[level]}
-                    </button>
+              <Field label="Objetivo">
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(Object.keys(GOAL) as Goal[]).map(g => (
+                    <Chip key={g} active={goal === g} onClick={() => setGoal(g)} hint={GOAL[g].hint}>
+                      {GOAL[g].label}
+                    </Chip>
                   ))}
+                </div>
+              </Field>
+
+              <div className={`transition-opacity ${activityDisabled ? 'opacity-40' : ''}`}>
+                <Field
+                  label="Actividad"
+                  note={isPuppy ? 'N/A — factor fijo por etapa' : isWeightLoss ? 'N/A — pérdida usa 1.0 × RER' : null}
+                >
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {(Object.keys(ACTIVITY) as ActivityLevel[]).map(l => (
+                      <Chip
+                        key={l}
+                        active={activity === l}
+                        onClick={() => setActivity(l)}
+                        hint={ACTIVITY[l].hint}
+                        disabled={activityDisabled}
+                      >
+                        {ACTIVITY[l].label}
+                      </Chip>
+                    ))}
+                  </div>
+                </Field>
+              </div>
+
+            </div>
+          </div>
+
+          <div className="border-t border-black/10"></div>
+
+          <div className="p-5 bg-[#fafaf7]">
+            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">Resultado</div>
+
+            {!result ? (
+              <div className="text-[13px] text-[#6b6b67] italic font-serif py-6 text-center">
+                Introduce un peso válido para calcular
+              </div>
+            ) : (
+              <div key={result.mer.toFixed(0)} className="fade-in">
+                <div className="mb-4">
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-[44px] leading-none font-mono font-bold tabular-nums" style={{ color: accent }}>
+                      {result.mer.toFixed(0)}
+                    </div>
+                    <div className="text-[13px] text-[#6b6b67] font-mono">kcal/día</div>
+                  </div>
+                  <div className="text-[11px] text-[#6b6b67] font-mono mt-1">
+                    ≈ {(result.mer / 3).toFixed(0)} kcal/comida <span className="text-[#bbb]">(3 tomas)</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="bg-white border border-black/10 rounded-md px-2.5 py-2">
+                    <div className="text-[#6b6b67] font-mono">RER reposo</div>
+                    <div className="font-mono font-bold text-[13px] mt-0.5 tabular-nums">
+                      {result.rer.toFixed(0)} <span className="font-normal text-[#6b6b67]">kcal</span>
+                    </div>
+                  </div>
+                  <div className="bg-white border border-black/10 rounded-md px-2.5 py-2">
+                    <div className="text-[#6b6b67] font-mono">Factor</div>
+                    <div className="font-mono font-bold text-[13px] mt-0.5 tabular-nums">× {result.factor.toFixed(1)}</div>
+                  </div>
+                </div>
+
+                {isWeightLoss && (
+                  <div className="mt-3 text-[11px] text-[#854f0b] bg-[#faeeda] rounded-md px-2.5 py-2 font-serif italic">
+                    Pérdida de peso: 1.0 × RER (ignora actividad y etapa).
+                  </div>
+                )}
+
+                <div className="mt-4 pt-3 border-t border-black/10">
+                  <div className="text-[10px] text-[#6b6b67] font-mono leading-relaxed">
+                    MER = 70 × peso<sup>0.75</sup> × factor
+                    <br />
+                    = 70 × {weight.toFixed(1)}<sup>0.75</sup> × {result.factor.toFixed(2)}
+                  </div>
                 </div>
               </div>
             )}
-
-            {/* Objetivo */}
-            <div>
-              <label className="text-[12px] text-[#6b6b67] font-mono block mb-1">
-                Objetivo
-              </label>
-              <div className="flex flex-col gap-1.5">
-                {(Object.keys(GOAL_LABELS) as Goal[]).map(g => (
-                  <button
-                    key={g}
-                    onClick={() => setGoal(g)}
-                    className={`text-left px-3 py-2 rounded-md text-[13px] font-serif border transition-colors ${
-                      goal === g
-                        ? 'bg-[#1a1a18] text-white border-[#1a1a18]'
-                        : 'bg-white text-[#1a1a18] border-black/15 hover:border-black/40'
-                    }`}
-                  >
-                    {GOAL_LABELS[g]}
-                  </button>
-                ))}
-              </div>
-              {isWeightLoss && (
-                <p className="text-[11px] text-[#6b6b67] mt-2 italic font-serif">
-                  En pérdida de peso se usa 1.0 × RER (se ignoran actividad y etapa).
-                </p>
-              )}
-            </div>
           </div>
         </div>
 
-        {result && (
-          <div className="bg-white border border-black/10 rounded-[10px] px-6 py-5 mb-4">
-            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
-              Resultado
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <div className="flex justify-between items-baseline">
-                <span className="text-[13px] text-[#6b6b67] font-mono">RER (reposo)</span>
-                <span className="text-[15px] font-mono">{result.rer.toFixed(1)} kcal/día</span>
-              </div>
-              <div className="flex justify-between items-baseline">
-                <span className="text-[13px] text-[#6b6b67] font-mono">Factor aplicado</span>
-                <span className="text-[15px] font-mono">× {result.factor.toFixed(1)}</span>
-              </div>
-              <hr className="border-0 border-t border-black/10" />
-              <div className="flex justify-between items-baseline">
-                <span className="text-[14px] font-mono font-bold">Calorías diarias</span>
-                <span className="text-[22px] font-mono text-[#1D9E75]">{result.mer.toFixed(0)} kcal</span>
-              </div>
-            </div>
-
-            <p className="text-[11px] text-[#6b6b67] mt-4 leading-relaxed italic font-serif">
-              RER = 70 × peso<sup>0.75</sup>. Los factores son orientativos; consulta siempre con tu veterinario para ajustar la dieta individual del perro.
-            </p>
-          </div>
-        )}
-
+        <p className="text-[11px] text-[#6b6b67] mt-3 leading-relaxed italic font-serif px-1">
+          Los factores son orientativos; consulta con tu veterinario para ajustar la dieta individual.
+        </p>
       </div>
     </div>
   )
