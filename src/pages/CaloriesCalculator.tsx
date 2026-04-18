@@ -69,7 +69,7 @@ type StepperProps = {
   step?: number
 }
 
-function Stepper({ value, onChange, min = 0.5, max = 60, step = 0.5 }: StepperProps) {
+function Stepper({ value, onChange, min = 0.5, max = 60, step = 0.1 }: StepperProps) {
   const dec = () => onChange(Math.max(min, +(value - step).toFixed(1)))
   const inc = () => onChange(Math.min(max, +(value + step).toFixed(1)))
   return (
@@ -178,7 +178,7 @@ export default function CaloriesCalculator() {
                   type="range"
                   min={0.5}
                   max={60}
-                  step={0.5}
+                  step={0.1}
                   value={weight}
                   onChange={e => setWeight(parseFloat(e.target.value))}
                   className="mt-2.5 w-full"
