@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import logo from './assets/logo.png'
 import './index.css'
 
 export default function App() {
@@ -6,6 +7,11 @@ export default function App() {
     <div className="font-serif bg-[#f9f8f6] text-[#1a1a18] min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-10">
+          <img
+            src={logo}
+            alt="berta"
+            className="w-20 h-20 mx-auto mb-2 [image-rendering:pixelated]"
+          />
           <h1 className="text-[32px] font-normal tracking-tight mb-2">Nutrición canina</h1>
           <p className="text-[13px] font-mono text-[#7a7a75]">Herramientas para planificar la dieta</p>
         </div>
