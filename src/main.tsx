@@ -1,11 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router'
+import { createHashRouter, RouterProvider } from 'react-router'
 import './index.css'
 import App from './App.tsx'
 import FoodCalculator from './pages/FoodCalculator.tsx'
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   { path: '/', element: <App /> },
   { path: '/calculadora', element: <FoodCalculator /> },
 ])
