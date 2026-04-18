@@ -51,6 +51,7 @@
   <div class="bg-white border border-black/10 rounded-[10px] px-6 py-5 mb-4">
     <div class="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">Energía y macros</div>
     <div class="grid grid-cols-5 max-[520px]:grid-cols-3 gap-2" id="macros"></div>
+    <div id="macro-donut"></div>
 
     <hr class="border-0 border-t border-black/10 my-5">
 
@@ -71,16 +72,17 @@ const POT_MIN  = 100;
 const POT_MAX  = 200;
 
 const ingredients = [
-  { id:'patata',    label:'Patata cocida',       group:'hc',   val:100,  max:150, step:5,    isOil:false, kcal:77,  prot:2.0,  fat:0.1,  phos:40,  pot:328, carb:17.5 },
+  { id:'patata',    label:'Patata cocida',       group:'hc',   val:110,  max:150, step:5,    isOil:false, kcal:77,  prot:2.0,  fat:0.1,  phos:40,  pot:328, carb:17.5 },
   { id:'arroz',     label:'Arroz blanco cocido', group:'hc',   val:0,  max:150, step:5,    isOil:false, kcal:130, prot:2.7,  fat:0.3,  phos:35,  pot:35,  carb:28.2 },
   { id:'calabacin', label:'Calabacín cocido',    group:'hc',   val:60,  max:150, step:5,    isOil:false, kcal:17,  prot:1.2,  fat:0.2,  phos:32,  pot:261, carb:3.1  },
   { id:'zanahoria', label:'Zanahoria cocida',    group:'hc',   val:20,  max:80,  step:5,    isOil:false, kcal:35,  prot:0.8,  fat:0.2,  phos:30,  pot:235, carb:7.9  },
   { id:'merluza',   label:'Merluza cocida',      group:'prot', val:70,  max:120, step:5,    isOil:false, kcal:77,  prot:15.8, fat:1.5,  phos:140, pot:302, carb:0    },
-  { id:'pollo',     label:'Pollo cocido',        group:'prot', val:0,   max:120, step:5,    isOil:false, kcal:165, prot:31.0, fat:3.6,  phos:220, pot:256, carb:0    },
   { id:'salmon',    label:'Salmón cocido',       group:'prot', val:0,   max:120, step:5,    isOil:false, kcal:206, prot:20.0, fat:13.0, phos:260, pot:384, carb:0    },
+  { id:'pollo',     label:'Pollo cocido',        group:'prot', val:0,   max:120, step:5,    isOil:false, kcal:165, prot:31.0, fat:3.6,  phos:220, pot:256, carb:0    },
+  { id:'higado',    label:'Hígado de pollo',     group:'prot', val:0,   max:60,  step:5,    isOil:false, kcal:165, prot:24.5, fat:6.5,  phos:300, pot:263, carb:0.7  },
   { id:'clara',     label:'Clara de huevo',      group:'prot', val:35,  max:80,  step:1,    isOil:false, kcal:52,  prot:10.9, fat:0.2,  phos:15,  pot:163, carb:0.7  },
   { id:'yema',      label:'Yema de huevo',       group:'prot', val:5,   max:20,  step:1,    isOil:false, kcal:322, prot:15.9, fat:26.5, phos:390, pot:109, carb:3.6  },
-  { id:'aceite',    label:'Aceite oliva (ml)',   group:'fat',  val:1,   max:5,   step:0.25, isOil:true,  kcal:884, prot:0,    fat:100,  phos:0,   pot:1,   carb:0    },
+  { id:'aceite',    label:'Aceite oliva (ml)',   group:'fat',  val:0.5,   max:5,   step:0.25, isOil:true,  kcal:884, prot:0,    fat:100,  phos:0,   pot:1,   carb:0    },
 ];
 
 const state = {};
@@ -114,6 +116,58 @@ function statHtml(sv, svColor, sl, barPct, barColor, barLabel) {
     </div>`;
 }
 
+function renderDonut(r) {
+  const PROT_C = '#5B8DEF';
+  const CARB_C = '#EF9F27';
+  const FAT_C  = '#1D9E75';
+  const protKcal = r.prot * 4;
+  const carbKcal = r.carb * 4;
+  const fatKcal  = r.fat  * 9;
+  const total = protKcal + carbKcal + fatKcal;
+  const C = 2 * Math.PI * 40;
+  const protPct = total > 0 ? protKcal / total * 100 : 0;
+  const carbPct = total > 0 ? carbKcal / total * 100 : 0;
+  const fatPct  = total > 0 ? fatKcal  / total * 100 : 0;
+  const protLen = (protPct / 100) * C;
+  const carbLen = (carbPct / 100) * C;
+  const fatLen  = (fatPct  / 100) * C;
+  const seg = (len, offset, color) => `
+    <circle cx="50" cy="50" r="40" fill="none" stroke="${color}" stroke-width="10"
+      stroke-linecap="butt"
+      stroke-dasharray="${len} ${C - len}"
+      stroke-dashoffset="${offset}"
+      transform="rotate(-90 50 50)"
+      style="transition:stroke-dasharray 0.3s ease,stroke-dashoffset 0.3s ease"/>`;
+  return `
+    <div class="flex items-center gap-8 mt-4 mb-1">
+      <div class="shrink-0">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e2dc" stroke-width="10"/>
+          ${total > 0 ? seg(protLen, 0, PROT_C) + seg(carbLen, C - protLen, CARB_C) + seg(fatLen, fatLen, FAT_C) : ''}
+          <text x="50" y="46" text-anchor="middle" font-size="8.5" fill="#9b9b97" font-family="monospace">macros</text>
+          <text x="50" y="57" text-anchor="middle" font-size="8" fill="#9b9b97" font-family="monospace">% kcal</text>
+        </svg>
+      </div>
+      <div class="flex flex-col gap-2.5">
+        <div class="flex items-center gap-2 w-36">
+          <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${PROT_C}"></span>
+          <span class="text-[12px] text-[#6b6b67] font-serif flex-1">Proteína</span>
+          <span class="text-[13px] font-mono font-bold text-[#1a1a18]">${protPct.toFixed(1)}%</span>
+        </div>
+        <div class="flex items-center gap-2 w-36">
+          <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${CARB_C}"></span>
+          <span class="text-[12px] text-[#6b6b67] font-serif flex-1">Hidratos</span>
+          <span class="text-[13px] font-mono font-bold text-[#1a1a18]">${carbPct.toFixed(1)}%</span>
+        </div>
+        <div class="flex items-center gap-2 w-36">
+          <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${FAT_C}"></span>
+          <span class="text-[12px] text-[#6b6b67] font-serif flex-1">Grasas</span>
+          <span class="text-[13px] font-mono font-bold text-[#1a1a18]">${fatPct.toFixed(1)}%</span>
+        </div>
+      </div>
+    </div>`;
+}
+
 function render() {
   const r = calc();
   const diffK = r.kcal - TARGET;
@@ -122,6 +176,7 @@ function render() {
 
   const totalG = ingredients.reduce((s,i) => s + state[i.id], 0);
 
+  document.getElementById('macro-donut').innerHTML = renderDonut(r);
   document.getElementById('macros').innerHTML =
     statHtml(r.kcal.toFixed(1), ck, 'kcal', pct, ck, `obj. ${TARGET}`) +
     statHtml(r.prot.toFixed(1), null, 'proteína g', null, null, null) +
