@@ -4,20 +4,37 @@ import './index.css'
 export default function App() {
   return (
     <div className="font-serif bg-[#f9f8f6] text-[#1a1a18] min-h-screen flex items-center justify-center px-4">
-      <div className="text-center">
-        <h1 className="text-[28px] font-normal tracking-tight mb-4">Nutrición canina</h1>
-        <div className="flex flex-col gap-3">
+      <div className="w-full max-w-2xl">
+        <div className="text-center mb-10">
+          <h1 className="text-[32px] font-normal tracking-tight mb-2">Nutrición canina</h1>
+          <p className="text-[13px] font-mono text-[#7a7a75]">Herramientas para planificar la dieta</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
             to="/calculadora"
-            className="text-[15px] font-mono text-[#5B8DEF] underline underline-offset-4 hover:text-[#3a6fd8]"
+            className="group relative bg-white border border-[#e8e6e0] rounded-lg p-6 hover:border-[#5B8DEF] hover:shadow-[0_4px_20px_rgba(91,141,239,0.08)] transition-all duration-200"
           >
-            Calculadora de dieta →
+            <div className="text-[11px] font-mono text-[#9a9a95] uppercase tracking-wider mb-3">01</div>
+            <h2 className="text-[20px] font-normal tracking-tight mb-2">Calculadora de dieta</h2>
+            <p className="text-[13px] font-mono text-[#7a7a75] leading-relaxed mb-6">
+              Raciones de carne, verdura y suplementos según peso y actividad.
+            </p>
+            <span className="text-[13px] font-mono text-[#5B8DEF] group-hover:translate-x-1 inline-block transition-transform">
+              Abrir →
+            </span>
           </Link>
           <Link
             to="/calorias"
-            className="text-[15px] font-mono text-[#5B8DEF] underline underline-offset-4 hover:text-[#3a6fd8]"
+            className="group relative bg-white border border-[#e8e6e0] rounded-lg p-6 hover:border-[#5B8DEF] hover:shadow-[0_4px_20px_rgba(91,141,239,0.08)] transition-all duration-200"
           >
-            Calculadora de calorías →
+            <div className="text-[11px] font-mono text-[#9a9a95] uppercase tracking-wider mb-3">02</div>
+            <h2 className="text-[20px] font-normal tracking-tight mb-2">Calculadora de calorías</h2>
+            <p className="text-[13px] font-mono text-[#7a7a75] leading-relaxed mb-6">
+              Necesidades energéticas diarias a partir del perfil del perro.
+            </p>
+            <span className="text-[13px] font-mono text-[#5B8DEF] group-hover:translate-x-1 inline-block transition-transform">
+              Abrir →
+            </span>
           </Link>
         </div>
       </div>
