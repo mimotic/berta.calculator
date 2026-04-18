@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import '../index.css'
+import { Header } from '../components/Header'
 
 type ActivityLevel = 'inactivo' | 'baja' | 'moderada' | 'alta'
 type LifeStage = 'cachorro_temprano' | 'cachorro_tardio' | 'adulto' | 'senior'
@@ -152,6 +153,8 @@ export default function CaloriesCalculator() {
   return (
     <div className="font-serif bg-[#f9f8f6] text-[#1a1a18] min-h-screen py-8 px-4">
       <div className="max-w-220 mx-auto">
+
+        <Header />
 
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">

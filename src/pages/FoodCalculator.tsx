@@ -5,6 +5,7 @@ import type { Values } from '../data/ingredients'
 import { StatCard } from '../components/StatCard'
 import { MacroDonut } from '../components/MacroDonut'
 import { SliderGroup } from '../components/SliderGroup'
+import { Header } from '../components/Header'
 
 const TARGET   = 210
 const FAT_MAX  = 5.0
@@ -58,6 +59,8 @@ export default function FoodCalculator() {
   return (
     <div className="font-serif bg-[#f9f8f6] text-[#1a1a18] min-h-screen py-8 px-4">
       <div className="max-w-[680px] mx-auto">
+
+        <Header />
 
         <header className="mb-8">
           <h1 className="text-[22px] font-normal tracking-tight">Calculadora dieta</h1>
