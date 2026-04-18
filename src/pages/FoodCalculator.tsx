@@ -60,7 +60,7 @@ export default function FoodCalculator() {
       <div className="max-w-[680px] mx-auto">
 
         <header className="mb-8">
-          <h1 className="text-[22px] font-normal tracking-tight">Calculadora dieta Berta</h1>
+          <h1 className="text-[22px] font-normal tracking-tight">Calculadora dieta</h1>
           <p className="text-[13px] text-[#6b6b67] mt-1 font-mono">
             objetivo: 210 kcal · fósforo &lt;100mg · potasio 100–200mg
           </p>

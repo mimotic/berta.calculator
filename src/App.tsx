@@ -5,7 +5,7 @@ export default function App() {
   return (
     <div className="font-serif bg-[#f9f8f6] text-[#1a1a18] min-h-screen flex items-center justify-center px-4">
       <div className="text-center">
-        <h1 className="text-[28px] font-normal tracking-tight mb-4">Dieta Berta</h1>
+        <h1 className="text-[28px] font-normal tracking-tight mb-4">Nutrición canina</h1>
         <div className="flex flex-col gap-3">
           <Link
             to="/calculadora"
