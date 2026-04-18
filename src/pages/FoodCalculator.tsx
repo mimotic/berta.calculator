@@ -58,76 +58,99 @@ export default function FoodCalculator() {
 
   return (
     <div className="font-serif bg-[#f9f8f6] text-[#1a1a18] min-h-screen py-8 px-4">
-      <div className="max-w-[680px] mx-auto">
+      <div className="max-w-220 mx-auto">
 
         <Header />
 
-        <header className="mb-8">
-          <h1 className="text-[22px] font-normal tracking-tight">Calculadora dieta</h1>
-          <p className="text-[13px] text-[#6b6b67] mt-1 font-mono">
+        <header className="mb-6">
+          <div className="flex items-baseline justify-between gap-4">
+            <h1 className="text-[24px] font-normal tracking-tight leading-tight">Calculadora dieta</h1>
+            <span className="text-[11px] text-[#6b6b67] font-mono shrink-0">renal · canina</span>
+          </div>
+          <p className="text-[12px] text-[#6b6b67] mt-1 font-mono">
             objetivo: 210 kcal · fósforo &lt;100mg · potasio 100–200mg
           </p>
         </header>
 
-        <div className="bg-white border border-black/10 rounded-[10px] px-6 py-5 mb-4">
-          <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
-            Ingredientes
-          </div>
-          <SliderGroup label="Hidratos"  group="hc"   values={values} onChange={handleChange} />
-          <div className="mt-3">
-            <SliderGroup label="Proteína" group="prot" values={values} onChange={handleChange} />
-          </div>
-          <div className="mt-3">
-            <SliderGroup label="Grasa"    group="fat"  values={values} onChange={handleChange} />
-          </div>
-        </div>
+        <div className="bg-white border border-black/10 rounded-xl overflow-hidden">
+          <div className="grid grid-cols-[2fr_1px_1fr] max-[720px]:grid-cols-1">
 
-        <div className="bg-white border border-black/10 rounded-[10px] px-6 py-5 mb-4">
-          <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
-            Energía y macros
-          </div>
-          <div className="grid grid-cols-5 max-[520px]:grid-cols-3 gap-2">
-            <StatCard value={r.kcal.toFixed(1)}  valueColor={kcalColor} label="kcal"         barPct={pct}                               barColor={kcalColor} barLabel={`obj. ${TARGET}`} />
-            <StatCard value={r.prot.toFixed(1)}                         label="proteína g" />
-            <StatCard value={r.fat.toFixed(2)}   valueColor={r.fat > FAT_MAX ? '#E24B4A' : undefined} label="grasa g" />
-            <StatCard value={r.carb.toFixed(1)}                         label="hidratos g" />
-            <StatCard value={totalG.toFixed(0)}                         label="peso total g" />
-          </div>
-
-          <MacroDonut r={r} />
-
-          <hr className="border-0 border-t border-black/10 my-5" />
-
-          <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
-            Minerales renales
-          </div>
-          <div className="grid grid-cols-3 max-[520px]:grid-cols-2 gap-2">
-            <StatCard
-              value={r.phos.toFixed(1)} valueColor={phosColor} label="fósforo mg"
-              barPct={Math.min(100, (r.phos / PHOS_MAX) * 100)} barColor={phosColor} barLabel="límite ~100mg"
-            />
-            <StatCard
-              value={r.pot.toFixed(1)} valueColor={potColor} label="potasio mg"
-              barPct={Math.min(100, (r.pot / POT_MAX) * 100)} barColor={potColor} barLabel="rango 100–200"
-            />
-            <StatCard
-              value={r.phos > 0 ? (r.prot / r.phos * 1000).toFixed(0) : '—'}
-              label="ratio prot:P ×10"
-            />
-          </div>
-
-          <div className="flex flex-col gap-[5px] mt-3">
-            {alerts.map(([type, msg], i) => (
-              <div key={i} className={`text-xs py-1.5 px-3 rounded-md font-serif ${alertClass[type]}`}>
-                {msg}
+          <div className="p-5 flex flex-col gap-5">
+            <div>
+              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
+                Ingredientes
               </div>
-            ))}
+              <SliderGroup label="Hidratos"  group="hc"   values={values} onChange={handleChange} />
+              <div className="mt-3">
+                <SliderGroup label="Proteína" group="prot" values={values} onChange={handleChange} />
+              </div>
+              <div className="mt-3">
+                <SliderGroup label="Grasa"    group="fat"  values={values} onChange={handleChange} />
+              </div>
+            </div>
+
+            <hr className="border-0 border-t border-black/10" />
+
+            <div>
+              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
+                Minerales renales
+              </div>
+              <div className="grid grid-cols-3 max-[520px]:grid-cols-2 gap-2">
+                <StatCard
+                  value={r.phos.toFixed(1)} valueColor={phosColor} label="fósforo mg"
+                  barPct={Math.min(100, (r.phos / PHOS_MAX) * 100)} barColor={phosColor} barLabel="límite ~100mg"
+                />
+                <StatCard
+                  value={r.pot.toFixed(1)} valueColor={potColor} label="potasio mg"
+                  barPct={Math.min(100, (r.pot / POT_MAX) * 100)} barColor={potColor} barLabel="rango 100–200"
+                />
+                <StatCard
+                  value={r.phos > 0 ? (r.prot / r.phos * 1000).toFixed(0) : '—'}
+                  label="ratio prot:P ×10"
+                />
+              </div>
+
+              <div className="flex flex-col gap-[5px] mt-3">
+                {alerts.map(([type, msg], i) => (
+                  <div key={i} className={`text-xs py-1.5 px-3 rounded-md font-serif ${alertClass[type]}`}>
+                    {msg}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <p className="text-[11px] text-[#6b6b67] mt-3 leading-relaxed italic font-serif">
-            Fósforo y potasio calculados con reducción por hervido (~30%). Referencia renal canina orientativa: fósforo &lt;100mg/día, potasio 100–200mg/día.
-          </p>
+          <div className="bg-black/10 max-[720px]:hidden"></div>
+
+          <div className="p-5 bg-[#fafaf7] flex flex-col gap-5">
+            <div>
+              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
+                Energía y macros
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="col-span-2">
+                  <StatCard value={r.kcal.toFixed(1)}  valueColor={kcalColor} label="kcal"         barPct={pct}                               barColor={kcalColor} barLabel={`obj. ${TARGET}`} />
+                </div>
+                <StatCard value={r.prot.toFixed(1)}                         label="proteína g" />
+                <StatCard value={r.fat.toFixed(2)}   valueColor={r.fat > FAT_MAX ? '#E24B4A' : undefined} label="grasa g" />
+                <StatCard value={r.carb.toFixed(1)}                         label="hidratos g" />
+                <StatCard value={totalG.toFixed(0)}                         label="peso total g" />
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
+                Distribución macros
+              </div>
+              <MacroDonut r={r} />
+            </div>
+          </div>
+          </div>
         </div>
+
+        <p className="text-[11px] text-[#6b6b67] mt-3 leading-relaxed italic font-serif px-1">
+          Fósforo y potasio calculados con reducción por hervido (~30%). Referencia renal canina orientativa: fósforo &lt;100mg/día, potasio 100–200mg/día.
+        </p>
 
       </div>
     </div>
