@@ -151,7 +151,7 @@ export default function CaloriesCalculator() {
 
   return (
     <div className="font-serif bg-[#f9f8f6] text-[#1a1a18] min-h-screen py-8 px-4">
-      <div className="max-w-115 mx-auto">
+      <div className="max-w-220 mx-auto">
 
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">
@@ -162,6 +162,7 @@ export default function CaloriesCalculator() {
         </header>
 
         <div className="bg-white border border-black/10 rounded-xl overflow-hidden">
+          <div className="grid grid-cols-[1fr_1px_1fr]">
 
           <div className="p-5">
             <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">Datos</div>
@@ -247,7 +248,7 @@ export default function CaloriesCalculator() {
             </div>
           </div>
 
-          <div className="border-t border-black/10"></div>
+          <div className="bg-black/10"></div>
 
           <div className="p-5 bg-[#fafaf7]">
             <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">Resultado</div>
@@ -298,6 +299,7 @@ export default function CaloriesCalculator() {
                 </div>
               </div>
             )}
+          </div>
           </div>
         </div>
 
