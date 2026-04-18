@@ -165,7 +165,7 @@ export default function CaloriesCalculator() {
         </header>
 
         <div className="bg-white border border-black/10 rounded-xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_1px_1fr]">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1px_1fr]">
 
           <div className="p-5">
             <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">Datos</div>
