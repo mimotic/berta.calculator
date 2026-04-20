@@ -132,6 +132,7 @@ export default function FoodCalculator() {
   const [values, setValues] = useState<Values>(
     () => Object.fromEntries(INGREDIENTS.map(i => [i.id, i.val]))
   )
+  const [microOpen, setMicroOpen] = useState(false)
 
   const commitTarget = (t: number) => {
     try { localStorage.setItem(STORAGE_KEY, String(t)) } catch { /* storage unavailable */ }
@@ -222,7 +223,7 @@ export default function FoodCalculator() {
             objetivo: {TARGET} kcal{' '}
             <button
               onClick={() => setEditingGoal(true)}
-              className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors"
+              className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
             >
               editar
             </button>
@@ -246,7 +247,7 @@ export default function FoodCalculator() {
             </div>
             <button
               onClick={() => setEditingIngredients(true)}
-              className="mt-4 text-[11px] font-mono text-[#6b6b67] dark:text-[#8a8a85] underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors"
+              className="mt-4 text-[11px] font-mono text-[#6b6b67] dark:text-[#8a8a85] underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
             >
               editar ingredientes ({selectedIds.length})
             </button>
@@ -305,6 +306,46 @@ export default function FoodCalculator() {
               ))}
             </div>
           </div>
+          </div>
+
+          <div className="p-5 border-t border-black/10 dark:border-white/10">
+            <button
+              onClick={() => setMicroOpen(o => !o)}
+              className="w-full flex items-center justify-between text-left group cursor-pointer"
+              aria-expanded={microOpen}
+            >
+              <span className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] font-mono group-hover:text-[#1a1a18] dark:group-hover:text-[#e8e6e0] transition-colors">
+                Micronutrientes
+              </span>
+              <span className={`text-[#6b6b67] dark:text-[#8a8a85] text-[12px] font-mono transition-transform ${microOpen ? 'rotate-90' : ''}`}>
+                ›
+              </span>
+            </button>
+            {microOpen && (
+              <ul className="divide-y divide-black/5 dark:divide-white/5 mt-3">
+                {[
+                  { label: 'Calcio',        value: r.ca.toFixed(1),   unit: 'mg' },
+                  { label: 'Fósforo',       value: r.phos.toFixed(1), unit: 'mg' },
+                  { label: 'Ratio Ca:P',    value: r.phos > 0 ? `${(r.ca / r.phos).toFixed(2)}:1` : '—', unit: '' },
+                  { label: 'Sodio',         value: r.na.toFixed(1),   unit: 'mg' },
+                  { label: 'Potasio',       value: r.pot.toFixed(1),  unit: 'mg' },
+                  { label: 'Hierro',        value: r.fe.toFixed(2),   unit: 'mg' },
+                  { label: 'Zinc',          value: r.zn.toFixed(2),   unit: 'mg' },
+                  { label: 'Vitamina A',    value: r.vitA.toFixed(0), unit: 'µg' },
+                  { label: 'Vitamina D',    value: r.vitD.toFixed(2), unit: 'µg' },
+                  { label: 'Vitamina E',    value: r.vitE.toFixed(2), unit: 'mg' },
+                  { label: 'Vitamina B12',  value: r.b12.toFixed(2),  unit: 'µg' },
+                ].map(({ label, value, unit }) => (
+                  <li key={label} className="flex items-baseline justify-between py-2 text-[13px]">
+                    <span className="font-serif text-[#1a1a18] dark:text-[#e8e6e0]">{label}</span>
+                    <span className="font-mono tabular-nums">
+                      {value}
+                      {unit && <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
