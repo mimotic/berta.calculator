@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import '../index.css'
 import { INGREDIENTS, calcNutrition } from '../data/ingredients'
 import type { Values } from '../data/ingredients'
@@ -7,16 +8,130 @@ import { MacroDonut } from '../components/MacroDonut'
 import { SliderGroup } from '../components/SliderGroup'
 import { Header } from '../components/Header'
 
-const TARGET   = 210
 const FAT_MAX  = 5.0
 const PHOS_MAX = 100
 const POT_MIN  = 100
 const POT_MAX  = 200
 
+const STORAGE_KEY = 'foodCalculator.kcalTarget'
+const DEFAULT_TARGET = 210
+
+function readStoredTarget(): number | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const n = parseFloat(raw)
+    return Number.isFinite(n) && n > 0 ? n : null
+  } catch {
+    return null
+  }
+}
+
+type GoalStepProps = {
+  initial: number
+  onSubmit: (t: number) => void
+  onCancel?: () => void
+}
+
+function GoalStep({ initial, onSubmit, onCancel }: GoalStepProps) {
+  const [value, setValue] = useState<number>(initial)
+  const valid = Number.isFinite(value) && value > 0
+
+  return (
+    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] min-h-screen py-8 px-4 transition-colors">
+      <div className="max-w-220 mx-auto">
+
+        <Header />
+
+        <header className="mb-6">
+          <div className="flex items-baseline justify-between gap-4">
+            <h1 className="text-[24px] font-normal tracking-tight leading-tight">Calculadora dieta</h1>
+            <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">paso 1 · objetivo</span>
+          </div>
+          <p className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
+            define el objetivo de kcal/día
+          </p>
+        </header>
+
+        <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl p-5">
+          <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
+            Objetivo calórico
+          </div>
+
+          <div className="flex items-center border border-black/15 dark:border-white/15 rounded-md bg-white dark:bg-[#0f0f0e] overflow-hidden focus-within:border-black/40 dark:focus-within:border-white/40 transition-colors mb-3">
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={Number.isFinite(value) ? value : ''}
+              onChange={e => {
+                const v = parseFloat(e.target.value)
+                setValue(Number.isFinite(v) ? v : 0)
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && valid) onSubmit(value)
+              }}
+              autoFocus
+              className="flex-1 text-center text-[24px] font-mono font-bold py-3 outline-none bg-transparent w-0 min-w-0 tabular-nums"
+            />
+            <span className="pr-4 text-[12px] text-[#6b6b67] dark:text-[#8a8a85] font-mono">kcal/día</span>
+          </div>
+
+          <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono leading-relaxed">
+            ¿No sabes cuánto?{' '}
+            <Link to="/calorias" className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors">
+              calcula las calorías diarias
+            </Link>{' '}
+            según peso y actividad.
+          </p>
+
+          <div className="flex gap-2 mt-5">
+            {onCancel && (
+              <button
+                onClick={onCancel}
+                className="px-4 py-2 text-[13px] font-mono border border-black/15 dark:border-white/15 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              >
+                Cancelar
+              </button>
+            )}
+            <button
+              onClick={() => valid && onSubmit(value)}
+              disabled={!valid}
+              className="flex-1 px-4 py-2 text-[13px] font-mono bg-[#1a1a18] text-white dark:bg-[#e8e6e0] dark:text-[#1a1a18] rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+            >
+              Continuar →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function FoodCalculator() {
+  const [target, setTarget] = useState<number | null>(() => readStoredTarget())
+  const [editingGoal, setEditingGoal] = useState(false)
   const [values, setValues] = useState<Values>(
     () => Object.fromEntries(INGREDIENTS.map(i => [i.id, i.val]))
   )
+
+  const commitTarget = (t: number) => {
+    try { localStorage.setItem(STORAGE_KEY, String(t)) } catch { /* storage unavailable */ }
+    setTarget(t)
+    setEditingGoal(false)
+  }
+
+  if (target === null || editingGoal) {
+    return (
+      <GoalStep
+        initial={target ?? DEFAULT_TARGET}
+        onSubmit={commitTarget}
+        onCancel={target !== null ? () => setEditingGoal(false) : undefined}
+      />
+    )
+  }
+
+  const TARGET = target
 
   const r = calcNutrition(values)
 
@@ -68,7 +183,14 @@ export default function FoodCalculator() {
             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">renal · canina</span>
           </div>
           <p className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
-            objetivo: 210 kcal · fósforo &lt;100mg · potasio 100–200mg
+            objetivo: {TARGET} kcal{' '}
+            <button
+              onClick={() => setEditingGoal(true)}
+              className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors"
+            >
+              editar
+            </button>
+            {' · '}fósforo &lt;100mg · potasio 100–200mg
           </p>
         </header>
 

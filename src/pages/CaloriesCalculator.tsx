@@ -140,7 +140,7 @@ function Field({ label, note, children }: FieldProps) {
 }
 
 export default function CaloriesCalculator() {
-  const [weight, setWeight] = useState<number>(8.5)
+  const [weight, setWeight] = useState<number>(2.6)
   const [neutered, setNeutered] = useState<boolean>(true)
   const [activity, setActivity] = useState<ActivityLevel>('moderada')
   const [lifeStage, setLifeStage] = useState<LifeStage>('adulto')

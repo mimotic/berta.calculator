@@ -24,7 +24,7 @@ export const INGREDIENTS: Ingredient[] = [
   { id:'pollo',     label:'Pollo cocido',        group:'prot', val:0,    max:120, step:5,    isOil:false, kcal:165, prot:31.0, fat:3.6,  phos:220, pot:256, carb:0    },
   { id:'higado',    label:'Hígado de pollo',     group:'prot', val:0,    max:60,  step:5,    isOil:false, kcal:165, prot:24.5, fat:6.5,  phos:300, pot:263, carb:0.7  },
   { id:'clara',     label:'Clara de huevo',      group:'prot', val:35,   max:80,  step:1,    isOil:false, kcal:52,  prot:10.9, fat:0.2,  phos:15,  pot:163, carb:0.7  },
-  { id:'yema',      label:'Yema de huevo',       group:'prot', val:5,    max:20,  step:1,    isOil:false, kcal:322, prot:15.9, fat:26.5, phos:390, pot:109, carb:3.6  },
+  { id:'yema',      label:'Yema de huevo',       group:'fat', val:5,    max:20,  step:1,    isOil:false, kcal:322, prot:15.9, fat:26.5, phos:390, pot:109, carb:3.6  },
   { id:'aceite',    label:'Aceite oliva (ml)',   group:'fat',  val:0.5,  max:5,   step:0.25, isOil:true,  kcal:884, prot:0,    fat:100,  phos:0,   pot:1,   carb:0    },
 ]
 
