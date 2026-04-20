@@ -335,6 +335,7 @@ export default function FoodCalculator() {
                   { label: 'Vitamina D',    value: r.vitD.toFixed(2), unit: 'µg' },
                   { label: 'Vitamina E',    value: r.vitE.toFixed(2), unit: 'mg' },
                   { label: 'Vitamina B12',  value: r.b12.toFixed(2),  unit: 'µg' },
+                  { label: 'Fibra',         value: r.fiber.toFixed(1), unit: 'g' },
                 ].map(({ label, value, unit }) => (
                   <li key={label} className="flex items-baseline justify-between py-2 text-[13px]">
                     <span className="font-serif text-[#1a1a18] dark:text-[#e8e6e0]">{label}</span>
