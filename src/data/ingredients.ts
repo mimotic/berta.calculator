@@ -40,6 +40,28 @@ export const INGREDIENTS: Ingredient[] = [
   { id:'aceite',    label:'Aceite oliva (ml)',        group:'fat',  val:0.5,  max:5,   step:0.25, isOil:true,  kcal:884, prot:0,    fat:100,  phos:0,   pot:1,   carb:0,    ca:1,   na:2,   fe:0.56, zn:0,    vitA:0,    vitD:0,    vitE:14.35,b12:0,    fiber:0   },
 ]
 
+// kcal ranges: upTo is exclusive upper bound (Infinity = no limit)
+const KCAL_RANGES: { upTo: number; factor: number }[] = [
+  { upTo:  150, factor: 0.6 },
+  { upTo:  500, factor: 1.0 },
+  { upTo:  750, factor: 1.4 },
+  { upTo: 1000, factor: 1.8 },
+  { upTo: 1250, factor: 2.2 },
+  { upTo: 1500, factor: 2.6 },
+  { upTo: 1750, factor: 3.0 },
+  { upTo: 2000, factor: 3.4 },
+  { upTo: 2250, factor: 3.8 },
+  { upTo: 2500, factor: 4.2 },
+  { upTo: 2750, factor: 4.6 },
+  { upTo: Infinity, factor: 5.0 },
+]
+
+export function getIngredientMax(ing: Ingredient, targetKcal: number): number {
+  const range = KCAL_RANGES.find(r => targetKcal < r.upTo) ?? KCAL_RANGES[KCAL_RANGES.length - 1]
+  const raw = ing.max * range.factor
+  return Math.max(ing.step, Math.round(raw / ing.step) * ing.step)
+}
+
 export type Values = Record<string, number>
 
 export function calcNutrition(values: Values, ingredients: Ingredient[] = INGREDIENTS) {

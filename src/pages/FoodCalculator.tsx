@@ -238,12 +238,12 @@ export default function FoodCalculator() {
             <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
               Ingredientes
             </div>
-            <SliderGroup label="Hidratos"  group="hc"   values={values} onChange={handleChange} ingredients={activeIngredients} />
+            <SliderGroup label="Hidratos"  group="hc"   values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
             <div className="mt-3">
-              <SliderGroup label="Proteína" group="prot" values={values} onChange={handleChange} ingredients={activeIngredients} />
+              <SliderGroup label="Proteína" group="prot" values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
             </div>
             <div className="mt-3">
-              <SliderGroup label="Grasa"    group="fat"  values={values} onChange={handleChange} ingredients={activeIngredients} />
+              <SliderGroup label="Grasa"    group="fat"  values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
             </div>
             <button
               onClick={() => setEditingIngredients(true)}
