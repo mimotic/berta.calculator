@@ -236,7 +236,7 @@ export default function CaloriesCalculator() {
                   label="Actividad"
                   note={isPuppy ? 'N/A — factor fijo por etapa' : isWeightLoss ? 'N/A — pérdida usa 1.0 × RER' : null}
                 >
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     {(Object.keys(ACTIVITY) as ActivityLevel[]).map(l => (
                       <Chip
                         key={l}
