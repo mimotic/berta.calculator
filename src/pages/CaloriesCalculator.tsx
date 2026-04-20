@@ -181,7 +181,7 @@ export default function CaloriesCalculator() {
                 <input
                   type="range"
                   min={0.5}
-                  max={60}
+                  max={90}
                   step={0.1}
                   value={weight}
                   onChange={e => setWeight(parseFloat(e.target.value))}
