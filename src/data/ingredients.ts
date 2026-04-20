@@ -30,10 +30,10 @@ export const INGREDIENTS: Ingredient[] = [
 
 export type Values = Record<string, number>
 
-export function calcNutrition(values: Values) {
+export function calcNutrition(values: Values, ingredients: Ingredient[] = INGREDIENTS) {
   let kcal = 0, prot = 0, fat = 0, carb = 0, phos = 0, pot = 0
-  for (const ing of INGREDIENTS) {
-    const g = values[ing.id]
+  for (const ing of ingredients) {
+    const g = values[ing.id] ?? 0
     kcal += (g / 100) * ing.kcal
     prot += (g / 100) * ing.prot
     fat  += (g / 100) * ing.fat

@@ -7,6 +7,7 @@ import { StatCard } from '../components/StatCard'
 import { MacroDonut } from '../components/MacroDonut'
 import { SliderGroup } from '../components/SliderGroup'
 import { Header } from '../components/Header'
+import { IngredientsWizard } from '../components/IngredientsWizard'
 
 const FAT_MAX  = 5.0
 const PHOS_MAX = 100
@@ -14,6 +15,7 @@ const POT_MIN  = 100
 const POT_MAX  = 200
 
 const STORAGE_KEY = 'foodCalculator.kcalTarget'
+const INGREDIENTS_STORAGE_KEY = 'foodCalculator.selectedIngredients'
 const DEFAULT_TARGET = 210
 
 function readStoredTarget(): number | null {
@@ -22,6 +24,18 @@ function readStoredTarget(): number | null {
     if (!raw) return null
     const n = parseFloat(raw)
     return Number.isFinite(n) && n > 0 ? n : null
+  } catch {
+    return null
+  }
+}
+
+function readStoredIngredients(): string[] | null {
+  try {
+    const raw = localStorage.getItem(INGREDIENTS_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return null
+    return parsed.filter((x): x is string => typeof x === 'string')
   } catch {
     return null
   }
@@ -111,6 +125,10 @@ function GoalStep({ initial, onSubmit, onCancel }: GoalStepProps) {
 export default function FoodCalculator() {
   const [target, setTarget] = useState<number | null>(() => readStoredTarget())
   const [editingGoal, setEditingGoal] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>(
+    () => readStoredIngredients() ?? INGREDIENTS.map(i => i.id)
+  )
+  const [editingIngredients, setEditingIngredients] = useState(false)
   const [values, setValues] = useState<Values>(
     () => Object.fromEntries(INGREDIENTS.map(i => [i.id, i.val]))
   )
@@ -119,6 +137,12 @@ export default function FoodCalculator() {
     try { localStorage.setItem(STORAGE_KEY, String(t)) } catch { /* storage unavailable */ }
     setTarget(t)
     setEditingGoal(false)
+  }
+
+  const commitIngredients = (ids: string[]) => {
+    try { localStorage.setItem(INGREDIENTS_STORAGE_KEY, JSON.stringify(ids)) } catch { /* storage unavailable */ }
+    setSelectedIds(ids)
+    setEditingIngredients(false)
   }
 
   if (target === null || editingGoal) {
@@ -131,9 +155,21 @@ export default function FoodCalculator() {
     )
   }
 
+  if (editingIngredients) {
+    return (
+      <IngredientsWizard
+        initial={selectedIds}
+        onSubmit={commitIngredients}
+        onCancel={() => setEditingIngredients(false)}
+      />
+    )
+  }
+
   const TARGET = target
 
-  const r = calcNutrition(values)
+  const activeIngredients = INGREDIENTS.filter(i => selectedIds.includes(i.id))
+
+  const r = calcNutrition(values, activeIngredients)
 
   const handleChange = (id: string, val: number) =>
     setValues(prev => ({ ...prev, [id]: val }))
@@ -142,7 +178,7 @@ export default function FoodCalculator() {
   const pct     = Math.min(100, (r.kcal / TARGET) * 100)
   const kcalColor = Math.abs(diffK) <= 8 ? '#1D9E75' : diffK < 0 ? '#EF9F27' : '#E24B4A'
 
-  const totalG = INGREDIENTS.reduce((s, i) => s + values[i.id], 0)
+  const totalG = activeIngredients.reduce((s, i) => s + (values[i.id] ?? 0), 0)
 
   const phosColor = r.phos > PHOS_MAX ? '#E24B4A' : r.phos > PHOS_MAX * 0.85 ? '#EF9F27' : '#1D9E75'
   const potColor  = r.pot >= POT_MIN && r.pot <= POT_MAX ? '#1D9E75' : '#EF9F27'
@@ -201,13 +237,19 @@ export default function FoodCalculator() {
             <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
               Ingredientes
             </div>
-            <SliderGroup label="Hidratos"  group="hc"   values={values} onChange={handleChange} />
+            <SliderGroup label="Hidratos"  group="hc"   values={values} onChange={handleChange} ingredients={activeIngredients} />
             <div className="mt-3">
-              <SliderGroup label="Proteína" group="prot" values={values} onChange={handleChange} />
+              <SliderGroup label="Proteína" group="prot" values={values} onChange={handleChange} ingredients={activeIngredients} />
             </div>
             <div className="mt-3">
-              <SliderGroup label="Grasa"    group="fat"  values={values} onChange={handleChange} />
+              <SliderGroup label="Grasa"    group="fat"  values={values} onChange={handleChange} ingredients={activeIngredients} />
             </div>
+            <button
+              onClick={() => setEditingIngredients(true)}
+              className="mt-4 text-[11px] font-mono text-[#6b6b67] dark:text-[#8a8a85] underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors"
+            >
+              editar ingredientes ({selectedIds.length})
+            </button>
           </div>
 
           <div className="bg-black/10 dark:bg-white/10 max-[720px]:hidden min-[721px]:row-span-2"></div>

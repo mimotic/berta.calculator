@@ -1,15 +1,17 @@
 import { INGREDIENTS } from '../data/ingredients'
-import type { Values } from '../data/ingredients'
+import type { Ingredient, Values } from '../data/ingredients'
 
 interface SliderGroupProps {
   label: string
   group: 'hc' | 'prot' | 'fat'
   values: Values
   onChange: (id: string, val: number) => void
+  ingredients?: Ingredient[]
 }
 
-export function SliderGroup({ label, group, values, onChange }: SliderGroupProps) {
-  const items = INGREDIENTS.filter(i => i.group === group)
+export function SliderGroup({ label, group, values, onChange, ingredients = INGREDIENTS }: SliderGroupProps) {
+  const items = ingredients.filter(i => i.group === group)
+  if (items.length === 0) return null
   return (
     <div>
       <div className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] italic mb-1.5 font-serif">{label}</div>
