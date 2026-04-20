@@ -23,12 +23,12 @@ export interface Ingredient {
 }
 
 export const INGREDIENTS: Ingredient[] = [
-  { id:'patata',    label:'Patata cocida',            group:'hc',   val:110,  max:150, step:5,    isOil:false, kcal:86,  prot:2.0,  fat:0.1,  phos:35,  pot:328, carb:20,   ca:8,   na:5,   fe:0.31, zn:0.30, vitA:0,    vitD:0,    vitE:0.01, b12:0     },
-  { id:'arroz',     label:'Arroz blanco cocido',      group:'hc',   val:0,    max:150, step:5,    isOil:false, kcal:130, prot:2.7,  fat:0.3,  phos:35,  pot:35,  carb:28.2, ca:10,  na:1,   fe:0.20, zn:0.49, vitA:0,    vitD:0,    vitE:0.04, b12:0     },
+  { id:'patata',    label:'Patata cocida',            group:'hc',   val:110,  max:200, step:5,    isOil:false, kcal:86,  prot:2.0,  fat:0.1,  phos:35,  pot:328, carb:20,   ca:8,   na:5,   fe:0.31, zn:0.30, vitA:0,    vitD:0,    vitE:0.01, b12:0     },
+  { id:'arroz',     label:'Arroz blanco cocido',      group:'hc',   val:0,    max:200, step:5,    isOil:false, kcal:130, prot:2.7,  fat:0.3,  phos:35,  pot:35,  carb:28.2, ca:10,  na:1,   fe:0.20, zn:0.49, vitA:0,    vitD:0,    vitE:0.04, b12:0     },
+  { id:'pasta',     label:'Pasta cocida',             group:'hc',   val:0,    max:200, step:5,    isOil:false, kcal:131, prot:5.0,  fat:1.1,  phos:56,  pot:44,  carb:25.0, ca:6,   na:1,   fe:1.28, zn:0.50, vitA:0,    vitD:0,    vitE:0.06, b12:0     },
+  { id:'calabaza',  label:'Calabaza cocida',          group:'hc',   val:0,    max:200, step:5,    isOil:false, kcal:20,  prot:0.7,  fat:0.1,  phos:30,  pot:230, carb:4.9,  ca:15,  na:1,   fe:0.57, zn:0.23, vitA:288,  vitD:0,    vitE:1.06, b12:0     },
   { id:'calabacin', label:'Calabacín cocido',         group:'hc',   val:60,   max:150, step:5,    isOil:false, kcal:17,  prot:1.2,  fat:0.2,  phos:32,  pot:261, carb:3.1,  ca:18,  na:3,   fe:0.37, zn:0.20, vitA:51,   vitD:0,    vitE:0.13, b12:0     },
   { id:'zanahoria', label:'Zanahoria cocida',         group:'hc',   val:20,   max:80,  step:5,    isOil:false, kcal:35,  prot:0.8,  fat:0.2,  phos:30,  pot:235, carb:7.9,  ca:30,  na:58,  fe:0.34, zn:0.20, vitA:852,  vitD:0,    vitE:1.03, b12:0     },
-  { id:'pasta',     label:'Pasta cocida',             group:'hc',   val:0,    max:150, step:5,    isOil:false, kcal:131, prot:5.0,  fat:1.1,  phos:56,  pot:44,  carb:25.0, ca:6,   na:1,   fe:1.28, zn:0.50, vitA:0,    vitD:0,    vitE:0.06, b12:0     },
-  { id:'calabaza',  label:'Calabaza cocida',          group:'hc',   val:0,    max:150, step:5,    isOil:false, kcal:20,  prot:0.7,  fat:0.1,  phos:30,  pot:230, carb:4.9,  ca:15,  na:1,   fe:0.57, zn:0.23, vitA:288,  vitD:0,    vitE:1.06, b12:0     },
   { id:'manzana',   label:'Manzana',                  group:'hc',   val:0,    max:80,  step:5,    isOil:false, kcal:52,  prot:0.3,  fat:0.2,  phos:11,  pot:107, carb:13.8, ca:6,   na:1,   fe:0.12, zn:0.04, vitA:3,    vitD:0,    vitE:0.18, b12:0     },
   { id:'merluza',   label:'Merluza cocida',           group:'prot', val:70,   max:120, step:5,    isOil:false, kcal:86,  prot:15.8, fat:1.5,  phos:140, pot:302, carb:0,    ca:40,  na:90,  fe:1.00, zn:0.50, vitA:10,   vitD:1.0,  vitE:0.60, b12:2.0   },
   { id:'salmon',    label:'Salmón cocido',            group:'prot', val:0,    max:120, step:5,    isOil:false, kcal:206, prot:20.0, fat:13.0, phos:260, pot:384, carb:0,    ca:15,  na:75,  fe:0.50, zn:0.40, vitA:17,   vitD:11.0, vitE:1.35, b12:2.8   },

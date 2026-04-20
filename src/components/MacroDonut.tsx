@@ -20,8 +20,8 @@ function DonutSeg({ len, offset, color }: { len: number; offset: number; color: 
 
 export function MacroDonut({ r }: { r: ReturnType<typeof calcNutrition> }) {
   const PROT_C = '#5B8DEF'
-  const CARB_C = '#EF9F27'
-  const FAT_C  = '#1D9E75'
+  const CARB_C = '#1D9E75'
+  const FAT_C  = '#EF9F27'
 
   const protKcal = r.prot * 4
   const carbKcal = r.carb * 4
