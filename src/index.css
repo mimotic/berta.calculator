@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 input[type=range] {
   height: 3px;
   -webkit-appearance: none;
@@ -9,6 +11,9 @@ input[type=range] {
   outline: none;
   cursor: pointer;
 }
+.dark input[type=range] {
+  background: rgba(255,255,255,0.12);
+}
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 16px;
@@ -17,6 +22,9 @@ input[type=range]::-webkit-slider-thumb {
   background: #1a1a18;
   cursor: pointer;
   transition: transform 0.1s;
+}
+.dark input[type=range]::-webkit-slider-thumb {
+  background: #e8e6e0;
 }
 input[type=range]::-webkit-slider-thumb:hover {
   transform: scale(1.2);

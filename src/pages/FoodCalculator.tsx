@@ -51,13 +51,13 @@ export default function FoodCalculator() {
   else                             alerts.push(['ok',     `✓ Potasio en rango (${r.pot.toFixed(1)}mg)`])
 
   const alertClass: Record<AlertType, string> = {
-    ok:     'bg-[#e1f5ee] text-[#0f6e56]',
-    warn:   'bg-[#faeeda] text-[#854f0b]',
-    danger: 'bg-[#fcebeb] text-[#a32d2d]',
+    ok:     'bg-[#e1f5ee] text-[#0f6e56] dark:bg-[#0f3328] dark:text-[#7ad4b1]',
+    warn:   'bg-[#faeeda] text-[#854f0b] dark:bg-[#3a2a10] dark:text-[#e8b980]',
+    danger: 'bg-[#fcebeb] text-[#a32d2d] dark:bg-[#3a1616] dark:text-[#eb8585]',
   }
 
   return (
-    <div className="font-serif bg-[#f9f8f6] text-[#1a1a18] min-h-screen py-8 px-4">
+    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] min-h-screen py-8 px-4 transition-colors">
       <div className="max-w-220 mx-auto">
 
         <Header />
@@ -65,18 +65,18 @@ export default function FoodCalculator() {
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">
             <h1 className="text-[24px] font-normal tracking-tight leading-tight">Calculadora dieta</h1>
-            <span className="text-[11px] text-[#6b6b67] font-mono shrink-0">renal · canina</span>
+            <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">renal · canina</span>
           </div>
-          <p className="text-[12px] text-[#6b6b67] mt-1 font-mono">
+          <p className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
             objetivo: 210 kcal · fósforo &lt;100mg · potasio 100–200mg
           </p>
         </header>
 
-        <div className="bg-white border border-black/10 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
           <div className="grid grid-cols-[2fr_1px_1fr] max-[720px]:grid-cols-1">
 
           <div className="p-5 max-[720px]:order-1">
-            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
+            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
               Ingredientes
             </div>
             <SliderGroup label="Hidratos"  group="hc"   values={values} onChange={handleChange} />
@@ -88,11 +88,11 @@ export default function FoodCalculator() {
             </div>
           </div>
 
-          <div className="bg-black/10 max-[720px]:hidden min-[721px]:row-span-2"></div>
+          <div className="bg-black/10 dark:bg-white/10 max-[720px]:hidden min-[721px]:row-span-2"></div>
 
-          <div className="p-5 bg-[#fafaf7] flex flex-col gap-5 max-[720px]:order-2 min-[721px]:row-span-2">
+          <div className="p-5 bg-[#fafaf7] dark:bg-[#141412] flex flex-col gap-5 max-[720px]:order-2 min-[721px]:row-span-2">
             <div>
-              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
+              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
                 Energía y macros
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -107,15 +107,15 @@ export default function FoodCalculator() {
             </div>
 
             <div>
-              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
+              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
                 Distribución macros
               </div>
               <MacroDonut r={r} />
             </div>
           </div>
 
-          <div className="p-5 max-[720px]:order-3 min-[721px]:border-t min-[721px]:border-black/10">
-            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">
+          <div className="p-5 max-[720px]:order-3 min-[721px]:border-t min-[721px]:border-black/10 dark:min-[721px]:border-white/10">
+            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
               Minerales renales
             </div>
             <div className="grid grid-cols-3 max-[520px]:grid-cols-2 gap-2">
@@ -144,7 +144,7 @@ export default function FoodCalculator() {
           </div>
         </div>
 
-        <p className="text-[11px] text-[#6b6b67] mt-3 leading-relaxed italic font-serif px-1">
+        <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] mt-3 leading-relaxed italic font-serif px-1">
           Fósforo y potasio calculados con reducción por hervido (~30%). Referencia renal canina orientativa: fósforo &lt;100mg/día, potasio 100–200mg/día.
         </p>
 

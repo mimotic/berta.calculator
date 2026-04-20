@@ -73,8 +73,8 @@ function Stepper({ value, onChange, min = 0.5, max = 60, step = 0.1 }: StepperPr
   const dec = () => onChange(Math.max(min, +(value - step).toFixed(1)))
   const inc = () => onChange(Math.min(max, +(value + step).toFixed(1)))
   return (
-    <div className="flex items-center border border-black/15 rounded-md bg-white overflow-hidden focus-within:border-black/40 transition-colors">
-      <button onClick={dec} className="w-9 h-10 text-[18px] text-[#6b6b67] hover:bg-black/5 font-mono">−</button>
+    <div className="flex items-center border border-black/15 dark:border-white/15 rounded-md bg-white dark:bg-[#1a1a18] overflow-hidden focus-within:border-black/40 dark:focus-within:border-white/40 transition-colors">
+      <button onClick={dec} className="w-9 h-10 text-[18px] text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono">−</button>
       <input
         type="number"
         min={min}
@@ -87,8 +87,8 @@ function Stepper({ value, onChange, min = 0.5, max = 60, step = 0.1 }: StepperPr
         }}
         className="flex-1 text-center text-[17px] font-mono font-bold py-2 outline-none bg-transparent w-0 min-w-0"
       />
-      <span className="pr-3 text-[11px] text-[#6b6b67] font-mono">kg</span>
-      <button onClick={inc} className="w-9 h-10 text-[18px] text-[#6b6b67] hover:bg-black/5 font-mono border-l border-black/10">+</button>
+      <span className="pr-3 text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono">kg</span>
+      <button onClick={inc} className="w-9 h-10 text-[18px] text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono border-l border-black/10 dark:border-white/10">+</button>
     </div>
   )
 }
@@ -104,11 +104,15 @@ type ChipProps = {
 function Chip({ active, onClick, children, hint, disabled }: ChipProps) {
   const base = 'group relative text-left px-2.5 py-1.5 rounded-md text-[12px] border transition-colors'
   const state = disabled
-    ? 'bg-black/5 text-[#bbb] border-transparent cursor-not-allowed'
+    ? 'bg-black/5 dark:bg-white/5 text-[#bbb] dark:text-[#555] border-transparent cursor-not-allowed'
     : active
-    ? 'bg-[#1a1a18] text-white border-[#1a1a18]'
-    : 'bg-white text-[#1a1a18] border-black/15 hover:border-black/40'
-  const hintColor = disabled ? 'text-[#bbb]' : active ? 'text-white/60' : 'text-[#6b6b67]'
+    ? 'bg-[#1a1a18] text-white border-[#1a1a18] dark:bg-[#e8e6e0] dark:text-[#1a1a18] dark:border-[#e8e6e0]'
+    : 'bg-white dark:bg-[#1a1a18] text-[#1a1a18] dark:text-[#e8e6e0] border-black/15 dark:border-white/15 hover:border-black/40 dark:hover:border-white/40'
+  const hintColor = disabled
+    ? 'text-[#bbb] dark:text-[#555]'
+    : active
+    ? 'text-white/60 dark:text-[#1a1a18]/60'
+    : 'text-[#6b6b67] dark:text-[#8a8a85]'
   return (
     <button onClick={onClick} disabled={disabled} className={`${base} ${state}`}>
       <div className="font-serif leading-tight">{children}</div>
@@ -127,8 +131,8 @@ function Field({ label, note, children }: FieldProps) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1.5">
-        <label className="text-[11px] text-[#6b6b67] font-mono uppercase tracking-wider">{label}</label>
-        {note && <span className="text-[10px] text-[#6b6b67] font-mono italic">{note}</span>}
+        <label className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono uppercase tracking-wider">{label}</label>
+        {note && <span className="text-[10px] text-[#6b6b67] dark:text-[#8a8a85] font-mono italic">{note}</span>}
       </div>
       {children}
     </div>
@@ -151,7 +155,7 @@ export default function CaloriesCalculator() {
   const accent = '#1D9E75'
 
   return (
-    <div className="font-serif bg-[#f9f8f6] text-[#1a1a18] min-h-screen py-8 px-4">
+    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] min-h-screen py-8 px-4 transition-colors">
       <div className="max-w-220 mx-auto">
 
         <Header />
@@ -159,16 +163,16 @@ export default function CaloriesCalculator() {
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">
             <h1 className="text-[24px] font-normal tracking-tight leading-tight">Calorías diarias</h1>
-            <span className="text-[11px] text-[#6b6b67] font-mono shrink-0">perro · WSAVA</span>
+            <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">perro · WSAVA</span>
           </div>
-          <p className="text-[12px] text-[#6b6b67] mt-1 font-mono">RER × factor de actividad</p>
+          <p className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">RER × factor de actividad</p>
         </header>
 
-        <div className="bg-white border border-black/10 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_1px_1fr]">
 
           <div className="p-5">
-            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">Datos</div>
+            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">Datos</div>
 
             <div className="flex flex-col gap-4">
 
@@ -196,8 +200,8 @@ export default function CaloriesCalculator() {
               </Field>
 
               <div className={`flex items-center justify-between transition-opacity ${activityDisabled ? 'opacity-40' : ''}`}>
-                <label className="text-[11px] text-[#6b6b67] font-mono uppercase tracking-wider">Castrado/a</label>
-                <div className="flex border border-black/15 rounded-md overflow-hidden bg-white">
+                <label className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono uppercase tracking-wider">Castrado/a</label>
+                <div className="flex border border-black/15 dark:border-white/15 rounded-md overflow-hidden bg-white dark:bg-[#1a1a18]">
                   {[true, false].map(val => (
                     <button
                       key={String(val)}
@@ -205,10 +209,10 @@ export default function CaloriesCalculator() {
                       disabled={activityDisabled}
                       className={`px-4 py-1.5 text-[12px] font-mono transition-colors ${
                         neutered === val && !activityDisabled
-                          ? 'bg-[#1a1a18] text-white'
+                          ? 'bg-[#1a1a18] text-white dark:bg-[#e8e6e0] dark:text-[#1a1a18]'
                           : activityDisabled
-                          ? 'text-[#bbb] cursor-not-allowed'
-                          : 'text-[#1a1a18] hover:bg-black/5'
+                          ? 'text-[#bbb] dark:text-[#555] cursor-not-allowed'
+                          : 'text-[#1a1a18] dark:text-[#e8e6e0] hover:bg-black/5 dark:hover:bg-white/5'
                       }`}
                     >
                       {val ? 'Sí' : 'No'}
@@ -251,13 +255,13 @@ export default function CaloriesCalculator() {
             </div>
           </div>
 
-          <div className="bg-black/10"></div>
+          <div className="bg-black/10 dark:bg-white/10"></div>
 
-          <div className="p-5 bg-[#fafaf7]">
-            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] mb-4 font-mono">Resultado</div>
+          <div className="p-5 bg-[#fafaf7] dark:bg-[#141412]">
+            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">Resultado</div>
 
             {!result ? (
-              <div className="text-[13px] text-[#6b6b67] italic font-serif py-6 text-center">
+              <div className="text-[13px] text-[#6b6b67] dark:text-[#8a8a85] italic font-serif py-6 text-center">
                 Introduce un peso válido para calcular
               </div>
             ) : (
@@ -267,34 +271,34 @@ export default function CaloriesCalculator() {
                     <div className="text-[44px] leading-none font-mono font-bold tabular-nums" style={{ color: accent }}>
                       {result.mer.toFixed(0)}
                     </div>
-                    <div className="text-[13px] text-[#6b6b67] font-mono">kcal/día</div>
+                    <div className="text-[13px] text-[#6b6b67] dark:text-[#8a8a85] font-mono">kcal/día</div>
                   </div>
-                  <div className="text-[11px] text-[#6b6b67] font-mono mt-1">
-                    ≈ {(result.mer / 3).toFixed(0)} kcal/comida <span className="text-[#bbb]">(3 tomas)</span>
+                  <div className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono mt-1">
+                    ≈ {(result.mer / 3).toFixed(0)} kcal/comida <span className="text-[#bbb] dark:text-[#555]">(3 tomas)</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="bg-white border border-black/10 rounded-md px-2.5 py-2">
-                    <div className="text-[#6b6b67] font-mono">RER reposo</div>
+                  <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-md px-2.5 py-2">
+                    <div className="text-[#6b6b67] dark:text-[#8a8a85] font-mono">RER reposo</div>
                     <div className="font-mono font-bold text-[13px] mt-0.5 tabular-nums">
-                      {result.rer.toFixed(0)} <span className="font-normal text-[#6b6b67]">kcal</span>
+                      {result.rer.toFixed(0)} <span className="font-normal text-[#6b6b67] dark:text-[#8a8a85]">kcal</span>
                     </div>
                   </div>
-                  <div className="bg-white border border-black/10 rounded-md px-2.5 py-2">
-                    <div className="text-[#6b6b67] font-mono">Factor</div>
+                  <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-md px-2.5 py-2">
+                    <div className="text-[#6b6b67] dark:text-[#8a8a85] font-mono">Factor</div>
                     <div className="font-mono font-bold text-[13px] mt-0.5 tabular-nums">× {result.factor.toFixed(1)}</div>
                   </div>
                 </div>
 
                 {isWeightLoss && (
-                  <div className="mt-3 text-[11px] text-[#854f0b] bg-[#faeeda] rounded-md px-2.5 py-2 font-serif italic">
+                  <div className="mt-3 text-[11px] text-[#854f0b] bg-[#faeeda] dark:bg-[#3a2a10] dark:text-[#e8b980] rounded-md px-2.5 py-2 font-serif italic">
                     Pérdida de peso: 1.0 × RER (ignora actividad y etapa).
                   </div>
                 )}
 
-                <div className="mt-4 pt-3 border-t border-black/10">
-                  <div className="text-[10px] text-[#6b6b67] font-mono leading-relaxed">
+                <div className="mt-4 pt-3 border-t border-black/10 dark:border-white/10">
+                  <div className="text-[10px] text-[#6b6b67] dark:text-[#8a8a85] font-mono leading-relaxed">
                     MER = 70 × peso<sup>0.75</sup> × factor
                     <br />
                     = 70 × {weight.toFixed(1)}<sup>0.75</sup> × {result.factor.toFixed(2)}
@@ -306,7 +310,7 @@ export default function CaloriesCalculator() {
           </div>
         </div>
 
-        <p className="text-[11px] text-[#6b6b67] mt-3 leading-relaxed italic font-serif px-1">
+        <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] mt-3 leading-relaxed italic font-serif px-1">
           Los factores son orientativos; consulta con tu veterinario para ajustar la dieta individual.
         </p>
       </div>

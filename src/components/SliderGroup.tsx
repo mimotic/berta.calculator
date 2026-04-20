@@ -12,12 +12,12 @@ export function SliderGroup({ label, group, values, onChange }: SliderGroupProps
   const items = INGREDIENTS.filter(i => i.group === group)
   return (
     <div>
-      <div className="text-[11px] text-[#6b6b67] italic mb-1.5 font-serif">{label}</div>
+      <div className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] italic mb-1.5 font-serif">{label}</div>
       {items.map(ing => {
         const g = values[ing.id]
         return (
           <div key={ing.id} className="flex items-center gap-[5px] mb-[10px] md:gap-[10px]">
-            <label htmlFor={`sl_${ing.id}`} className="text-[13px] text-[#6b6b67] w-[165px] max-[520px]:w-[130px] shrink-0 font-serif">
+            <label htmlFor={`sl_${ing.id}`} className="text-[13px] text-[#6b6b67] dark:text-[#9a9a95] w-[165px] max-[520px]:w-[130px] shrink-0 font-serif">
               {ing.label}
             </label>
             <input
@@ -30,10 +30,10 @@ export function SliderGroup({ label, group, values, onChange }: SliderGroupProps
               value={g}
               onChange={e => onChange(ing.id, parseFloat(e.target.value))}
             />
-            <span className="w-14 text-right text-[13px] font-bold font-mono text-[#1a1a18]">
+            <span className="w-14 text-right text-[13px] font-bold font-mono text-[#1a1a18] dark:text-[#e8e6e0]">
               {ing.isOil ? `${g.toFixed(2)} ml` : `${g} g`}
             </span>
-            <span className="w-11 text-right text-[11px] text-[#6b6b67] font-mono max-[520px]:hidden">
+            <span className="w-11 text-right text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono max-[520px]:hidden">
               {((g / 100) * ing.kcal).toFixed(1)}k
             </span>
           </div>
