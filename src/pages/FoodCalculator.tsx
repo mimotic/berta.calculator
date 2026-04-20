@@ -1,21 +1,19 @@
-import { useState } from 'react'
+import { useState, type ReactElement } from 'react'
 import { Link } from 'react-router'
 import '../index.css'
 import { INGREDIENTS, calcNutrition } from '../data/ingredients'
 import type { Values } from '../data/ingredients'
+import { type PathologyId, PATHOLOGY_DEFS, computeLimits } from '../data/pathologies'
 import { StatCard } from '../components/StatCard'
 import { MacroDonut } from '../components/MacroDonut'
 import { SliderGroup } from '../components/SliderGroup'
 import { Header } from '../components/Header'
 import { IngredientsWizard } from '../components/IngredientsWizard'
-
-const FAT_MAX  = 5.0
-const PHOS_MAX = 100
-const POT_MIN  = 100
-const POT_MAX  = 200
+import { PathologyWizard } from '../components/PathologyWizard'
 
 const STORAGE_KEY = 'foodCalculator.kcalTarget'
 const INGREDIENTS_STORAGE_KEY = 'foodCalculator.selectedIngredients'
+const PATHOLOGIES_STORAGE_KEY = 'foodCalculator.pathologies'
 const DEFAULT_TARGET = 210
 
 function readStoredTarget(): number | null {
@@ -36,6 +34,19 @@ function readStoredIngredients(): string[] | null {
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return null
     return parsed.filter((x): x is string => typeof x === 'string')
+  } catch {
+    return null
+  }
+}
+
+function readStoredPathologies(): PathologyId[] | null {
+  try {
+    const raw = localStorage.getItem(PATHOLOGIES_STORAGE_KEY)
+    if (raw === null) return null
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return null
+    const valid: PathologyId[] = ['renal', 'hepatica', 'digestiva', 'cardiaca']
+    return parsed.filter((x): x is PathologyId => valid.includes(x))
   } catch {
     return null
   }
@@ -125,6 +136,8 @@ function GoalStep({ initial, onSubmit, onCancel }: GoalStepProps) {
 export default function FoodCalculator() {
   const [target, setTarget] = useState<number | null>(() => readStoredTarget())
   const [editingGoal, setEditingGoal] = useState(false)
+  const [pathologies, setPathologies] = useState<PathologyId[] | null>(() => readStoredPathologies())
+  const [editingPathology, setEditingPathology] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>(
     () => readStoredIngredients() ?? INGREDIENTS.map(i => i.id)
   )
@@ -138,6 +151,12 @@ export default function FoodCalculator() {
     try { localStorage.setItem(STORAGE_KEY, String(t)) } catch { /* storage unavailable */ }
     setTarget(t)
     setEditingGoal(false)
+  }
+
+  const commitPathologies = (ids: PathologyId[]) => {
+    try { localStorage.setItem(PATHOLOGIES_STORAGE_KEY, JSON.stringify(ids)) } catch { /* storage unavailable */ }
+    setPathologies(ids)
+    setEditingPathology(false)
   }
 
   const commitIngredients = (ids: string[]) => {
@@ -156,6 +175,16 @@ export default function FoodCalculator() {
     )
   }
 
+  if (pathologies === null || editingPathology) {
+    return (
+      <PathologyWizard
+        initial={pathologies ?? []}
+        onSubmit={commitPathologies}
+        onCancel={editingPathology ? () => setEditingPathology(false) : undefined}
+      />
+    )
+  }
+
   if (editingIngredients) {
     return (
       <IngredientsWizard
@@ -167,9 +196,9 @@ export default function FoodCalculator() {
   }
 
   const TARGET = target
+  const limits = computeLimits(pathologies)
 
   const activeIngredients = INGREDIENTS.filter(i => selectedIds.includes(i.id))
-
   const r = calcNutrition(values, activeIngredients)
 
   const handleChange = (id: string, val: number) =>
@@ -178,12 +207,60 @@ export default function FoodCalculator() {
   const diffK   = r.kcal - TARGET
   const pct     = Math.min(100, (r.kcal / TARGET) * 100)
   const kcalColor = Math.abs(diffK) <= 8 ? '#1D9E75' : diffK < 0 ? '#EF9F27' : '#E24B4A'
-
   const totalG = activeIngredients.reduce((s, i) => s + (values[i.id] ?? 0), 0)
 
-  const phosColor = r.phos > PHOS_MAX ? '#E24B4A' : r.phos > PHOS_MAX * 0.85 ? '#EF9F27' : '#1D9E75'
-  const potColor  = r.pot >= POT_MIN && r.pot <= POT_MAX ? '#1D9E75' : '#EF9F27'
+  const pathologyChip = pathologies.length > 0
+    ? pathologies.map(id => PATHOLOGY_DEFS[id].label.toLowerCase()).join(' · ') + ' · canina'
+    : 'canina'
 
+  const limitsInfo: string[] = []
+  if (limits.fatMax !== undefined)   limitsInfo.push(`grasa <${limits.fatMax}g`)
+  if (limits.phosMax !== undefined)  limitsInfo.push(`fósforo <${limits.phosMax}mg`)
+  if (limits.potMin !== undefined && limits.potMax !== undefined) limitsInfo.push(`potasio ${limits.potMin}–${limits.potMax}mg`)
+  else if (limits.potMax !== undefined) limitsInfo.push(`potasio <${limits.potMax}mg`)
+  if (limits.naMax !== undefined)    limitsInfo.push(`sodio <${limits.naMax}mg`)
+  if (limits.protMax !== undefined)  limitsInfo.push(`proteína <${limits.protMax}g`)
+  if (limits.fiberMin !== undefined && limits.fiberMax !== undefined) limitsInfo.push(`fibra ${limits.fiberMin}–${limits.fiberMax}g`)
+
+  // Mineral cards
+  type MineralCard = { key: string; el: ReactElement }
+  const mineralCards: MineralCard[] = []
+
+  if (limits.phosMax !== undefined) {
+    const phosColor = r.phos > limits.phosMax ? '#E24B4A' : r.phos > limits.phosMax * 0.85 ? '#EF9F27' : '#1D9E75'
+    mineralCards.push({ key: 'phos', el: <StatCard value={r.phos.toFixed(1)} valueColor={phosColor} label="fósforo mg" barPct={Math.min(100, (r.phos / limits.phosMax) * 100)} barColor={phosColor} barLabel={`límite ~${limits.phosMax}mg`} /> })
+  }
+
+  if (limits.potMin !== undefined || limits.potMax !== undefined) {
+    const potMin = limits.potMin ?? 0
+    const potMax = limits.potMax ?? 9999
+    const potColor = r.pot >= potMin && r.pot <= potMax ? '#1D9E75' : '#EF9F27'
+    const potLabel = limits.potMin !== undefined && limits.potMax !== undefined
+      ? `rango ${limits.potMin}–${limits.potMax}`
+      : limits.potMax !== undefined ? `máx ${limits.potMax}mg` : `mín ${limits.potMin}mg`
+    mineralCards.push({ key: 'pot', el: <StatCard value={r.pot.toFixed(1)} valueColor={potColor} label="potasio mg" barPct={Math.min(100, (r.pot / potMax) * 100)} barColor={potColor} barLabel={potLabel} /> })
+  }
+
+  if (pathologies.includes('renal') && r.phos > 0) {
+    mineralCards.push({ key: 'ratio', el: <StatCard value={(r.prot / r.phos * 1000).toFixed(0)} label="ratio prot:P ×10" /> })
+  }
+
+  if (limits.naMax !== undefined) {
+    const naColor = r.na > limits.naMax ? '#E24B4A' : r.na > limits.naMax * 0.85 ? '#EF9F27' : '#1D9E75'
+    mineralCards.push({ key: 'na', el: <StatCard value={r.na.toFixed(1)} valueColor={naColor} label="sodio mg" barPct={Math.min(100, (r.na / limits.naMax) * 100)} barColor={naColor} barLabel={`límite ~${limits.naMax}mg`} /> })
+  }
+
+  if (limits.fiberMin !== undefined || limits.fiberMax !== undefined) {
+    const fMin = limits.fiberMin ?? 0
+    const fMax = limits.fiberMax ?? 9999
+    const fiberColor = r.fiber >= fMin && r.fiber <= fMax ? '#1D9E75' : '#EF9F27'
+    const fiberLabel = limits.fiberMin !== undefined && limits.fiberMax !== undefined
+      ? `rango ${limits.fiberMin.toFixed(1)}–${limits.fiberMax.toFixed(1)}g`
+      : limits.fiberMax !== undefined ? `máx ${limits.fiberMax.toFixed(1)}g` : `mín ${limits.fiberMin!.toFixed(1)}g`
+    mineralCards.push({ key: 'fiber', el: <StatCard value={r.fiber.toFixed(1)} valueColor={fiberColor} label="fibra g" barPct={limits.fiberMax ? Math.min(100, (r.fiber / limits.fiberMax) * 100) : 50} barColor={fiberColor} barLabel={fiberLabel} /> })
+  }
+
+  // Alerts
   type AlertType = 'ok' | 'warn' | 'danger'
   const alerts: [AlertType, string][] = []
 
@@ -191,22 +268,56 @@ export default function FoodCalculator() {
   else if (diffK < 0)              alerts.push(['warn',   `Faltan ${Math.abs(diffK).toFixed(1)} kcal para llegar a ${TARGET}`])
   else                             alerts.push(['danger', `${diffK.toFixed(1)} kcal por encima del objetivo`])
 
-  if (r.fat > FAT_MAX)             alerts.push(['danger', `Grasa ${r.fat.toFixed(2)}g — supera el límite de ${FAT_MAX}g`])
-  else                             alerts.push(['ok',     `✓ Grasa dentro del límite (${r.fat.toFixed(2)}g)`])
+  if (limits.fatMax !== undefined) {
+    if (r.fat > limits.fatMax)     alerts.push(['danger', `Grasa ${r.fat.toFixed(2)}g — supera el límite de ${limits.fatMax}g`])
+    else                           alerts.push(['ok',     `✓ Grasa dentro del límite (${r.fat.toFixed(2)}g)`])
+  }
 
-  if (r.phos > PHOS_MAX)           alerts.push(['danger', `Fósforo ${r.phos.toFixed(1)}mg — supera el límite renal`])
-  else if (r.phos > PHOS_MAX*0.85) alerts.push(['warn',   `Fósforo ${r.phos.toFixed(1)}mg — cerca del límite`])
-  else                             alerts.push(['ok',     `✓ Fósforo controlado (${r.phos.toFixed(1)}mg)`])
+  if (limits.phosMax !== undefined) {
+    if (r.phos > limits.phosMax)              alerts.push(['danger', `Fósforo ${r.phos.toFixed(1)}mg — supera el límite`])
+    else if (r.phos > limits.phosMax * 0.85)  alerts.push(['warn',   `Fósforo ${r.phos.toFixed(1)}mg — cerca del límite`])
+    else                                      alerts.push(['ok',     `✓ Fósforo controlado (${r.phos.toFixed(1)}mg)`])
+  }
 
-  if (r.pot < POT_MIN)             alerts.push(['warn',   `Potasio ${r.pot.toFixed(1)}mg — por debajo del rango`])
-  else if (r.pot > POT_MAX)        alerts.push(['warn',   `Potasio ${r.pot.toFixed(1)}mg — por encima del rango`])
-  else                             alerts.push(['ok',     `✓ Potasio en rango (${r.pot.toFixed(1)}mg)`])
+  if (limits.potMin !== undefined || limits.potMax !== undefined) {
+    const potMin = limits.potMin ?? 0
+    const potMax = limits.potMax ?? 9999
+    if (r.pot < potMin)            alerts.push(['warn',   `Potasio ${r.pot.toFixed(1)}mg — por debajo del rango`])
+    else if (r.pot > potMax)       alerts.push(['warn',   `Potasio ${r.pot.toFixed(1)}mg — por encima del rango`])
+    else                           alerts.push(['ok',     `✓ Potasio en rango (${r.pot.toFixed(1)}mg)`])
+  }
+
+  if (limits.naMax !== undefined) {
+    if (r.na > limits.naMax)              alerts.push(['danger', `Sodio ${r.na.toFixed(1)}mg — supera el límite de ${limits.naMax}mg`])
+    else if (r.na > limits.naMax * 0.85)  alerts.push(['warn',   `Sodio ${r.na.toFixed(1)}mg — cerca del límite`])
+    else                                  alerts.push(['ok',     `✓ Sodio controlado (${r.na.toFixed(1)}mg)`])
+  }
+
+  if (limits.protMax !== undefined) {
+    if (r.prot > limits.protMax)   alerts.push(['danger', `Proteína ${r.prot.toFixed(1)}g — supera el límite de ${limits.protMax}g`])
+    else                           alerts.push(['ok',     `✓ Proteína dentro del límite (${r.prot.toFixed(1)}g)`])
+  }
+
+  if (limits.fiberMin !== undefined || limits.fiberMax !== undefined) {
+    const fMin = limits.fiberMin ?? 0
+    const fMax = limits.fiberMax ?? 9999
+    if (r.fiber < fMin)            alerts.push(['warn',   `Fibra ${r.fiber.toFixed(1)}g — por debajo del rango`])
+    else if (r.fiber > fMax)       alerts.push(['warn',   `Fibra ${r.fiber.toFixed(1)}g — por encima del rango`])
+    else                           alerts.push(['ok',     `✓ Fibra en rango (${r.fiber.toFixed(1)}g)`])
+  }
 
   const alertClass: Record<AlertType, string> = {
     ok:     'bg-[#e1f5ee] text-[#0f6e56] dark:bg-[#0f3328] dark:text-[#7ad4b1]',
     warn:   'bg-[#faeeda] text-[#854f0b] dark:bg-[#3a2a10] dark:text-[#e8b980]',
     danger: 'bg-[#fcebeb] text-[#a32d2d] dark:bg-[#3a1616] dark:text-[#eb8585]',
   }
+
+  // Footer notes
+  const footerNotes: string[] = []
+  if (pathologies.includes('renal'))     footerNotes.push('Fósforo y potasio con reducción por hervido (~30%). Referencia renal canina orientativa: fósforo <100mg/día, potasio 100–200mg/día.')
+  if (pathologies.includes('hepatica'))  footerNotes.push('Parámetros hepáticos orientativos: proteína <15g/día, grasa <4g, sodio <80mg.')
+  if (pathologies.includes('digestiva')) footerNotes.push('Parámetros digestivos orientativos: grasa <3g/día, fibra 1.5–4g.')
+  if (pathologies.includes('cardiaca'))  footerNotes.push('Parámetros cardíacos orientativos: sodio <50mg/día.')
 
   return (
     <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] min-h-screen py-8 px-4 transition-colors">
@@ -217,7 +328,7 @@ export default function FoodCalculator() {
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">
             <h1 className="text-[24px] font-normal tracking-tight leading-tight">Calculadora dieta</h1>
-            <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">renal · canina</span>
+            <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">{pathologyChip}</span>
           </div>
           <p className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
             objetivo: {TARGET} kcal{' '}
@@ -227,7 +338,16 @@ export default function FoodCalculator() {
             >
               editar
             </button>
-            {' · '}fósforo &lt;100mg · potasio 100–200mg
+            {' · '}
+            <button
+              onClick={() => setEditingPathology(true)}
+              className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
+            >
+              {pathologies.length > 0 ? 'editar patología' : 'añadir patología'}
+            </button>
+            {limitsInfo.length > 0 && (
+              <span className="ml-1">· {limitsInfo.join(' · ')}</span>
+            )}
           </p>
         </header>
 
@@ -265,7 +385,7 @@ export default function FoodCalculator() {
                   <StatCard value={r.kcal.toFixed(1)}  valueColor={kcalColor} label="kcal"         barPct={pct}                               barColor={kcalColor} barLabel={`obj. ${TARGET}`} />
                 </div>
                 <StatCard value={r.prot.toFixed(1)}                         label="proteína g" />
-                <StatCard value={r.fat.toFixed(2)}   valueColor={r.fat > FAT_MAX ? '#E24B4A' : undefined} label="grasa g" />
+                <StatCard value={r.fat.toFixed(2)}   valueColor={limits.fatMax !== undefined && r.fat > limits.fatMax ? '#E24B4A' : undefined} label="grasa g" />
                 <StatCard value={r.carb.toFixed(1)}                         label="hidratos g" />
                 <StatCard value={totalG.toFixed(0)}                         label="peso total g" />
               </div>
@@ -279,33 +399,39 @@ export default function FoodCalculator() {
             </div>
           </div>
 
-          <div className="p-5 max-[720px]:order-3 min-[721px]:border-t min-[721px]:border-black/10 dark:min-[721px]:border-white/10">
-            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
-              Minerales renales
-            </div>
-            <div className="grid grid-cols-3 max-[520px]:grid-cols-2 gap-2">
-              <StatCard
-                value={r.phos.toFixed(1)} valueColor={phosColor} label="fósforo mg"
-                barPct={Math.min(100, (r.phos / PHOS_MAX) * 100)} barColor={phosColor} barLabel="límite ~100mg"
-              />
-              <StatCard
-                value={r.pot.toFixed(1)} valueColor={potColor} label="potasio mg"
-                barPct={Math.min(100, (r.pot / POT_MAX) * 100)} barColor={potColor} barLabel="rango 100–200"
-              />
-              <StatCard
-                value={r.phos > 0 ? (r.prot / r.phos * 1000).toFixed(0) : '—'}
-                label="ratio prot:P ×10"
-              />
-            </div>
+          {mineralCards.length > 0 && (
+            <div className="p-5 max-[720px]:order-3 min-[721px]:border-t min-[721px]:border-black/10 dark:min-[721px]:border-white/10">
+              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
+                Minerales
+              </div>
+              <div className="grid grid-cols-3 max-[520px]:grid-cols-2 gap-2">
+                {mineralCards.map(({ key, el }) => (
+                  <div key={key}>{el}</div>
+                ))}
+              </div>
 
-            <div className="flex flex-col gap-[5px] mt-3">
-              {alerts.map(([type, msg], i) => (
-                <div key={i} className={`text-xs py-1.5 px-3 rounded-md font-serif ${alertClass[type]}`}>
-                  {msg}
-                </div>
-              ))}
+              <div className="flex flex-col gap-[5px] mt-3">
+                {alerts.map(([type, msg], i) => (
+                  <div key={i} className={`text-xs py-1.5 px-3 rounded-md font-serif ${alertClass[type]}`}>
+                    {msg}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {mineralCards.length === 0 && alerts.length > 0 && (
+            <div className="p-5 max-[720px]:order-3 min-[721px]:border-t min-[721px]:border-black/10 dark:min-[721px]:border-white/10">
+              <div className="flex flex-col gap-[5px]">
+                {alerts.map(([type, msg], i) => (
+                  <div key={i} className={`text-xs py-1.5 px-3 rounded-md font-serif ${alertClass[type]}`}>
+                    {msg}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           </div>
 
           <div className="p-5 border-t border-black/10 dark:border-white/10">
@@ -350,9 +476,11 @@ export default function FoodCalculator() {
           </div>
         </div>
 
-        <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] mt-3 leading-relaxed italic font-serif px-1">
-          Fósforo y potasio calculados con reducción por hervido (~30%). Referencia renal canina orientativa: fósforo &lt;100mg/día, potasio 100–200mg/día.
-        </p>
+        {footerNotes.length > 0 && (
+          <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] mt-3 leading-relaxed italic font-serif px-1">
+            {footerNotes.join(' ')}
+          </p>
+        )}
 
       </div>
     </div>
