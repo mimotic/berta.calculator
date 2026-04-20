@@ -65,6 +65,22 @@ export function MacroDonut({ r }: { r: ReturnType<typeof calcNutrition> }) {
           </div>
         ))}
       </div>
+      <div className="w-full mt-1 rounded-lg bg-[#f5f3ef] dark:bg-[#1e1c1a] p-3">
+        <p className="text-[11px] text-[#9b9b97] dark:text-[#6b6b67] font-serif mb-2">Orientativo perro adulto sano</p>
+        <div className="flex flex-col gap-1">
+          {[
+            { color: PROT_C, name: 'Proteína',  range: '20–30%' },
+            { color: CARB_C, name: 'Hidratos',  range: '30–50%' },
+            { color: FAT_C,  name: 'Grasas',    range: '25–40%' },
+          ].map(({ color, name, range }) => (
+            <div key={name} className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+              <span className="text-[11px] text-[#9b9b97] dark:text-[#6b6b67] font-serif flex-1">{name}</span>
+              <span className="text-[11px] font-mono text-[#9b9b97] dark:text-[#6b6b67]">{range}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
