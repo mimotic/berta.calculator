@@ -74,7 +74,7 @@ function Stepper({ value, onChange, min = 0.5, max = 60, step = 0.1 }: StepperPr
   const inc = () => onChange(Math.min(max, +(value + step).toFixed(1)))
   return (
     <div className="flex items-center border border-black/15 dark:border-white/15 rounded-md bg-white dark:bg-[#1a1a18] overflow-hidden focus-within:border-black/40 dark:focus-within:border-white/40 transition-colors">
-      <button onClick={dec} className="w-9 h-10 text-[18px] text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono">−</button>
+      <button onClick={dec} className="w-9 h-10 text-lg text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono">−</button>
       <input
         type="number"
         min={min}
@@ -88,7 +88,7 @@ function Stepper({ value, onChange, min = 0.5, max = 60, step = 0.1 }: StepperPr
         className="flex-1 text-center text-[17px] font-mono font-bold py-2 outline-none bg-transparent w-0 min-w-0"
       />
       <span className="pr-3 text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono">kg</span>
-      <button onClick={inc} className="w-9 h-10 text-[18px] text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono border-l border-black/10 dark:border-white/10">+</button>
+      <button onClick={inc} className="w-9 h-10 text-lg text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono border-l border-black/10 dark:border-white/10">+</button>
     </div>
   )
 }
@@ -102,7 +102,7 @@ type ChipProps = {
 }
 
 function Chip({ active, onClick, children, hint, disabled }: ChipProps) {
-  const base = 'group relative text-left px-2.5 py-1.5 rounded-md text-[12px] border transition-colors'
+  const base = 'group relative text-left px-2.5 py-1.5 rounded-md text-xs border transition-colors'
   const state = disabled
     ? 'bg-black/5 dark:bg-white/5 text-[#bbb] dark:text-[#555] border-transparent cursor-not-allowed'
     : active
@@ -162,10 +162,10 @@ export default function CaloriesCalculator() {
 
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">
-            <h1 className="text-[24px] font-normal tracking-tight leading-tight">Calorías diarias</h1>
+            <h1 className="text-2xl font-normal tracking-tight leading-tight">Calorías diarias</h1>
             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">perro · WSAVA</span>
           </div>
-          <p className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">RER × factor de actividad</p>
+          <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">RER × factor de actividad</p>
         </header>
 
         <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
@@ -207,7 +207,7 @@ export default function CaloriesCalculator() {
                       key={String(val)}
                       onClick={() => !activityDisabled && setNeutered(val)}
                       disabled={activityDisabled}
-                      className={`px-4 py-1.5 text-[12px] font-mono transition-colors ${
+                      className={`px-4 py-1.5 text-xs font-mono transition-colors ${
                         neutered === val && !activityDisabled
                           ? 'bg-[#1a1a18] text-white dark:bg-[#e8e6e0] dark:text-[#1a1a18]'
                           : activityDisabled

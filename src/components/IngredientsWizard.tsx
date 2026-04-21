@@ -41,10 +41,10 @@ export function IngredientsWizard({ initial, onSubmit, onCancel }: Props) {
 
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">
-            <h1 className="text-[24px] font-normal tracking-tight leading-tight">Editar ingredientes</h1>
+            <h1 className="text-2xl font-normal tracking-tight leading-tight">Editar ingredientes</h1>
             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">{current.subtitle}</span>
           </div>
-          <p className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
+          <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
             elige qué ingredientes aparecerán en la calculadora
           </p>
         </header>

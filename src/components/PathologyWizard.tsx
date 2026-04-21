@@ -30,10 +30,10 @@ export function PathologyWizard({ initial, onSubmit, onCancel }: Props) {
 
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">
-            <h1 className="text-[24px] font-normal tracking-tight leading-tight">Patologías</h1>
+            <h1 className="text-2xl font-normal tracking-tight leading-tight">Patologías</h1>
             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">paso 2 · patologías</span>
           </div>
-          <p className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
+          <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
             selecciona las patologías que aplican — pueden ser varias
           </p>
         </header>
@@ -57,7 +57,7 @@ export function PathologyWizard({ initial, onSubmit, onCancel }: Props) {
                       : 'border-black/15 dark:border-white/15 hover:border-black/30 dark:hover:border-white/30'
                   }`}
                 >
-                  <div className="text-[14px] font-serif">{def.label}</div>
+                  <div className="text-sm font-serif">{def.label}</div>
                   <div className={`text-[11px] font-mono mt-0.5 ${active ? 'opacity-70' : 'text-[#6b6b67] dark:text-[#8a8a85]'}`}>
                     {def.description}
                   </div>

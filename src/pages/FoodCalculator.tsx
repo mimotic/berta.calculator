@@ -81,10 +81,10 @@ function GoalStep({ initial, onSubmit, onCancel }: GoalStepProps) {
 
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">
-            <h1 className="text-[24px] font-normal tracking-tight leading-tight">Calculadora dieta</h1>
+            <h1 className="text-2xl font-normal tracking-tight leading-tight">Calculadora dieta</h1>
             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">paso 1 · objetivo</span>
           </div>
-          <p className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
+          <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
             define el objetivo de kcal/día
           </p>
         </header>
@@ -108,9 +108,9 @@ function GoalStep({ initial, onSubmit, onCancel }: GoalStepProps) {
                 if (e.key === 'Enter' && valid) onSubmit(value)
               }}
               autoFocus
-              className="flex-1 text-center text-[24px] font-mono font-bold py-3 outline-none bg-transparent w-0 min-w-0 tabular-nums"
+              className="flex-1 text-center text-2xl font-mono font-bold py-3 outline-none bg-transparent w-0 min-w-0 tabular-nums"
             />
-            <span className="pr-4 text-[12px] text-[#6b6b67] dark:text-[#8a8a85] font-mono">kcal/día</span>
+            <span className="pr-4 text-xs text-[#6b6b67] dark:text-[#8a8a85] font-mono">kcal/día</span>
           </div>
 
           <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono leading-relaxed">
@@ -319,10 +319,10 @@ export default function FoodCalculator() {
 
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">
-            <h1 className="text-[24px] font-normal tracking-tight leading-tight">Calculadora dieta</h1>
+            <h1 className="text-2xl font-normal tracking-tight leading-tight">Calculadora dieta</h1>
             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">{pathologyChip}</span>
           </div>
-          <p className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
+          <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
             objetivo: {TARGET} kcal{' '}
             <button
               onClick={() => setEditingGoal(true)}
@@ -431,7 +431,7 @@ export default function FoodCalculator() {
               <span className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] font-mono group-hover:text-[#1a1a18] dark:group-hover:text-[#e8e6e0] transition-colors">
                 Micronutrientes
               </span>
-              <span className={`text-[#6b6b67] dark:text-[#8a8a85] text-[12px] font-mono transition-transform ${microOpen ? 'rotate-90' : ''}`}>
+              <span className={`text-[#6b6b67] dark:text-[#8a8a85] text-xs font-mono transition-transform ${microOpen ? 'rotate-90' : ''}`}>
                 ›
               </span>
             </button>

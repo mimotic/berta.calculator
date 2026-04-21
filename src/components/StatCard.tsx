@@ -10,7 +10,7 @@ interface StatCardProps {
 export function StatCard({ value, valueColor, label, barPct, barColor, barLabel }: StatCardProps) {
   return (
     <div className="bg-[#f2f0ec] dark:bg-[#242220] rounded-[6px] py-3 px-[0.6rem] text-center">
-      <div className="text-[20px] font-mono font-bold leading-none" style={{ color: valueColor ?? 'inherit' }}>
+      <div className="text-xl font-mono font-bold leading-none" style={{ color: valueColor ?? 'inherit' }}>
         {value}
       </div>
       <div className="text-[10px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-serif">{label}</div>

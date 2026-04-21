@@ -60,7 +60,7 @@ export function MacroDonut({ r }: { r: ReturnType<typeof calcNutrition> }) {
         {legend.map(({ color, name, pct }) => (
           <div key={name} className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
-            <span className="text-[12px] text-[#6b6b67] dark:text-[#8a8a85] font-serif flex-1">{name}</span>
+            <span className="text-xs text-[#6b6b67] dark:text-[#8a8a85] font-serif flex-1">{name}</span>
             <span className="text-[13px] font-mono font-bold text-[#1a1a18] dark:text-[#e8e6e0]">{pct.toFixed(1)}%</span>
           </div>
         ))}
