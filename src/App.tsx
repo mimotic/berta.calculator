@@ -18,7 +18,7 @@ export default function App() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
             to="/calorias"
-            className="group relative bg-white dark:bg-[#1a1a18] border border-[#e8e6e0] dark:border-white/10 rounded-lg p-6 hover:border-[#5B8DEF] dark:hover:border-[#5B8DEF] hover:shadow-[0_4px_20px_rgba(91,141,239,0.08)] transition-all duration-200"
+            className="group relative bg-white dark:bg-[#1a1a18] border border-[#e8e6e0] dark:border-white/10 cursor-pointer rounded-lg p-6 hover:border-[#5B8DEF] dark:hover:border-[#5B8DEF] hover:shadow-[0_4px_20px_rgba(91,141,239,0.08)] transition-all duration-200"
           >
             <div className="text-[11px] font-mono text-[#9a9a95] dark:text-[#7a7a75] uppercase tracking-wider mb-3">01</div>
             <h2 className="text-xl font-normal tracking-tight mb-2">Calculadora de calorías</h2>
@@ -31,7 +31,7 @@ export default function App() {
           </Link>
           <Link
             to="/calculadora"
-            className="group relative bg-white dark:bg-[#1a1a18] border border-[#e8e6e0] dark:border-white/10 rounded-lg p-6 hover:border-[#5B8DEF] dark:hover:border-[#5B8DEF] hover:shadow-[0_4px_20px_rgba(91,141,239,0.08)] transition-all duration-200"
+            className="group relative bg-white dark:bg-[#1a1a18] border border-[#e8e6e0] dark:border-white/10 cursor-pointer rounded-lg p-6 hover:border-[#5B8DEF] dark:hover:border-[#5B8DEF] hover:shadow-[0_4px_20px_rgba(91,141,239,0.08)] transition-all duration-200"
           >
             <div className="text-[11px] font-mono text-[#9a9a95] dark:text-[#7a7a75] uppercase tracking-wider mb-3">02</div>
             <h2 className="text-xl font-normal tracking-tight mb-2">Calculadora de dieta</h2>
@@ -44,7 +44,7 @@ export default function App() {
           </Link>
           <Link
             to="/toxicidad"
-            className="group relative bg-white dark:bg-[#1a1a18] border border-[#e8e6e0] dark:border-white/10 rounded-lg p-6 hover:border-[#5B8DEF] dark:hover:border-[#5B8DEF] hover:shadow-[0_4px_20px_rgba(91,141,239,0.08)] transition-all duration-200"
+            className="group relative bg-white dark:bg-[#1a1a18] border border-[#e8e6e0] dark:border-white/10 cursor-pointer rounded-lg p-6 hover:border-[#5B8DEF] dark:hover:border-[#5B8DEF] hover:shadow-[0_4px_20px_rgba(91,141,239,0.08)] transition-all duration-200"
           >
             <div className="text-[11px] font-mono text-[#9a9a95] dark:text-[#7a7a75] uppercase tracking-wider mb-3">03</div>
             <h2 className="text-xl font-normal tracking-tight mb-2">Calculadora de toxicidad</h2>
