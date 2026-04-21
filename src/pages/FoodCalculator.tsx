@@ -293,10 +293,14 @@ export default function FoodCalculator() {
     }
   }
 
-  // Determine fat valueColor for the macro stats card
-  const fatRule = activeRules.fat
-  const fatNorm = fatRule ? getNormalizedValue(r.fat, r.kcal, fatRule.basis, NUTRIENT_META.fat.kcalFactor) : null
+  // Determine valueColor for macro stats cards
+  const fatRule  = activeRules.fat
+  const fatNorm  = fatRule ? getNormalizedValue(r.fat, r.kcal, fatRule.basis, NUTRIENT_META.fat.kcalFactor) : null
   const fatOverLimit = fatRule?.max !== undefined && fatNorm !== null && fatNorm > fatRule.max
+
+  const protRule  = activeRules.protein
+  const protNorm  = protRule ? getNormalizedValue(r.prot, r.kcal, protRule.basis, NUTRIENT_META.protein.kcalFactor) : null
+  const protOverLimit = protRule?.max !== undefined && protNorm !== null && protNorm > protRule.max
 
   const alertClass: Record<AlertType, string> = {
     ok:     'bg-[#e1f5ee] text-[#0f6e56] dark:bg-[#0f3328] dark:text-[#7ad4b1]',
@@ -369,7 +373,7 @@ export default function FoodCalculator() {
                 <div className="col-span-2">
                   <StatCard value={r.kcal.toFixed(1)} valueColor={kcalColor} label="kcal" barPct={pct} barColor={kcalColor} barLabel={`obj. ${TARGET}`} />
                 </div>
-                <StatCard value={r.prot.toFixed(1)} label="proteína g" />
+                <StatCard value={r.prot.toFixed(1)} valueColor={protOverLimit ? '#E24B4A' : undefined} label="proteína g" />
                 <StatCard value={r.fat.toFixed(2)} valueColor={fatOverLimit ? '#E24B4A' : undefined} label="grasa g" />
                 <StatCard value={r.carb.toFixed(1)} label="hidratos g" />
                 <StatCard value={totalG.toFixed(0)} label="peso total g" />
