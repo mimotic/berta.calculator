@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import logo from './assets/logo.png'
+import logo from './assets/berta_logo.png'
 import './index.css'
 
 export default function App() {
