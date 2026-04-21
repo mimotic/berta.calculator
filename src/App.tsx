@@ -4,7 +4,7 @@ import './index.css'
 
 export default function App() {
   return (
-    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] min-h-screen flex items-center justify-center px-4 transition-colors">
+    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] flex-1 flex items-center justify-center px-4 transition-colors">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-10">
           <img

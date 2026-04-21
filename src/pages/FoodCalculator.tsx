@@ -74,7 +74,7 @@ function GoalStep({ initial, onSubmit, onCancel }: GoalStepProps) {
   const valid = Number.isFinite(value) && value > 0
 
   return (
-    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] min-h-screen py-8 px-4 transition-colors">
+    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] flex-1 py-8 px-4 transition-colors">
       <div className="max-w-220 mx-auto">
 
         <Header />
@@ -312,7 +312,7 @@ export default function FoodCalculator() {
   const footerNotes = pathologies.flatMap(id => PATHOLOGY_DEFS[id].notes ?? [])
 
   return (
-    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] min-h-screen py-8 px-4 transition-colors">
+    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] flex-1 py-8 px-4 transition-colors">
       <div className="max-w-220 mx-auto">
 
         <Header />
