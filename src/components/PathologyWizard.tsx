@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Header } from './Header'
 import { type PathologyId, PATHOLOGY_DEFS } from '../data/pathologies'
 
-const OPTION_IDS: PathologyId[] = ['renal', 'hepatica', 'digestiva', 'cardiaca']
+const OPTION_IDS: PathologyId[] = ['renal', 'hepatica_estable', 'encefalopatia_hepatica', 'digestiva_low_fat', 'cardiaca']
 
 type Props = {
   initial: PathologyId[]
