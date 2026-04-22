@@ -23,6 +23,7 @@ import { PathologyWizard } from '../components/PathologyWizard'
 const STORAGE_KEY = 'foodCalculator.kcalTarget'
 const INGREDIENTS_STORAGE_KEY = 'foodCalculator.selectedIngredients'
 const PATHOLOGIES_STORAGE_KEY = 'foodCalculator.pathologies'
+const VALUES_STORAGE_KEY = 'foodCalculator.values'
 const DEFAULT_TARGET = 210
 
 // Fixed display order for nutrient rule cards
@@ -46,6 +47,18 @@ function readStoredIngredients(): string[] | null {
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return null
     return parsed.filter((x): x is string => typeof x === 'string')
+  } catch {
+    return null
+  }
+}
+
+function readStoredValues(): Values | null {
+  try {
+    const raw = localStorage.getItem(VALUES_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) return null
+    return parsed as Values
   } catch {
     return null
   }
@@ -154,9 +167,11 @@ export default function FoodCalculator() {
     () => readStoredIngredients() ?? INGREDIENTS.map(i => i.id)
   )
   const [editingIngredients, setEditingIngredients] = useState(false)
-  const [values, setValues] = useState<Values>(
-    () => Object.fromEntries(INGREDIENTS.map(i => [i.id, i.val]))
-  )
+  const [values, setValues] = useState<Values>(() => {
+    const stored = readStoredValues()
+    const defaults = Object.fromEntries(INGREDIENTS.map(i => [i.id, i.val]))
+    return stored ? { ...defaults, ...stored } : defaults
+  })
   const [microOpen, setMicroOpen] = useState(false)
 
   const commitTarget = (t: number) => {
@@ -214,7 +229,11 @@ export default function FoodCalculator() {
   const r = calcNutrition(values, activeIngredients)
 
   const handleChange = (id: string, val: number) =>
-    setValues(prev => ({ ...prev, [id]: val }))
+    setValues(prev => {
+      const next = { ...prev, [id]: val }
+      try { localStorage.setItem(VALUES_STORAGE_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ }
+      return next
+    })
 
   const diffK     = r.kcal - TARGET
   const pct       = Math.min(100, (r.kcal / TARGET) * 100)
