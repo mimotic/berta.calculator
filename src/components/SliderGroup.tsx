@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { INGREDIENTS, getIngredientMax } from '../data/ingredients'
 import type { Ingredient, Values } from '../data/ingredients'
+import { IngredientModal } from './IngredientModal'
 
 interface SliderGroupProps {
   label: string
@@ -11,19 +13,26 @@ interface SliderGroupProps {
 }
 
 export function SliderGroup({ label, group, values, onChange, ingredients = INGREDIENTS, targetKcal }: SliderGroupProps) {
+  const [selected, setSelected] = useState<Ingredient | null>(null)
   const items = ingredients.filter(i => i.group === group)
   if (items.length === 0) return null
   return (
     <div>
       <div className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] italic mb-1.5 font-serif">{label}</div>
+      {selected && <IngredientModal ingredient={selected} onClose={() => setSelected(null)} />}
       {items.map(ing => {
         const computedMax = targetKcal != null ? getIngredientMax(ing, targetKcal) : ing.max
         const g = Math.min(values[ing.id] ?? 0, computedMax)
         return (
-          <div key={ing.id} className="flex items-center gap-[5px] mb-[10px] md:gap-[10px]">
-            <label htmlFor={`sl_${ing.id}`} className="text-[13px] text-[#6b6b67] dark:text-[#9a9a95] w-[165px] max-[520px]:w-[130px] shrink-0 font-serif">
+          <div key={ing.id} className="flex items-center gap-1.25 mb-2.5 md:gap-2.5">
+            <button
+              type="button"
+              onClick={() => setSelected(ing)}
+              className="text-[13px] text-[#6b6b67] dark:text-[#9a9a95] w-41.25 max-[520px]:w-32.5 shrink-0 font-serif text-left hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] hover:underline transition-colors cursor-pointer"
+              title="Ver valores analíticos"
+            >
               {ing.label}
-            </label>
+            </button>
             <input
               type="range"
               id={`sl_${ing.id}`}
