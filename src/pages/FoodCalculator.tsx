@@ -318,7 +318,7 @@ export default function FoodCalculator() {
         <Header />
 
         <header className="mb-6">
-          <div className="flex items-baseline justify-between gap-4">
+          <div className="flex flex-col items-baseline justify-between gap-2 md:gap-4 md:flex-row">
             <h1 className="text-2xl font-normal tracking-tight leading-tight">Calculadora dieta</h1>
             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">{pathologyChip}</span>
           </div>
