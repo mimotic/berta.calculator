@@ -87,3 +87,5 @@ export function calcNutrition(values: Values, ingredients: Ingredient[] = INGRED
   }
   return { kcal, prot, fat, carb, phos, pot, ca, na, fe, zn, vitA, vitD, vitE, b12, fiber }
 }
+
+export type NutritionResult = ReturnType<typeof calcNutrition>

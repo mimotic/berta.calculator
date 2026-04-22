@@ -12,6 +12,7 @@ import {
   getNormalizedValue,
   displayUnit,
 } from '../data/pathologies'
+import { generateDietPDF } from '../utils/generateDietPDF'
 import { StatCard } from '../components/StatCard'
 import { MacroDonut } from '../components/MacroDonut'
 import { SliderGroup } from '../components/SliderGroup'
@@ -322,22 +323,30 @@ export default function FoodCalculator() {
             <h1 className="text-2xl font-normal tracking-tight leading-tight">Calculadora dieta</h1>
             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">{pathologyChip}</span>
           </div>
-          <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
-            objetivo: {TARGET} kcal{' '}
+          <div className="flex items-center justify-between gap-4 mt-1">
+            <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] font-mono">
+              objetivo: {TARGET} kcal{' '}
+              <button
+                onClick={() => setEditingGoal(true)}
+                className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
+              >
+                editar
+              </button>
+              {' · '}
+              <button
+                onClick={() => setEditingPathology(true)}
+                className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
+              >
+                {pathologies.length > 0 ? 'editar patología' : 'añadir patología'}
+              </button>
+            </p>
             <button
-              onClick={() => setEditingGoal(true)}
-              className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
+              onClick={() => generateDietPDF(TARGET, pathologies, activeIngredients, values, r)}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono border border-black/15 dark:border-white/15 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
-              editar
+              ↓ Descargar PDF
             </button>
-            {' · '}
-            <button
-              onClick={() => setEditingPathology(true)}
-              className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
-            >
-              {pathologies.length > 0 ? 'editar patología' : 'añadir patología'}
-            </button>
-          </p>
+          </div>
         </header>
 
         <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
