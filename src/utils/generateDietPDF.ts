@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf'
+import logoUrl from '../assets/berta_logo.png'
 import type { Values, NutritionResult } from '../data/ingredients'
 import type { Ingredient } from '../data/ingredients'
 import type { PathologyId, NutrientKey } from '../data/pathologies'
@@ -35,28 +36,46 @@ function drawHRule(doc: jsPDF, y: number, x = 14, w = 182) {
   doc.line(x, y, x + w, y)
 }
 
-export function generateDietPDF(
+async function loadImageAsDataUrl(url: string): Promise<string> {
+  const res = await fetch(url)
+  const blob = await res.blob()
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+export async function generateDietPDF(
   target: number,
   pathologies: PathologyId[],
   activeIngredients: Ingredient[],
   values: Values,
   r: NutritionResult,
 ) {
+  const logoDataUrl = await loadImageAsDataUrl(logoUrl)
+
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
   const margin = 14
   let y = 18
 
   // ── Header ─────────────────────────────────────────────────────────────────
+  const logoH = 10
+  const logoW = 10
+  doc.addImage(logoDataUrl, 'PNG', margin, y - logoH + 2, logoW, logoH)
+
+  const textX = margin + logoW + 3
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
   setColor(doc, BRAND)
-  doc.text('berta.calc', margin, y)
+  doc.text('berta.calc', textX, y)
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   setColor(doc, MUTED)
-  doc.text('dieta · calculadora canina', margin, y + 6)
+  doc.text('dieta · calculadora canina', textX, y + 6)
 
   const dateStr = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
   doc.text(dateStr, pageW - margin, y + 6, { align: 'right' })

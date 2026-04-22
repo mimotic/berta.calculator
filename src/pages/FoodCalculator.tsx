@@ -341,7 +341,7 @@ export default function FoodCalculator() {
               </button>
             </p>
             <button
-              onClick={() => generateDietPDF(TARGET, pathologies, activeIngredients, values, r)}
+              onClick={() => { void generateDietPDF(TARGET, pathologies, activeIngredients, values, r) }}
               className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono border border-black/15 dark:border-white/15 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
               ↓ Descargar PDF
