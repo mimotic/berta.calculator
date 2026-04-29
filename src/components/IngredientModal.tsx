@@ -54,7 +54,7 @@ export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
           </button>
         </div>
 
-        <ul className="divide-y divide-black/5 dark:divide-white/5 px-4 max-h-[60vh] overflow-y-auto">
+        <ul className="divide-y divide-black/5 dark:divide-white/5 px-4 pb-2 max-h-[60vh] overflow-y-auto">
           {ROWS.map(({ label, key, unit, decimals }) => {
             const raw = ingredient[key]
             const val = typeof raw === 'number' ? raw.toFixed(decimals) : String(raw)

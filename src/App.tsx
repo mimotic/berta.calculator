@@ -55,6 +55,19 @@ export default function App() {
               Abrir →
             </span>
           </Link>
+          <Link
+            to="/anos-humanos"
+            className="group relative bg-white dark:bg-[#1a1a18] border border-[#e8e6e0] dark:border-white/10 cursor-pointer rounded-lg p-6 hover:border-[#5B8DEF] dark:hover:border-[#5B8DEF] hover:shadow-[0_4px_20px_rgba(91,141,239,0.08)] transition-all duration-200"
+          >
+            <div className="text-[11px] font-mono text-[#9a9a95] dark:text-[#7a7a75] uppercase tracking-wider mb-3">04</div>
+            <h2 className="text-xl font-normal tracking-tight mb-2">Años en humano</h2>
+            <p className="text-[13px] font-mono text-[#7a7a75] dark:text-[#8a8a85] leading-relaxed mb-6">
+              Equivalencia entre la edad del perro y años humanos según su tamaño.
+            </p>
+            <span className="text-[13px] font-mono text-[#5B8DEF] group-hover:translate-x-1 inline-block transition-transform">
+              Abrir →
+            </span>
+          </Link>
         </div>
       </div>
     </div>
