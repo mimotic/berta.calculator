@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import '../index.css'
 import { Header } from '../components/Header'
+import { Stepper } from '../components/Stepper'
 
 type SizeCategory = 'pequeno' | 'mediano' | 'grande' | 'gigante'
 
@@ -39,38 +40,6 @@ function getLifeStage(humanAge: number): LifeStageInfo {
   if (humanAge < 60) return { label: 'Mediana edad', desc: 'Experimentado y equilibrado' }
   if (humanAge < 75) return { label: 'Mayor', desc: 'Merece cuidados especiales y mucho mimo' }
   return { label: 'Gran veterano', desc: 'Un superviviente con mucha historia' }
-}
-
-type StepperProps = {
-  value: number
-  onChange: (v: number) => void
-  min?: number
-  max?: number
-  step?: number
-}
-
-function Stepper({ value, onChange, min = 0.5, max = 20, step = 0.5 }: StepperProps) {
-  const dec = () => onChange(Math.max(min, +(value - step).toFixed(1)))
-  const inc = () => onChange(Math.min(max, +(value + step).toFixed(1)))
-  return (
-    <div className="flex items-center border border-black/15 dark:border-white/15 rounded-md bg-white dark:bg-[#1a1a18] overflow-hidden focus-within:border-black/40 dark:focus-within:border-white/40 transition-colors">
-      <button onClick={dec} className="w-9 h-10 text-lg text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono">−</button>
-      <input
-        type="number"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={e => {
-          const v = parseFloat(e.target.value)
-          if (!isNaN(v)) onChange(Math.min(max, Math.max(min, v)))
-        }}
-        className="flex-1 text-center text-[17px] font-mono font-bold py-2 outline-none bg-transparent w-0 min-w-0"
-      />
-      <span className="pr-3 text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono">años</span>
-      <button onClick={inc} className="w-9 h-10 text-lg text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono border-l border-black/10 dark:border-white/10">+</button>
-    </div>
-  )
 }
 
 type ChipProps = {
@@ -139,7 +108,7 @@ export default function HumanYearsCalculator() {
               <div className="flex flex-col gap-4">
 
                 <Field label="Edad del perro">
-                  <Stepper value={dogAge} onChange={setDogAge} />
+                  <Stepper value={dogAge} onChange={setDogAge} min={0.5} max={20} step={0.5} unit="años" />
                   <input
                     type="range"
                     min={0.5}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import '../index.css'
 import { Header } from '../components/Header'
+import { Stepper } from '../components/Stepper'
 
 type ActivityLevel = 'inactivo' | 'baja' | 'moderada' | 'alta'
 type LifeStage = 'cachorro_temprano' | 'cachorro_tardio' | 'adulto' | 'senior'
@@ -59,38 +60,6 @@ function calcCalories(
   if (goal === 'ganancia') factor *= 1.2
 
   return { rer, mer: rer * factor, factor }
-}
-
-type StepperProps = {
-  value: number
-  onChange: (v: number) => void
-  min?: number
-  max?: number
-  step?: number
-}
-
-function Stepper({ value, onChange, min = 0.5, max = 60, step = 0.1 }: StepperProps) {
-  const dec = () => onChange(Math.max(min, +(value - step).toFixed(1)))
-  const inc = () => onChange(Math.min(max, +(value + step).toFixed(1)))
-  return (
-    <div className="flex items-center border border-black/15 dark:border-white/15 rounded-md bg-white dark:bg-[#1a1a18] overflow-hidden focus-within:border-black/40 dark:focus-within:border-white/40 transition-colors">
-      <button onClick={dec} className="w-9 h-10 text-lg text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono">−</button>
-      <input
-        type="number"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={e => {
-          const v = parseFloat(e.target.value)
-          if (!isNaN(v)) onChange(v)
-        }}
-        className="flex-1 text-center text-[17px] font-mono font-bold py-2 outline-none bg-transparent w-0 min-w-0"
-      />
-      <span className="pr-3 text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono">kg</span>
-      <button onClick={inc} className="w-9 h-10 text-lg text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono border-l border-black/10 dark:border-white/10">+</button>
-    </div>
-  )
 }
 
 type ChipProps = {
@@ -177,7 +146,7 @@ export default function CaloriesCalculator() {
             <div className="flex flex-col gap-4">
 
               <Field label="Peso" note="0.5 – 60 kg">
-                <Stepper value={weight} onChange={setWeight} />
+                <Stepper value={weight} onChange={setWeight} min={0.5} max={60} step={0.1} unit="kg" />
                 <input
                   type="range"
                   min={0.5}
