@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { INGREDIENTS, getIngredientMax } from '../data/ingredients'
 import type { Ingredient, Values } from '../data/ingredients'
 import { IngredientModal } from './IngredientModal'
+import { Stepper } from './Stepper'
 
 interface SliderGroupProps {
   label: string
@@ -33,17 +34,27 @@ export function SliderGroup({ label, group, values, onChange, ingredients = INGR
             >
               {ing.label}
             </button>
+            <div className="flex-1 md:hidden">
+              <Stepper
+                value={g}
+                onChange={v => onChange(ing.id, v)}
+                min={0}
+                max={computedMax}
+                step={ing.step}
+                unit={ing.isOil ? 'ml' : 'g'}
+              />
+            </div>
             <input
               type="range"
               id={`sl_${ing.id}`}
-              className="flex-1"
+              className="flex-1 hidden md:block"
               min={0}
               max={computedMax}
               step={ing.step}
               value={g}
               onChange={e => onChange(ing.id, parseFloat(e.target.value))}
             />
-            <span className="w-14 text-right text-[13px] font-bold font-mono text-[#1a1a18] dark:text-[#e8e6e0]">
+            <span className="hidden md:inline w-14 text-right text-[13px] font-bold font-mono text-[#1a1a18] dark:text-[#e8e6e0]">
               {ing.isOil ? `${g.toFixed(2)} ml` : `${g} g`}
             </span>
             <span className="w-11 text-right text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono max-[520px]:hidden">
