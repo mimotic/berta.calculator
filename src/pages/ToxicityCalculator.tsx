@@ -167,7 +167,7 @@ export default function ToxicityCalculator() {
 
               <div className="flex flex-col gap-4">
 
-                <Field label="Peso del perro" note="0.5 – 60 kg">
+                <Field label="Peso del perro" note="0.5 – 90 kg">
                   <Stepper value={weight} onChange={setWeight} min={0.5} max={90} step={0.5} unit="kg" />
                   <input
                     type="range"

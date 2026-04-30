@@ -145,8 +145,8 @@ export default function CaloriesCalculator() {
 
             <div className="flex flex-col gap-4">
 
-              <Field label="Peso" note="0.5 – 60 kg">
-                <Stepper value={weight} onChange={setWeight} min={0.5} max={60} step={0.1} unit="kg" />
+              <Field label="Peso" note="0.5 – 90 kg">
+                <Stepper value={weight} onChange={setWeight} min={0.5} max={90} step={0.1} unit="kg" />
                 <input
                   type="range"
                   min={0.5}
