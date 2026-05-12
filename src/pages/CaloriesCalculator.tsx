@@ -130,6 +130,19 @@ export default function CaloriesCalculator() {
   const implicitGoal = bcs > 5 ? 'Perder peso' : bcs < 5 ? 'Ganar peso' : 'Mantener'
   const accent = '#1D9E75'
 
+  const KCAL_PER_KG = 7700
+  const merCurrent = valid && result ? 70 * Math.pow(weight, 0.75) * result.factor : 0
+  const dailyDelta = result ? merCurrent - result.mer : 0
+  const weightDelta = Math.abs(weight - idealWeight)
+  const daysToIdeal = result && Math.abs(dailyDelta) > 1
+    ? (weightDelta * KCAL_PER_KG) / Math.abs(dailyDelta)
+    : 0
+  const weeksToIdeal = daysToIdeal / 7
+  const weeklyRatePct = weight > 0 && daysToIdeal > 0
+    ? (weightDelta / weight) * 100 / weeksToIdeal
+    : 0
+  const rateTooFast = weeklyRatePct > 2
+
   return (
     <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] flex-1 py-8 px-4 transition-colors">
       <div className="max-w-220 mx-auto">
@@ -292,11 +305,36 @@ export default function CaloriesCalculator() {
                 </div>
 
                 {bcs !== 5 && (
-                  <div className="mt-3 text-[11px] text-[#6b6b67] dark:text-[#8a8a85] bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-md px-2.5 py-2 font-mono">
-                    Objetivo implícito: <span className="text-[#1a1a18] dark:text-[#e8e6e0] font-bold font-serif not-italic">{implicitGoal}</span>
-                    <br />
-                    Peso ideal estimado: <span className="text-[#1a1a18] dark:text-[#e8e6e0] font-bold tabular-nums">{idealWeight.toFixed(1)} kg</span>
-                    <span className="text-[10px] italic font-serif"> (BCS {bcs}/9)</span>
+                  <div className="mt-3 text-[11px] text-[#6b6b67] dark:text-[#8a8a85] bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-md px-2.5 py-2 font-mono space-y-1">
+                    <div>
+                      Objetivo implícito: <span className="text-[#1a1a18] dark:text-[#e8e6e0] font-bold font-serif not-italic">{implicitGoal}</span>
+                    </div>
+                    <div>
+                      Peso ideal estimado: <span className="text-[#1a1a18] dark:text-[#e8e6e0] font-bold tabular-nums">{idealWeight.toFixed(1)} kg</span>
+                      <span className="text-[10px] italic font-serif"> (BCS {bcs}/9)</span>
+                    </div>
+                    <div>
+                      Δ peso: <span className="text-[#1a1a18] dark:text-[#e8e6e0] font-bold tabular-nums">{(bcs > 5 ? '−' : '+')}{weightDelta.toFixed(1)} kg</span>
+                      <span className="text-[#bbb] dark:text-[#555]"> · </span>
+                      Δ kcal/día: <span className="text-[#1a1a18] dark:text-[#e8e6e0] font-bold tabular-nums">{(bcs > 5 ? '−' : '+')}{Math.abs(dailyDelta).toFixed(0)}</span>
+                    </div>
+                    {daysToIdeal > 0 && (
+                      <div className="pt-1 mt-1 border-t border-black/10 dark:border-white/10">
+                        Tiempo estimado: <span className="text-[#1a1a18] dark:text-[#e8e6e0] font-bold tabular-nums">
+                          {weeksToIdeal < 1
+                            ? `${Math.round(daysToIdeal)} días`
+                            : weeksToIdeal < 12
+                            ? `${weeksToIdeal.toFixed(1)} semanas`
+                            : `${(weeksToIdeal / 4.345).toFixed(1)} meses`}
+                        </span>
+                        <span className="text-[10px] italic font-serif"> · ritmo {weeklyRatePct.toFixed(1)} %/sem</span>
+                      </div>
+                    )}
+                    {rateTooFast && (
+                      <div className="text-[10px] text-[#854f0b] dark:text-[#e8b980] italic font-serif">
+                        ⚠ ritmo {'>'} 2 %/sem — considera revisión veterinaria
+                      </div>
+                    )}
                   </div>
                 )}
 
