@@ -5,7 +5,24 @@ import { Stepper } from '../components/Stepper'
 
 type ActivityLevel = 'inactivo' | 'baja' | 'moderada' | 'alta'
 type LifeStage = 'cachorro_temprano' | 'cachorro_tardio' | 'adulto' | 'senior'
-type Goal = 'mantenimiento' | 'perdida' | 'ganancia'
+type BCS = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+
+const BCS_LABEL: Record<BCS, string> = {
+  1: 'Caquéctico',
+  2: 'Muy delgado',
+  3: 'Delgado',
+  4: 'Algo delgado',
+  5: 'Ideal',
+  6: 'Algo sobrepeso',
+  7: 'Sobrepeso',
+  8: 'Obeso',
+  9: 'Obesidad mórbida',
+}
+
+function idealWeightFromBCS(currentWeight: number, bcs: BCS): number {
+  const deviation = 1 + 0.1 * (bcs - 5)
+  return currentWeight / deviation
+}
 
 const ACTIVITY: Record<ActivityLevel, { label: string; hint: string }> = {
   inactivo: { label: 'Inactivo', hint: 'sedentario' },
@@ -21,12 +38,6 @@ const LIFE_STAGE: Record<LifeStage, { label: string; hint: string }> = {
   senior:            { label: 'Senior',   hint: '> 7 años' },
 }
 
-const GOAL: Record<Goal, { label: string; hint: string }> = {
-  mantenimiento: { label: 'Mantener', hint: 'peso estable' },
-  perdida:       { label: 'Perder',   hint: '1.0 × RER' },
-  ganancia:      { label: 'Ganar',    hint: '+20 %' },
-}
-
 function getMERFactor(activity: ActivityLevel, neutered: boolean): number {
   if (activity === 'inactivo') return neutered ? 1.2 : 1.4
   if (activity === 'baja')     return neutered ? 1.4 : 1.6
@@ -39,13 +50,10 @@ function calcCalories(
   activity: ActivityLevel,
   neutered: boolean,
   lifeStage: LifeStage,
-  goal: Goal,
+  bcs: BCS,
 ) {
-  const rer = 70 * Math.pow(weightKg, 0.75)
-
-  if (goal === 'perdida') {
-    return { rer, mer: rer * 1.0, factor: 1.0 }
-  }
+  const idealWeight = idealWeightFromBCS(weightKg, bcs)
+  const rer = 70 * Math.pow(idealWeight, 0.75)
 
   let factor: number
   if (lifeStage === 'cachorro_temprano') {
@@ -56,8 +64,6 @@ function calcCalories(
     factor = getMERFactor(activity, neutered)
     if (lifeStage === 'senior') factor *= 0.9
   }
-
-  if (goal === 'ganancia') factor *= 1.2
 
   return { rer, mer: rer * factor, factor }
 }
@@ -113,14 +119,15 @@ export default function CaloriesCalculator() {
   const [neutered, setNeutered] = useState<boolean>(true)
   const [activity, setActivity] = useState<ActivityLevel>('moderada')
   const [lifeStage, setLifeStage] = useState<LifeStage>('adulto')
-  const [goal, setGoal] = useState<Goal>('mantenimiento')
+  const [bcs, setBcs] = useState<BCS>(5)
 
   const isPuppy = lifeStage === 'cachorro_temprano' || lifeStage === 'cachorro_tardio'
-  const isWeightLoss = goal === 'perdida'
-  const activityDisabled = isPuppy || isWeightLoss
+  const activityDisabled = isPuppy
 
   const valid = weight > 0
-  const result = valid ? calcCalories(weight, activity, neutered, lifeStage, goal) : null
+  const result = valid ? calcCalories(weight, activity, neutered, lifeStage, bcs) : null
+  const idealWeight = valid ? idealWeightFromBCS(weight, bcs) : 0
+  const implicitGoal = bcs > 5 ? 'Perder peso' : bcs < 5 ? 'Ganar peso' : 'Mantener'
   const accent = '#1D9E75'
 
   return (
@@ -158,6 +165,40 @@ export default function CaloriesCalculator() {
                 />
               </Field>
 
+              <Field
+                label="Condición corporal (BCS)"
+                note={`${bcs}/9 · ${BCS_LABEL[bcs]}`}
+              >
+                <div className="grid grid-cols-9 gap-1">
+                  {([1, 2, 3, 4, 5, 6, 7, 8, 9] as BCS[]).map(n => {
+                    const active = bcs === n
+                    const ideal = n === 5
+                    return (
+                      <button
+                        key={n}
+                        onClick={() => setBcs(n)}
+                        className={`py-1.5 rounded-md text-xs font-mono border transition-colors tabular-nums ${
+                          active
+                            ? ideal
+                              ? 'bg-[#1D9E75] text-white border-[#1D9E75]'
+                              : 'bg-[#1a1a18] text-white border-[#1a1a18] dark:bg-[#e8e6e0] dark:text-[#1a1a18] dark:border-[#e8e6e0]'
+                            : ideal
+                            ? 'bg-white dark:bg-[#1a1a18] text-[#1D9E75] border-[#1D9E75]/40 hover:border-[#1D9E75]'
+                            : 'bg-white dark:bg-[#1a1a18] text-[#1a1a18] dark:text-[#e8e6e0] border-black/15 dark:border-white/15 hover:border-black/40 dark:hover:border-white/40'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="flex justify-between text-[10px] text-[#6b6b67] dark:text-[#8a8a85] font-mono mt-1 px-0.5">
+                  <span>delgado</span>
+                  <span>ideal</span>
+                  <span>obeso</span>
+                </div>
+              </Field>
+
               <Field label="Etapa vital">
                 <div className="grid grid-cols-2 gap-1.5">
                   {(Object.keys(LIFE_STAGE) as LifeStage[]).map(s => (
@@ -190,20 +231,10 @@ export default function CaloriesCalculator() {
                 </div>
               </div>
 
-              <Field label="Objetivo">
-                <div className="grid grid-cols-3 gap-1.5">
-                  {(Object.keys(GOAL) as Goal[]).map(g => (
-                    <Chip key={g} active={goal === g} onClick={() => setGoal(g)} hint={GOAL[g].hint}>
-                      {GOAL[g].label}
-                    </Chip>
-                  ))}
-                </div>
-              </Field>
-
               <div className={`transition-opacity ${activityDisabled ? 'opacity-40' : ''}`}>
                 <Field
                   label="Actividad"
-                  note={isPuppy ? 'N/A — factor fijo por etapa' : isWeightLoss ? 'N/A — pérdida usa 1.0 × RER' : null}
+                  note={isPuppy ? 'N/A — factor fijo por etapa' : null}
                 >
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     {(Object.keys(ACTIVITY) as ActivityLevel[]).map(l => (
@@ -260,17 +291,20 @@ export default function CaloriesCalculator() {
                   </div>
                 </div>
 
-                {isWeightLoss && (
-                  <div className="mt-3 text-[11px] text-[#854f0b] bg-[#faeeda] dark:bg-[#3a2a10] dark:text-[#e8b980] rounded-md px-2.5 py-2 font-serif italic">
-                    Pérdida de peso: 1.0 × RER (ignora actividad y etapa).
+                {bcs !== 5 && (
+                  <div className="mt-3 text-[11px] text-[#6b6b67] dark:text-[#8a8a85] bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-md px-2.5 py-2 font-mono">
+                    Objetivo implícito: <span className="text-[#1a1a18] dark:text-[#e8e6e0] font-bold font-serif not-italic">{implicitGoal}</span>
+                    <br />
+                    Peso ideal estimado: <span className="text-[#1a1a18] dark:text-[#e8e6e0] font-bold tabular-nums">{idealWeight.toFixed(1)} kg</span>
+                    <span className="text-[10px] italic font-serif"> (BCS {bcs}/9)</span>
                   </div>
                 )}
 
                 <div className="mt-4 pt-3 border-t border-black/10 dark:border-white/10">
                   <div className="text-[10px] text-[#6b6b67] dark:text-[#8a8a85] font-mono leading-relaxed">
-                    MER = 70 × peso<sup>0.75</sup> × factor
+                    MER = 70 × peso ideal<sup>0.75</sup> × factor
                     <br />
-                    = 70 × {weight.toFixed(1)}<sup>0.75</sup> × {result.factor.toFixed(2)}
+                    = 70 × {idealWeight.toFixed(1)}<sup>0.75</sup> × {result.factor.toFixed(2)}
                   </div>
                 </div>
               </div>
