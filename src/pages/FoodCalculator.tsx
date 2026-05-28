@@ -463,32 +463,46 @@ export default function FoodCalculator() {
                 ›
               </span>
             </button>
-            {microOpen && (
-              <ul className="divide-y divide-black/5 dark:divide-white/5 mt-3">
-                {[
-                  { label: 'Calcio',        value: r.ca.toFixed(1),    unit: 'mg' },
-                  { label: 'Fósforo',       value: r.phos.toFixed(1),  unit: 'mg' },
-                  { label: 'Ratio Ca:P',    value: r.phos > 0 ? `${(r.ca / r.phos).toFixed(2)}:1` : '—', unit: '' },
-                  { label: 'Sodio',         value: r.na.toFixed(1),    unit: 'mg' },
-                  { label: 'Potasio',       value: r.pot.toFixed(1),   unit: 'mg' },
-                  { label: 'Hierro',        value: r.fe.toFixed(2),    unit: 'mg' },
-                  { label: 'Zinc',          value: r.zn.toFixed(2),    unit: 'mg' },
-                  { label: 'Vitamina A',    value: r.vitA.toFixed(0),  unit: 'µg' },
-                  { label: 'Vitamina D',    value: r.vitD.toFixed(2),  unit: 'µg' },
-                  { label: 'Vitamina E',    value: r.vitE.toFixed(2),  unit: 'mg' },
-                  { label: 'Vitamina B12',  value: r.b12.toFixed(2),   unit: 'µg' },
-                  { label: 'Fibra',         value: r.fiber.toFixed(1), unit: 'g'  },
-                ].map(({ label, value, unit }) => (
-                  <li key={label} className="flex items-baseline justify-between py-2 text-[13px]">
-                    <span className="font-serif text-[#1a1a18] dark:text-[#e8e6e0]">{label}</span>
-                    <span className="font-mono tabular-nums">
-                      {value}
-                      {unit && <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {microOpen && (() => {
+              const k = TARGET / 1000
+              const fmt = (n: number, d = 0) => n >= 100 ? Math.round(n).toString() : n.toFixed(d)
+              return (
+                <>
+                  <ul className="divide-y divide-black/5 dark:divide-white/5 mt-3">
+                    {[
+                      { label: 'Calcio',       value: r.ca.toFixed(1),    unit: 'mg', ref: `≥ ${fmt(500 * k)}` },
+                      { label: 'Fósforo',      value: r.phos.toFixed(1),  unit: 'mg', ref: `≥ ${fmt(375 * k)}` },
+                      { label: 'Ratio Ca:P',   value: r.phos > 0 ? `${(r.ca / r.phos).toFixed(2)}:1` : '—', unit: '', ref: '1:1 – 2:1' },
+                      { label: 'Sodio',        value: r.na.toFixed(1),    unit: 'mg', ref: `≥ ${fmt(200 * k)}` },
+                      { label: 'Potasio',      value: r.pot.toFixed(1),   unit: 'mg', ref: `≥ ${fmt(1100 * k)}` },
+                      { label: 'Hierro',       value: r.fe.toFixed(2),    unit: 'mg', ref: `≥ ${(7.5 * k).toFixed(1)}` },
+                      { label: 'Zinc',         value: r.zn.toFixed(2),    unit: 'mg', ref: `≥ ${(15 * k).toFixed(1)}` },
+                      { label: 'Vitamina A',   value: r.vitA.toFixed(0),  unit: 'µg', ref: `≥ ${fmt(167 * k)}` },
+                      { label: 'Vitamina D',   value: r.vitD.toFixed(2),  unit: 'µg', ref: `≥ ${(3.4 * k).toFixed(1)}` },
+                      { label: 'Vitamina E',   value: r.vitE.toFixed(2),  unit: 'mg', ref: `≥ ${(7.5 * k).toFixed(1)}` },
+                      { label: 'Vitamina B12', value: r.b12.toFixed(2),   unit: 'µg', ref: `≥ ${(7 * k).toFixed(1)}` },
+                      { label: 'Fibra',        value: r.fiber.toFixed(1), unit: 'g',  ref: '2–4,5 % MS' },
+                    ].map(({ label, value, unit, ref }) => (
+                      <li key={label} className="flex items-baseline justify-between py-2 text-[13px] gap-3">
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-serif text-[#1a1a18] dark:text-[#e8e6e0]">{label}</span>
+                          <span className="font-mono text-[10px] text-[#6b6b67] dark:text-[#8a8a85]">
+                            ref {ref}{unit && ` ${unit}`}
+                          </span>
+                        </div>
+                        <span className="font-mono tabular-nums whitespace-nowrap">
+                          {value}
+                          {unit && <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-[10px] text-[#6b6b67] dark:text-[#8a8a85] mt-3 leading-relaxed italic font-serif">
+                    Valores orientativos: mínimos FEDIAF 2024 para perro adulto en mantenimiento, escalados a {TARGET} kcal/día. Pueden variar según etapa vital, condición o patologías.
+                  </p>
+                </>
+              )
+            })()}
           </div>
         </div>
 
