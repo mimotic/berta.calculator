@@ -466,21 +466,25 @@ export default function FoodCalculator() {
             {microOpen && (() => {
               const k = TARGET / 1000
               const fmt = (n: number, d = 0) => n >= 100 ? Math.round(n).toString() : n.toFixed(d)
+              // Rango de referencia por 1000 kcal: mínimo NRC 2006 (RA) → mínimo FEDIAF 2024, escalado por k.
+              // Conversiones para vitaminas expresadas en IU por las fuentes: 1 IU vit A = 0.3 µg retinol,
+              // 1 IU vit D = 0.025 µg; vit E en mg (base NRC).
+              const range = (a: number, b: number, d = 0) => `${fmt(a * k, d)}–${fmt(b * k, d)}`
               return (
                 <>
                   <ul className="divide-y divide-black/5 dark:divide-white/5 mt-3">
                     {[
-                      { label: 'Calcio',       value: r.ca.toFixed(1),    unit: 'mg', ref: `≥ ${fmt(500 * k)}` },
-                      { label: 'Fósforo',      value: r.phos.toFixed(1),  unit: 'mg', ref: `≥ ${fmt(375 * k)}` },
+                      { label: 'Calcio',       value: r.ca.toFixed(1),    unit: 'mg', ref: range(1000, 1250) },
+                      { label: 'Fósforo',      value: r.phos.toFixed(1),  unit: 'mg', ref: range(750, 1000) },
                       { label: 'Ratio Ca:P',   value: r.phos > 0 ? `${(r.ca / r.phos).toFixed(2)}:1` : '—', unit: '', ref: '1:1 – 2:1' },
-                      { label: 'Sodio',        value: r.na.toFixed(1),    unit: 'mg', ref: `≥ ${fmt(200 * k)}` },
-                      { label: 'Potasio',      value: r.pot.toFixed(1),   unit: 'mg', ref: `≥ ${fmt(1100 * k)}` },
-                      { label: 'Hierro',       value: r.fe.toFixed(2),    unit: 'mg', ref: `≥ ${(7.5 * k).toFixed(1)}` },
-                      { label: 'Zinc',         value: r.zn.toFixed(2),    unit: 'mg', ref: `≥ ${(15 * k).toFixed(1)}` },
-                      { label: 'Vitamina A',   value: r.vitA.toFixed(0),  unit: 'µg', ref: `≥ ${fmt(167 * k)}` },
-                      { label: 'Vitamina D',   value: r.vitD.toFixed(2),  unit: 'µg', ref: `≥ ${(3.4 * k).toFixed(1)}` },
-                      { label: 'Vitamina E',   value: r.vitE.toFixed(2),  unit: 'mg', ref: `≥ ${(7.5 * k).toFixed(1)}` },
-                      { label: 'Vitamina B12', value: r.b12.toFixed(2),   unit: 'µg', ref: `≥ ${(7 * k).toFixed(1)}` },
+                      { label: 'Sodio',        value: r.na.toFixed(1),    unit: 'mg', ref: range(200, 250) },
+                      { label: 'Potasio',      value: r.pot.toFixed(1),   unit: 'mg', ref: range(1000, 1250) },
+                      { label: 'Hierro',       value: r.fe.toFixed(2),    unit: 'mg', ref: range(7.5, 9, 1) },
+                      { label: 'Zinc',         value: r.zn.toFixed(2),    unit: 'mg', ref: range(15, 18, 1) },
+                      { label: 'Vitamina A',   value: r.vitA.toFixed(0),  unit: 'µg', ref: range(455, 525) },
+                      { label: 'Vitamina D',   value: r.vitD.toFixed(2),  unit: 'µg', ref: range(3.4, 4.0, 1) },
+                      { label: 'Vitamina E',   value: r.vitE.toFixed(2),  unit: 'mg', ref: range(7.5, 9, 1) },
+                      { label: 'Vitamina B12', value: r.b12.toFixed(2),   unit: 'µg', ref: range(8.4, 8.8, 1) },
                       { label: 'Fibra',        value: r.fiber.toFixed(1), unit: 'g',  ref: '2–4,5 % MS' },
                     ].map(({ label, value, unit, ref }) => (
                       <li key={label} className="flex items-baseline justify-between py-2 text-[13px] gap-3">
@@ -498,7 +502,7 @@ export default function FoodCalculator() {
                     ))}
                   </ul>
                   <p className="text-[10px] text-[#6b6b67] dark:text-[#8a8a85] mt-3 leading-relaxed italic font-serif">
-                    Valores orientativos: mínimos FEDIAF 2024 para perro adulto en mantenimiento, escalados a {TARGET} kcal/día. Pueden variar según etapa vital, condición o patologías.
+                    Valores orientativos: rango de referencia NRC 2006 (RA) – FEDIAF 2024 (mínimo) para perro adulto en mantenimiento, escalado a {TARGET} kcal/día. Pueden variar según etapa vital, condición o patologías.
                   </p>
                 </>
               )

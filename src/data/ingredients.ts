@@ -68,6 +68,11 @@ export function getIngredientMax(ing: Ingredient, targetKcal: number): number {
 
 export type Values = Record<string, number>
 
+// Fracción de fósforo y potasio retenida tras el hervido: parte se pierde por lixiviación
+// al agua de cocción que se descarta (~30% de pérdida). Se aplica de forma uniforme a todos
+// los ingredientes; un refinamiento futuro sería limitarlo a los realmente hervidos.
+export const BOILING_RETENTION = 0.7
+
 export function calcNutrition(values: Values, ingredients: Ingredient[] = INGREDIENTS) {
   let kcal = 0, prot = 0, fat = 0, carb = 0, phos = 0, pot = 0
   let ca = 0, na = 0, fe = 0, zn = 0, vitA = 0, vitD = 0, vitE = 0, b12 = 0, fiber = 0
@@ -77,8 +82,8 @@ export function calcNutrition(values: Values, ingredients: Ingredient[] = INGRED
     prot  += (g / 100) * ing.prot
     fat   += (g / 100) * ing.fat
     carb  += (g / 100) * (ing.carb || 0)
-    phos  += (g / 100) * ing.phos
-    pot   += (g / 100) * ing.pot
+    phos  += (g / 100) * ing.phos * BOILING_RETENTION
+    pot   += (g / 100) * ing.pot  * BOILING_RETENTION
     ca    += (g / 100) * ing.ca
     na    += (g / 100) * ing.na
     fe    += (g / 100) * ing.fe
