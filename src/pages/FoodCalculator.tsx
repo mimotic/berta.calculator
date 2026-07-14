@@ -1,8 +1,9 @@
-import { useState, type ReactElement } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import { Link } from 'react-router'
 import '../index.css'
 import { INGREDIENTS, calcNutrition } from '../data/ingredients'
 import type { Values } from '../data/ingredients'
+import { saveRecipe } from '../data/recipes'
 import {
   type PathologyId,
   type NutrientKey,
@@ -158,6 +159,60 @@ function GoalStep({ initial, onSubmit, onCancel }: GoalStepProps) {
   )
 }
 
+type SaveRecipeModalProps = {
+  onSave: (title: string) => void
+  onCancel: () => void
+}
+
+function SaveRecipeModal({ onSave, onCancel }: SaveRecipeModalProps) {
+  const [title, setTitle] = useState('')
+  const valid = title.trim().length > 0
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl p-5"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
+          Guardar receta
+        </div>
+        <input
+          type="text"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && valid) onSave(title.trim())
+            if (e.key === 'Escape') onCancel()
+          }}
+          placeholder="Título de la receta"
+          autoFocus
+          maxLength={60}
+          className="w-full text-[15px] font-serif py-2.5 px-3 border border-black/15 dark:border-white/15 rounded-md bg-white dark:bg-[#0f0f0e] outline-none focus:border-black/40 dark:focus:border-white/40 transition-colors placeholder:text-[#9a9a95] dark:placeholder:text-[#6b6b67]"
+        />
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-[13px] font-mono border border-black/15 dark:border-white/15 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => valid && onSave(title.trim())}
+            disabled={!valid}
+            className="flex-1 px-4 py-2 text-[13px] font-mono bg-[#1a1a18] text-white dark:bg-[#e8e6e0] dark:text-[#1a1a18] rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity cursor-pointer"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function FoodCalculator() {
   const [target, setTarget] = useState<number | null>(() => readStoredTarget())
   const [editingGoal, setEditingGoal] = useState(false)
@@ -173,6 +228,14 @@ export default function FoodCalculator() {
     return stored ? { ...defaults, ...stored } : defaults
   })
   const [microOpen, setMicroOpen] = useState(false)
+  const [saveOpen, setSaveOpen] = useState(false)
+  const [justSaved, setJustSaved] = useState(false)
+
+  useEffect(() => {
+    if (!justSaved) return
+    const t = setTimeout(() => setJustSaved(false), 6000)
+    return () => clearTimeout(t)
+  }, [justSaved])
 
   const commitTarget = (t: number) => {
     try { localStorage.setItem(STORAGE_KEY, String(t)) } catch { /* storage unavailable */ }
@@ -234,6 +297,17 @@ export default function FoodCalculator() {
       try { localStorage.setItem(VALUES_STORAGE_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ }
       return next
     })
+
+  const handleSaveRecipe = (title: string) => {
+    const recipeValues: Values = {}
+    for (const ing of activeIngredients) {
+      const g = values[ing.id] ?? 0
+      if (g > 0) recipeValues[ing.id] = g
+    }
+    saveRecipe({ title, kcalTarget: TARGET, pathologies, values: recipeValues })
+    setSaveOpen(false)
+    setJustSaved(true)
+  }
 
   const diffK     = r.kcal - TARGET
   const pct       = Math.min(100, (r.kcal / TARGET) * 100)
@@ -359,13 +433,29 @@ export default function FoodCalculator() {
                 {pathologies.length > 0 ? 'editar patología' : 'añadir patología'}
               </button>
             </p>
-            <button
-              onClick={() => { void generateDietPDF(TARGET, pathologies, activeIngredients, values, r) }}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono border border-black/15 dark:border-white/15 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-            >
-              ↓ Descargar PDF
-            </button>
+            <div className="shrink-0 flex items-center gap-2">
+              <button
+                onClick={() => setSaveOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono border border-black/15 dark:border-white/15 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                ☆ Guardar receta
+              </button>
+              <button
+                onClick={() => { void generateDietPDF(TARGET, pathologies, activeIngredients, values, r) }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono border border-black/15 dark:border-white/15 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                ↓ Descargar PDF
+              </button>
+            </div>
           </div>
+          {justSaved && (
+            <div className="text-xs py-1.5 px-3 rounded-md font-serif mt-3 bg-[#e1f5ee] text-[#0f6e56] dark:bg-[#0f3328] dark:text-[#7ad4b1]">
+              ✓ Receta guardada ·{' '}
+              <Link to="/recetas" className="underline hover:opacity-80 transition-opacity">
+                ver mis recetas
+              </Link>
+            </div>
+          )}
         </header>
 
         <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">
@@ -517,6 +607,13 @@ export default function FoodCalculator() {
         )}
 
       </div>
+
+      {saveOpen && (
+        <SaveRecipeModal
+          onSave={handleSaveRecipe}
+          onCancel={() => setSaveOpen(false)}
+        />
+      )}
     </div>
   )
 }
