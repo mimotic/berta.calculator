@@ -74,9 +74,13 @@ const KCAL_RANGES: { upTo: number; factor: number }[] = [
   { upTo: Infinity, factor: 5.0 },
 ]
 
+// Holgura sobre el máximo teórico: sin ella el tope del slider queda demasiado
+// ajustado y no permite compensar cuando el resto de ingredientes van bajos.
+const MAX_HEADROOM = 1.3
+
 export function getIngredientMax(ing: Ingredient, targetKcal: number): number {
   const range = KCAL_RANGES.find(r => targetKcal < r.upTo) ?? KCAL_RANGES[KCAL_RANGES.length - 1]
-  const raw = ing.max * range.factor
+  const raw = ing.max * range.factor * MAX_HEADROOM
   return Math.max(ing.step, Math.round(raw / ing.step) * ing.step)
 }
 
