@@ -74,9 +74,17 @@ export default function RecipeDetail() {
             <h1 className="text-2xl font-normal tracking-tight leading-tight">{recipe.title}</h1>
             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">{pathologyChip}</span>
           </div>
-          <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
-            guardada el {formatDate(recipe.createdAt)} · objetivo: {recipe.kcalTarget} kcal
-          </p>
+          <div className="flex items-center justify-between gap-4 mt-1">
+            <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] font-mono">
+              guardada el {formatDate(recipe.createdAt)} · objetivo: {recipe.kcalTarget} kcal
+            </p>
+            <Link
+              to={`/calculadora?receta=${recipe.id}`}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono border border-black/15 dark:border-white/15 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            >
+              ✎ Editar
+            </Link>
+          </div>
         </header>
 
         <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl overflow-hidden">

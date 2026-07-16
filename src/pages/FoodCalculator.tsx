@@ -1,9 +1,9 @@
 import { useEffect, useState, type ReactElement } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import '../index.css'
 import { INGREDIENTS, calcNutrition } from '../data/ingredients'
 import type { Values } from '../data/ingredients'
-import { saveRecipe } from '../data/recipes'
+import { getRecipe, saveRecipe, updateRecipe, type SavedRecipe } from '../data/recipes'
 import {
   type PathologyId,
   type NutrientKey,
@@ -160,12 +160,13 @@ function GoalStep({ initial, onSubmit, onCancel }: GoalStepProps) {
 }
 
 type SaveRecipeModalProps = {
+  initialTitle?: string
   onSave: (title: string) => void
   onCancel: () => void
 }
 
-function SaveRecipeModal({ onSave, onCancel }: SaveRecipeModalProps) {
-  const [title, setTitle] = useState('')
+function SaveRecipeModal({ initialTitle, onSave, onCancel }: SaveRecipeModalProps) {
+  const [title, setTitle] = useState(initialTitle ?? '')
   const valid = title.trim().length > 0
 
   return (
@@ -214,17 +215,25 @@ function SaveRecipeModal({ onSave, onCancel }: SaveRecipeModalProps) {
 }
 
 export default function FoodCalculator() {
-  const [target, setTarget] = useState<number | null>(() => readStoredTarget())
+  const [searchParams] = useSearchParams()
+  const [editingRecipe, setEditingRecipe] = useState<SavedRecipe | null>(() => {
+    const id = searchParams.get('receta')
+    return id ? getRecipe(id) : null
+  })
+  const [target, setTarget] = useState<number | null>(() => editingRecipe?.kcalTarget ?? readStoredTarget())
   const [editingGoal, setEditingGoal] = useState(false)
-  const [pathologies, setPathologies] = useState<PathologyId[] | null>(() => readStoredPathologies())
+  const [pathologies, setPathologies] = useState<PathologyId[] | null>(() => editingRecipe?.pathologies ?? readStoredPathologies())
   const [editingPathology, setEditingPathology] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<string[]>(
-    () => readStoredIngredients() ?? INGREDIENTS.map(i => i.id)
+  const [selectedIds, setSelectedIds] = useState<string[]>(() =>
+    editingRecipe
+      ? Object.keys(editingRecipe.values)
+      : readStoredIngredients() ?? INGREDIENTS.map(i => i.id)
   )
   const [editingIngredients, setEditingIngredients] = useState(false)
   const [values, setValues] = useState<Values>(() => {
-    const stored = readStoredValues()
     const defaults = Object.fromEntries(INGREDIENTS.map(i => [i.id, i.val]))
+    if (editingRecipe) return { ...defaults, ...editingRecipe.values }
+    const stored = readStoredValues()
     return stored ? { ...defaults, ...stored } : defaults
   })
   const [microOpen, setMicroOpen] = useState(false)
@@ -237,20 +246,28 @@ export default function FoodCalculator() {
     return () => clearTimeout(t)
   }, [justSaved])
 
+  // En modo edición de receta no se escribe en las claves de la calculadora,
+  // para no pisar la dieta en curso del usuario.
   const commitTarget = (t: number) => {
-    try { localStorage.setItem(STORAGE_KEY, String(t)) } catch { /* storage unavailable */ }
+    if (!editingRecipe) {
+      try { localStorage.setItem(STORAGE_KEY, String(t)) } catch { /* storage unavailable */ }
+    }
     setTarget(t)
     setEditingGoal(false)
   }
 
   const commitPathologies = (ids: PathologyId[]) => {
-    try { localStorage.setItem(PATHOLOGIES_STORAGE_KEY, JSON.stringify(ids)) } catch { /* storage unavailable */ }
+    if (!editingRecipe) {
+      try { localStorage.setItem(PATHOLOGIES_STORAGE_KEY, JSON.stringify(ids)) } catch { /* storage unavailable */ }
+    }
     setPathologies(ids)
     setEditingPathology(false)
   }
 
   const commitIngredients = (ids: string[]) => {
-    try { localStorage.setItem(INGREDIENTS_STORAGE_KEY, JSON.stringify(ids)) } catch { /* storage unavailable */ }
+    if (!editingRecipe) {
+      try { localStorage.setItem(INGREDIENTS_STORAGE_KEY, JSON.stringify(ids)) } catch { /* storage unavailable */ }
+    }
     setSelectedIds(ids)
     setEditingIngredients(false)
   }
@@ -294,9 +311,19 @@ export default function FoodCalculator() {
   const handleChange = (id: string, val: number) =>
     setValues(prev => {
       const next = { ...prev, [id]: val }
-      try { localStorage.setItem(VALUES_STORAGE_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ }
+      if (!editingRecipe) {
+        try { localStorage.setItem(VALUES_STORAGE_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ }
+      }
       return next
     })
+
+  const handleResetValues = () => {
+    const next = Object.fromEntries(INGREDIENTS.map(i => [i.id, 0]))
+    if (!editingRecipe) {
+      try { localStorage.setItem(VALUES_STORAGE_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ }
+    }
+    setValues(next)
+  }
 
   const handleSaveRecipe = (title: string) => {
     const recipeValues: Values = {}
@@ -304,7 +331,12 @@ export default function FoodCalculator() {
       const g = values[ing.id] ?? 0
       if (g > 0) recipeValues[ing.id] = g
     }
-    saveRecipe({ title, kcalTarget: TARGET, pathologies, values: recipeValues })
+    if (editingRecipe) {
+      const updated = updateRecipe(editingRecipe.id, { title, kcalTarget: TARGET, pathologies, values: recipeValues })
+      if (updated) setEditingRecipe(updated)
+    } else {
+      saveRecipe({ title, kcalTarget: TARGET, pathologies, values: recipeValues })
+    }
     setSaveOpen(false)
     setJustSaved(true)
   }
@@ -411,6 +443,15 @@ export default function FoodCalculator() {
 
         <Header />
 
+        {editingRecipe && (
+          <div className="text-xs py-2 px-3 rounded-md font-serif mb-4 bg-[#eaf1fd] text-[#2d5cb8] dark:bg-[#16233a] dark:text-[#8fb3f5] flex items-center justify-between gap-3">
+            <span>✎ Editando receta «{editingRecipe.title}»</span>
+            <Link to="/recetas" className="underline font-mono text-[11px] shrink-0 hover:opacity-80 transition-opacity">
+              salir sin guardar
+            </Link>
+          </div>
+        )}
+
         <header className="mb-6">
           <div className="flex flex-col items-baseline justify-between gap-2 md:gap-4 md:flex-row">
             <h1 className="text-2xl font-normal tracking-tight leading-tight">Calculadora dieta</h1>
@@ -438,7 +479,7 @@ export default function FoodCalculator() {
                 onClick={() => setSaveOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono border border-black/15 dark:border-white/15 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
-                ☆ Guardar receta
+                {editingRecipe ? '✓ Guardar cambios' : '☆ Guardar receta'}
               </button>
               <button
                 onClick={() => { void generateDietPDF(TARGET, pathologies, activeIngredients, values, r) }}
@@ -450,7 +491,7 @@ export default function FoodCalculator() {
           </div>
           {justSaved && (
             <div className="text-xs py-1.5 px-3 rounded-md font-serif mt-3 bg-[#e1f5ee] text-[#0f6e56] dark:bg-[#0f3328] dark:text-[#7ad4b1]">
-              ✓ Receta guardada ·{' '}
+              ✓ {editingRecipe ? 'Cambios guardados' : 'Receta guardada'} ·{' '}
               <Link to="/recetas" className="underline hover:opacity-80 transition-opacity">
                 ver mis recetas
               </Link>
@@ -472,12 +513,21 @@ export default function FoodCalculator() {
             <div className="mt-3">
               <SliderGroup label="Grasa"    group="fat"  values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
             </div>
-            <button
-              onClick={() => setEditingIngredients(true)}
-              className="mt-4 text-[11px] font-mono text-[#6b6b67] dark:text-[#8a8a85] underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
-            >
-              editar ingredientes ({selectedIds.length})
-            </button>
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                onClick={() => setEditingIngredients(true)}
+                className="text-[11px] font-mono text-[#6b6b67] dark:text-[#8a8a85] underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
+              >
+                editar ingredientes ({selectedIds.length})
+              </button>
+              <span className="text-[11px] font-mono text-[#6b6b67] dark:text-[#8a8a85]">·</span>
+              <button
+                onClick={handleResetValues}
+                className="text-[11px] font-mono text-[#6b6b67] dark:text-[#8a8a85] underline hover:text-[#E24B4A] dark:hover:text-[#eb8585] transition-colors cursor-pointer"
+              >
+                poner todo a 0
+              </button>
+            </div>
           </div>
 
           <div className="bg-black/10 dark:bg-white/10 max-[720px]:hidden min-[721px]:row-span-2"></div>
@@ -610,6 +660,7 @@ export default function FoodCalculator() {
 
       {saveOpen && (
         <SaveRecipeModal
+          initialTitle={editingRecipe?.title}
           onSave={handleSaveRecipe}
           onCancel={() => setSaveOpen(false)}
         />

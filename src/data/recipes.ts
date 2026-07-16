@@ -50,6 +50,16 @@ export function saveRecipe(recipe: Omit<SavedRecipe, 'id' | 'createdAt'>): Saved
   return full
 }
 
+export function updateRecipe(id: string, patch: Partial<Omit<SavedRecipe, 'id' | 'createdAt'>>): SavedRecipe | null {
+  const recipes = loadRecipes()
+  const idx = recipes.findIndex(r => r.id === id)
+  if (idx === -1) return null
+  const updated: SavedRecipe = { ...recipes[idx], ...patch }
+  recipes[idx] = updated
+  try { localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipes)) } catch { /* storage unavailable */ }
+  return updated
+}
+
 export function deleteRecipe(id: string): SavedRecipe[] {
   const next = loadRecipes().filter(r => r.id !== id)
   try { localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ }

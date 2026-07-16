@@ -93,6 +93,12 @@ export default function MyRecipes() {
                             Eliminar
                           </button>
                           <Link
+                            to={`/calculadora?receta=${recipe.id}`}
+                            className="px-3 py-1.5 text-[11px] font-mono text-[#6b6b67] dark:text-[#8a8a85] border border-black/15 dark:border-white/15 rounded-md hover:text-[#1a1a18] hover:border-black/40 dark:hover:text-[#e8e6e0] dark:hover:border-white/40 transition-colors"
+                          >
+                            ✎ Editar
+                          </Link>
+                          <Link
                             to={`/recetas/${recipe.id}`}
                             className="px-3 py-1.5 text-[11px] font-mono text-[#5B8DEF] border border-black/15 dark:border-white/15 rounded-md hover:border-[#5B8DEF] transition-colors"
                           >
