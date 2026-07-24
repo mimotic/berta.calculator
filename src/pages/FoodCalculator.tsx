@@ -609,7 +609,10 @@ export default function FoodCalculator() {
               // Rango de referencia por 1000 kcal: mínimo NRC 2006 (RA) → mínimo FEDIAF 2024, escalado por k.
               // Conversiones para vitaminas expresadas en IU por las fuentes: 1 IU vit A = 0.3 µg retinol,
               // 1 IU vit D = 0.025 µg; vit E en mg (base NRC).
-              const range = (a: number, b: number, d = 0) => `${fmt(a * k, d)}–${fmt(b * k, d)}`
+              const range = (a: number, b: number, d = 0) => {
+                const lo = fmt(a * k, d), hi = fmt(b * k, d)
+                return lo === hi ? lo : `${lo}–${hi}`
+              }
               return (
                 <>
                   <ul className="divide-y divide-black/5 dark:divide-white/5 mt-3">
@@ -624,6 +627,12 @@ export default function FoodCalculator() {
                       { label: 'Vitamina A',   value: r.vitA.toFixed(0),  unit: 'µg', ref: range(455, 525) },
                       { label: 'Vitamina D',   value: r.vitD.toFixed(2),  unit: 'µg', ref: range(3.4, 4.0, 1) },
                       { label: 'Vitamina E',   value: r.vitE.toFixed(2),  unit: 'mg', ref: range(7.5, 9, 1) },
+                      { label: 'Vitamina C',   value: r.vitC.toFixed(1),  unit: 'mg', ref: '—' },
+                      { label: 'Tiamina (B1)', value: r.b1.toFixed(2),    unit: 'mg', ref: range(0.54, 0.56, 2) },
+                      { label: 'Riboflavina (B2)', value: r.b2.toFixed(2), unit: 'mg', ref: range(1.3, 1.5, 1) },
+                      { label: 'Niacina (B3)', value: r.b3.toFixed(1),    unit: 'mg', ref: range(4.25, 4.25, 1) },
+                      { label: 'Vitamina B6',  value: r.b6.toFixed(2),    unit: 'mg', ref: range(0.375, 0.375, 2) },
+                      { label: 'Folato (B9)',  value: r.b9.toFixed(0),    unit: 'µg', ref: range(67.5, 67.5) },
                       { label: 'Vitamina B12', value: r.b12.toFixed(2),   unit: 'µg', ref: range(8.4, 8.8, 1) },
                       { label: 'Fibra',        value: r.fiber.toFixed(1), unit: 'g',  ref: '2–4,5 % MS' },
                     ].map(({ label, value, unit, ref }) => (
@@ -631,7 +640,7 @@ export default function FoodCalculator() {
                         <div className="flex flex-col min-w-0">
                           <span className="font-serif text-[#1a1a18] dark:text-[#e8e6e0]">{label}</span>
                           <span className="font-mono text-[10px] text-[#6b6b67] dark:text-[#8a8a85]">
-                            ref {ref}{unit && ` ${unit}`}
+                            ref {ref}{unit && ref !== '—' && ` ${unit}`}
                           </span>
                         </div>
                         <span className="font-mono tabular-nums whitespace-nowrap">
@@ -642,7 +651,7 @@ export default function FoodCalculator() {
                     ))}
                   </ul>
                   <p className="text-[10px] text-[#6b6b67] dark:text-[#8a8a85] mt-3 leading-relaxed italic font-serif">
-                    Valores orientativos: rango de referencia NRC 2006 (RA) – FEDIAF 2024 (mínimo) para perro adulto en mantenimiento, escalado a {TARGET} kcal/día. Pueden variar según etapa vital, condición o patologías.
+                    Valores orientativos: rango de referencia NRC 2006 (RA) – FEDIAF 2024 (mínimo) para perro adulto en mantenimiento, escalado a {TARGET} kcal/día. Pueden variar según etapa vital, condición o patologías. La vitamina C no tiene requerimiento establecido: el perro la sintetiza de forma endógena.
                   </p>
                 </>
               )

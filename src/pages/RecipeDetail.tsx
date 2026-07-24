@@ -169,6 +169,12 @@ export default function RecipeDetail() {
                 { label: 'Vitamina A',   value: r.vitA.toFixed(0),  unit: 'µg' },
                 { label: 'Vitamina D',   value: r.vitD.toFixed(2),  unit: 'µg' },
                 { label: 'Vitamina E',   value: r.vitE.toFixed(2),  unit: 'mg' },
+                { label: 'Vitamina C',   value: r.vitC.toFixed(1),  unit: 'mg' },
+                { label: 'Tiamina (B1)', value: r.b1.toFixed(2),    unit: 'mg' },
+                { label: 'Riboflavina (B2)', value: r.b2.toFixed(2), unit: 'mg' },
+                { label: 'Niacina (B3)', value: r.b3.toFixed(1),    unit: 'mg' },
+                { label: 'Vitamina B6',  value: r.b6.toFixed(2),    unit: 'mg' },
+                { label: 'Folato (B9)',  value: r.b9.toFixed(0),    unit: 'µg' },
                 { label: 'Vitamina B12', value: r.b12.toFixed(2),   unit: 'µg' },
                 { label: 'Fibra',        value: r.fiber.toFixed(1), unit: 'g' },
               ].map(({ label, value, unit }) => (

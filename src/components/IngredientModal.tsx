@@ -20,6 +20,12 @@ const ROWS: { label: string; key: keyof Ingredient; unit: string; decimals: numb
   { label: 'Vitamina A',   key: 'vitA',  unit: 'µg',   decimals: 0 },
   { label: 'Vitamina D',   key: 'vitD',  unit: 'µg',   decimals: 2 },
   { label: 'Vitamina E',   key: 'vitE',  unit: 'mg',   decimals: 2 },
+  { label: 'Vitamina C',   key: 'vitC',  unit: 'mg',   decimals: 1 },
+  { label: 'Tiamina (B1)', key: 'b1',    unit: 'mg',   decimals: 2 },
+  { label: 'Riboflavina (B2)', key: 'b2', unit: 'mg',  decimals: 2 },
+  { label: 'Niacina (B3)', key: 'b3',    unit: 'mg',   decimals: 2 },
+  { label: 'Vitamina B6',  key: 'b6',    unit: 'mg',   decimals: 2 },
+  { label: 'Folato (B9)',  key: 'b9',    unit: 'µg',   decimals: 0 },
   { label: 'Vitamina B12', key: 'b12',   unit: 'µg',   decimals: 2 },
 ]
 
