@@ -15,7 +15,7 @@ import {
 } from '../data/pathologies'
 import { generateDietPDF } from '../utils/generateDietPDF'
 import { StatCard } from '../components/StatCard'
-import { MacroDonut } from '../components/MacroDonut'
+import { MacroDonut, WeightDonut } from '../components/MacroDonut'
 import { SliderGroup } from '../components/SliderGroup'
 import { Header } from '../components/Header'
 import { IngredientsWizard } from '../components/IngredientsWizard'
@@ -553,6 +553,13 @@ export default function FoodCalculator() {
                 Distribución macros
               </div>
               <MacroDonut r={r} />
+            </div>
+
+            <div>
+              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
+                Distribución por peso
+              </div>
+              <WeightDonut ingredients={activeIngredients} values={values} />
             </div>
           </div>
 

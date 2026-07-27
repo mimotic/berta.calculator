@@ -1,4 +1,4 @@
-import { calcNutrition } from '../data/ingredients'
+import { calcNutrition, type Ingredient } from '../data/ingredients'
 
 const DONUT_C = 2 * Math.PI * 40
 
@@ -80,6 +80,61 @@ export function MacroDonut({ r }: { r: ReturnType<typeof calcNutrition> }) {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  )
+}
+
+export function WeightDonut({ ingredients, values }: { ingredients: Ingredient[]; values: Record<string, number> }) {
+  const PROT_C = '#5B8DEF'
+  const CARB_C = '#1D9E75'
+  const FAT_C  = '#EF9F27'
+
+  const sumGroup = (group: Ingredient['group']) =>
+    ingredients.filter(i => i.group === group).reduce((s, i) => s + (values[i.id] ?? 0), 0)
+
+  const protG = sumGroup('prot')
+  const carbG = sumGroup('hc')
+  const fatG  = sumGroup('fat')
+  const total = protG + carbG + fatG
+  const C     = DONUT_C
+
+  const protPct = total > 0 ? (protG / total) * 100 : 0
+  const carbPct = total > 0 ? (carbG / total) * 100 : 0
+  const fatPct  = total > 0 ? (fatG  / total) * 100 : 0
+  const protLen = (protPct / 100) * C
+  const carbLen = (carbPct / 100) * C
+  const fatLen  = (fatPct  / 100) * C
+
+  const legend = [
+    { color: PROT_C, name: 'Proteína', pct: protPct, g: protG },
+    { color: CARB_C, name: 'Hidratos', pct: carbPct, g: carbG },
+    { color: FAT_C,  name: 'Grasas',   pct: fatPct,  g: fatG  },
+  ]
+
+  return (
+    <div className="flex flex-col items-center gap-5">
+      <svg width="140" height="140" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" fill="none" className="stroke-[#e5e2dc] dark:stroke-[#2a2826]" strokeWidth="10" />
+        {total > 0 && (
+          <>
+            <DonutSeg len={protLen} offset={0}           color={PROT_C} />
+            <DonutSeg len={carbLen} offset={C - protLen} color={CARB_C} />
+            <DonutSeg len={fatLen}  offset={fatLen}      color={FAT_C}  />
+          </>
+        )}
+        <text x="50" y="46" textAnchor="middle" fontSize="8.5" className="fill-[#9b9b97] dark:fill-[#6b6b67]" fontFamily="monospace">peso</text>
+        <text x="50" y="57" textAnchor="middle" fontSize="8"   className="fill-[#9b9b97] dark:fill-[#6b6b67]" fontFamily="monospace">% g</text>
+      </svg>
+      <div className="flex flex-col gap-2.5 w-full">
+        {legend.map(({ color, name, pct, g }) => (
+          <div key={name} className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
+            <span className="text-xs text-[#6b6b67] dark:text-[#8a8a85] font-serif flex-1">{name}</span>
+            <span className="text-[11px] font-mono text-[#9b9b97] dark:text-[#6b6b67]">{g.toFixed(0)} g</span>
+            <span className="text-[13px] font-mono font-bold text-[#1a1a18] dark:text-[#e8e6e0] w-13 text-right">{pct.toFixed(1)}%</span>
+          </div>
+        ))}
       </div>
     </div>
   )
