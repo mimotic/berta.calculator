@@ -6,8 +6,10 @@ import { PATHOLOGY_DEFS } from '../data/pathologies'
 import { StatCard } from '../components/StatCard'
 import { MacroDonut } from '../components/MacroDonut'
 
-const GROUP_LABELS: { group: 'hc' | 'prot' | 'fat'; label: string }[] = [
+const GROUP_LABELS: { group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat'; label: string }[] = [
   { group: 'hc', label: 'Hidratos' },
+  { group: 'verdura', label: 'Verduras' },
+  { group: 'fruta', label: 'Frutas' },
   { group: 'prot', label: 'Proteína' },
   { group: 'fat', label: 'Grasa' },
 ]

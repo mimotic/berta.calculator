@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { INGREDIENTS } from '../data/ingredients'
 import { Header } from './Header'
 
-type Group = 'hc' | 'prot' | 'fat'
+type Group = 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat'
 
 const STEPS: Array<{ group: Group; title: string; subtitle: string }> = [
-  { group: 'hc',   title: 'Hidratos',  subtitle: 'paso 1 · hidratos' },
-  { group: 'prot', title: 'Proteína',  subtitle: 'paso 2 · proteína' },
-  { group: 'fat',  title: 'Grasa',     subtitle: 'paso 3 · grasa' },
+  { group: 'hc',      title: 'Hidratos', subtitle: 'paso 1 · hidratos' },
+  { group: 'verdura', title: 'Verduras', subtitle: 'paso 2 · verduras' },
+  { group: 'fruta',   title: 'Frutas',   subtitle: 'paso 3 · frutas' },
+  { group: 'prot',    title: 'Proteína', subtitle: 'paso 4 · proteína' },
+  { group: 'fat',     title: 'Grasa',    subtitle: 'paso 5 · grasa' },
 ]
 
 type Props = {

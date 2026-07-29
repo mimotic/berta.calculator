@@ -506,12 +506,18 @@ export default function FoodCalculator() {
             <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
               Ingredientes
             </div>
-            <SliderGroup label="Hidratos"  group="hc"   values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
+            <SliderGroup label="Hidratos"  group="hc"      values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
             <div className="mt-3">
-              <SliderGroup label="Proteína" group="prot" values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
+              <SliderGroup label="Verduras" group="verdura" values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
             </div>
             <div className="mt-3">
-              <SliderGroup label="Grasa"    group="fat"  values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
+              <SliderGroup label="Frutas"   group="fruta"   values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
+            </div>
+            <div className="mt-3">
+              <SliderGroup label="Proteína" group="prot"    values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
+            </div>
+            <div className="mt-3">
+              <SliderGroup label="Grasa"    group="fat"     values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
             </div>
             <div className="mt-4 flex items-center gap-3">
               <button

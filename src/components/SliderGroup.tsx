@@ -6,7 +6,7 @@ import { Stepper } from './Stepper'
 
 interface SliderGroupProps {
   label: string
-  group: 'hc' | 'prot' | 'fat'
+  group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat'
   values: Values
   onChange: (id: string, val: number) => void
   ingredients?: Ingredient[]

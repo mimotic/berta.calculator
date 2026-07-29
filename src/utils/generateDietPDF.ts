@@ -120,8 +120,10 @@ export async function generateDietPDF(
   doc.text('INGREDIENTES', margin, y)
   y += 5
 
-  const groups: { label: string; group: 'hc' | 'prot' | 'fat' }[] = [
+  const groups: { label: string; group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat' }[] = [
     { label: 'Hidratos', group: 'hc' },
+    { label: 'Verduras', group: 'verdura' },
+    { label: 'Frutas', group: 'fruta' },
     { label: 'Proteína', group: 'prot' },
     { label: 'Grasa', group: 'fat' },
   ]
