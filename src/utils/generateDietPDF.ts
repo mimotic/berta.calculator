@@ -209,12 +209,17 @@ export async function generateDietPDF(
       const dispVal = rule.basis === 'pct_kcal' || meta.unit === 'g'
         ? normalized.toFixed(1)
         : normalized.toFixed(0)
+      const inWarnZone = rule.warn !== undefined
+        ? normalized >= rule.warn
+        : rule.max !== undefined && normalized > rule.max * 0.85
       let color = GREEN
       if (rule.max !== undefined && normalized > rule.max) color = RED
-      else if (rule.max !== undefined && normalized > rule.max * 0.85) color = ORANGE
+      else if (inWarnZone) color = ORANGE
       else if (rule.min !== undefined && normalized < rule.min) color = ORANGE
       const barLabel = rule.min !== undefined && rule.max !== undefined
         ? `${rule.min}–${rule.max}${dUnit}`
+        : rule.warn !== undefined && rule.max !== undefined
+        ? `${rule.warn}–${rule.max}${dUnit}`
         : rule.max !== undefined ? `límite ${rule.max}${dUnit}` : `mín ${rule.min}${dUnit}`
       return { label: `${meta.label} ${dUnit}`, value: `${dispVal}`, range: barLabel, color }
     })

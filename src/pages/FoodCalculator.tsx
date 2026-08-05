@@ -374,10 +374,13 @@ export default function FoodCalculator() {
     const normalized = getNormalizedValue(actual, r.kcal, rule.basis, meta.kcalFactor)
     const dUnit      = displayUnit(rule.basis, meta.unit)
 
-    // Color
+    // Color — explicit warn threshold takes precedence over the default 85%-of-max zone
+    const inWarnZone = rule.warn !== undefined
+      ? normalized >= rule.warn
+      : rule.max !== undefined && normalized > rule.max * 0.85
     let color = '#1D9E75'
     if      (rule.max !== undefined && normalized > rule.max)             color = '#E24B4A'
-    else if (rule.max !== undefined && normalized > rule.max * 0.85)      color = '#EF9F27'
+    else if (inWarnZone)                                                  color = '#EF9F27'
     else if (rule.min !== undefined && normalized < rule.min)             color = '#EF9F27'
 
     // Bar reference
@@ -385,6 +388,8 @@ export default function FoodCalculator() {
     const barPct   = Math.min(100, (normalized / barMax) * 100)
     const barLabel = rule.min !== undefined && rule.max !== undefined
       ? `${rule.min}–${rule.max}${dUnit}`
+      : rule.warn !== undefined && rule.max !== undefined
+      ? `${rule.warn}–${rule.max}${dUnit}`
       : rule.max !== undefined ? `límite ${rule.max}${dUnit}` : `mín ${rule.min}${dUnit}`
 
     // Display value — 1 decimal for g and %, 0 for mg
@@ -410,7 +415,7 @@ export default function FoodCalculator() {
     const cap = meta.label.charAt(0).toUpperCase() + meta.label.slice(1)
     if (rule.max !== undefined && normalized > rule.max) {
       alerts.push(['danger', `${cap} ${dispVal} ${dUnit} — supera el límite de ${rule.max}${dUnit}`])
-    } else if (rule.max !== undefined && normalized > rule.max * 0.85) {
+    } else if (inWarnZone) {
       alerts.push(['warn', `${cap} ${dispVal} ${dUnit} — cerca del límite`])
     } else if (rule.min !== undefined && normalized < rule.min) {
       alerts.push(['warn', `${cap} ${dispVal} ${dUnit} — por debajo del rango`])

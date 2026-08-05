@@ -30,7 +30,7 @@ No test suite is configured.
 **Static ingredient data** lives in `src/data/ingredients.ts` — 18 food items each with full macro + micronutrient profiles. Max slider values scale with the kcal target via `KCAL_RANGES` step multipliers (`src/utils/calculatorUtils.ts`).
 
 **Nutrient alerts** use hardcoded thresholds:
-- Phosphorus: warn >80 mg, alert >100 mg (a 30% reduction factor is applied to phosphorus and potassium to model boiling losses).
+- Phosphorus (renal rule): green <50 mg/100kcal, warn 50–100, alert >100 (a 30% reduction factor is applied to phosphorus and potassium of raw ingredients only — `isRaw` flag — to model boiling losses; cooked ingredients' data already reflects those losses).
 - Potassium: target 100–200 mg range.
 - Fat: warn >10 g, alert >15 g.
 

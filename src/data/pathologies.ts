@@ -13,6 +13,7 @@ export type NutrientKey = 'fat' | 'protein' | 'phosphorus' | 'potassium' | 'sodi
 export type NutrientRule = {
   max?: number
   min?: number
+  warn?: number  // start of the caution zone; below it is OK (green), from it up to max is warn (yellow)
   basis: LimitBasis
 }
 
@@ -47,7 +48,7 @@ export const PATHOLOGY_DEFS: Record<PathologyId, PathologyDef> = {
     label: 'Renal',
     description: 'ERC: fósforo y sodio bajos, proteína moderada de alta calidad',
     rules: {
-      phosphorus: { max: 50,           basis: 'per_100kcal' },  // WSAVA: restricción en estadios 2–4
+      phosphorus: { warn: 50, max: 100, basis: 'per_100kcal' },  // WSAVA: restricción en estadios 2–4
       sodium:     { max: 30,           basis: 'per_100kcal' },  // moderado; ascitis requiere más restricción
       protein:    { min: 14, max: 22,  basis: 'pct_kcal'   },  // proteína moderada; no excesiva ni deficiente
       potassium:  { min: 50, max: 100, basis: 'per_100kcal' },  // hipokalemia frecuente en ERC
@@ -114,8 +115,9 @@ export function computeActiveRules(ids: PathologyId[]): Partial<Record<NutrientK
         merged[k] = { ...rule }
       } else {
         const ex = merged[k]!
-        if (rule.max !== undefined) ex.max = ex.max !== undefined ? Math.min(ex.max, rule.max) : rule.max
-        if (rule.min !== undefined) ex.min = ex.min !== undefined ? Math.max(ex.min, rule.min) : rule.min
+        if (rule.max !== undefined)  ex.max  = ex.max !== undefined ? Math.min(ex.max, rule.max) : rule.max
+        if (rule.min !== undefined)  ex.min  = ex.min !== undefined ? Math.max(ex.min, rule.min) : rule.min
+        if (rule.warn !== undefined) ex.warn = ex.warn !== undefined ? Math.min(ex.warn, rule.warn) : rule.warn
       }
     }
   }
