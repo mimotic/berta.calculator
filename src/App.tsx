@@ -15,7 +15,7 @@ export default function App() {
           <h1 className="text-[32px] font-normal tracking-tight mb-2">Nutrición canina</h1>
           <p className="text-[13px] font-mono text-[#7a7a75] dark:text-[#8a8a85]">Herramientas para planificar la dieta</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
           <Link
             to="/calorias"
             className="group relative bg-white dark:bg-[#1a1a18] border border-[#e8e6e0] dark:border-white/10 cursor-pointer rounded-lg p-6 hover:border-[#5B8DEF] dark:hover:border-[#5B8DEF] hover:shadow-[0_4px_20px_rgba(91,141,239,0.08)] transition-all duration-200"
