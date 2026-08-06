@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import '../index.css'
 import { Header } from '../components/Header'
 import { Stepper } from '../components/Stepper'
@@ -17,6 +17,34 @@ const BCS_LABEL: Record<BCS, string> = {
   7: 'Sobrepeso',
   8: 'Obeso',
   9: 'Obesidad mórbida',
+}
+
+const STORAGE_KEY = 'caloriesCalculator.form'
+
+type StoredForm = {
+  weight: number
+  neutered: boolean
+  activity: ActivityLevel
+  lifeStage: LifeStage
+  bcs: BCS
+}
+
+function readStoredForm(): Partial<StoredForm> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) return {}
+    const out: Partial<StoredForm> = {}
+    if (typeof parsed.weight === 'number' && Number.isFinite(parsed.weight) && parsed.weight > 0) out.weight = parsed.weight
+    if (typeof parsed.neutered === 'boolean') out.neutered = parsed.neutered
+    if (['inactivo', 'baja', 'moderada', 'alta'].includes(parsed.activity)) out.activity = parsed.activity
+    if (['cachorro_temprano', 'cachorro_tardio', 'adulto', 'senior'].includes(parsed.lifeStage)) out.lifeStage = parsed.lifeStage
+    if ([1, 2, 3, 4, 5, 6, 7, 8, 9].includes(parsed.bcs)) out.bcs = parsed.bcs
+    return out
+  } catch {
+    return {}
+  }
 }
 
 function idealWeightFromBCS(currentWeight: number, bcs: BCS): number {
@@ -115,11 +143,17 @@ function Field({ label, note, children }: FieldProps) {
 }
 
 export default function CaloriesCalculator() {
-  const [weight, setWeight] = useState<number>(2.6)
-  const [neutered, setNeutered] = useState<boolean>(true)
-  const [activity, setActivity] = useState<ActivityLevel>('moderada')
-  const [lifeStage, setLifeStage] = useState<LifeStage>('adulto')
-  const [bcs, setBcs] = useState<BCS>(5)
+  const [stored] = useState(readStoredForm)
+  const [weight, setWeight] = useState<number>(stored.weight ?? 2.6)
+  const [neutered, setNeutered] = useState<boolean>(stored.neutered ?? true)
+  const [activity, setActivity] = useState<ActivityLevel>(stored.activity ?? 'moderada')
+  const [lifeStage, setLifeStage] = useState<LifeStage>(stored.lifeStage ?? 'adulto')
+  const [bcs, setBcs] = useState<BCS>(stored.bcs ?? 5)
+
+  useEffect(() => {
+    const form: StoredForm = { weight, neutered, activity, lifeStage, bcs }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(form)) } catch { /* storage unavailable */ }
+  }, [weight, neutered, activity, lifeStage, bcs])
 
   const isPuppy = lifeStage === 'cachorro_temprano' || lifeStage === 'cachorro_tardio'
   const activityDisabled = isPuppy
