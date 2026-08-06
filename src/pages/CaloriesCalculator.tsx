@@ -32,6 +32,7 @@ type StoredForm = {
 function readStoredForm(): Partial<StoredForm> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
+    console.log('raw', raw)
     if (!raw) return {}
     const parsed = JSON.parse(raw)
     if (typeof parsed !== 'object' || parsed === null) return {}
