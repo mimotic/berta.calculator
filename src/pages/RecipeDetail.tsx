@@ -5,6 +5,8 @@ import { getRecipe } from '../data/recipes'
 import { PATHOLOGY_DEFS } from '../data/pathologies'
 import { StatCard } from '../components/StatCard'
 import { MacroDonut } from '../components/MacroDonut'
+import { NutrientRulesPanel } from '../components/NutrientRulesPanel'
+import { buildNutrientAssessment } from '../utils/nutrientAssessment'
 
 const GROUP_LABELS: { group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat'; label: string }[] = [
   { group: 'hc', label: 'Hidratos' },
@@ -53,6 +55,9 @@ export default function RecipeDetail() {
   const diffK = r.kcal - recipe.kcalTarget
   const pct = Math.min(100, (r.kcal / recipe.kcalTarget) * 100)
   const kcalColor = Math.abs(diffK) <= 8 ? '#1D9E75' : diffK < 0 ? '#EF9F27' : '#E24B4A'
+
+  const { mineralCards, alerts, fatOverLimit, protOverLimit, footerNotes } =
+    buildNutrientAssessment(r, recipe.kcalTarget, recipe.pathologies)
 
   const pathologyChip = recipe.pathologies.length > 0
     ? recipe.pathologies.map(id => PATHOLOGY_DEFS[id]?.label.toLowerCase()).filter(Boolean).join(' · ') + ' · canina'
@@ -127,9 +132,9 @@ export default function RecipeDetail() {
               })}
             </div>
 
-            <div className="bg-black/10 dark:bg-white/10 max-[720px]:hidden"></div>
+            <div className="bg-black/10 dark:bg-white/10 max-[720px]:hidden min-[721px]:row-span-2"></div>
 
-            <div className="p-5 bg-[#fafaf7] dark:bg-[#141412] flex flex-col gap-5 max-[720px]:order-2">
+            <div className="p-5 bg-[#fafaf7] dark:bg-[#141412] flex flex-col gap-5 max-[720px]:order-2 min-[721px]:row-span-2">
               <div>
                 <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
                   Energía y macros
@@ -138,8 +143,8 @@ export default function RecipeDetail() {
                   <div className="col-span-2">
                     <StatCard value={r.kcal.toFixed(1)} valueColor={kcalColor} label="kcal" barPct={pct} barColor={kcalColor} barLabel={`obj. ${recipe.kcalTarget}`} />
                   </div>
-                  <StatCard value={r.prot.toFixed(1)} label="proteína g" />
-                  <StatCard value={r.fat.toFixed(2)} label="grasa g" />
+                  <StatCard value={r.prot.toFixed(1)} valueColor={protOverLimit ? '#E24B4A' : undefined} label="proteína g" />
+                  <StatCard value={r.fat.toFixed(2)} valueColor={fatOverLimit ? '#E24B4A' : undefined} label="grasa g" />
                   <StatCard value={r.carb.toFixed(1)} label="hidratos g" />
                   <StatCard value={totalG.toFixed(0)} label="peso total g" />
                 </div>
@@ -153,11 +158,17 @@ export default function RecipeDetail() {
               </div>
             </div>
 
+            <NutrientRulesPanel
+              mineralCards={mineralCards}
+              alerts={alerts}
+              className="max-[720px]:order-3 min-[721px]:border-t min-[721px]:border-black/10 dark:min-[721px]:border-white/10"
+            />
+
           </div>
 
           <div className="p-5 border-t border-black/10 dark:border-white/10">
             <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-3 font-mono">
-              Minerales y micronutrientes
+              Micronutrientes
             </div>
             <ul className="divide-y divide-black/5 dark:divide-white/5">
               {[
@@ -191,6 +202,12 @@ export default function RecipeDetail() {
             </ul>
           </div>
         </div>
+
+        {footerNotes.length > 0 && (
+          <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] mt-3 leading-relaxed italic font-serif px-1">
+            {footerNotes.join(' ')}
+          </p>
+        )}
 
       </div>
     </div>

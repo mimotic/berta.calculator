@@ -1,20 +1,14 @@
-import { useEffect, useState, type ReactElement } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import '../index.css'
 import { INGREDIENTS, calcNutrition } from '../data/ingredients'
 import type { Values } from '../data/ingredients'
 import { getRecipe, saveRecipe, updateRecipe, type SavedRecipe } from '../data/recipes'
-import {
-  type PathologyId,
-  type NutrientKey,
-  PATHOLOGY_DEFS,
-  NUTRIENT_META,
-  computeActiveRules,
-  getNormalizedValue,
-  displayUnit,
-} from '../data/pathologies'
+import { type PathologyId, PATHOLOGY_DEFS } from '../data/pathologies'
 import { generateDietPDF } from '../utils/generateDietPDF'
 import { StatCard } from '../components/StatCard'
+import { NutrientRulesPanel } from '../components/NutrientRulesPanel'
+import { buildNutrientAssessment } from '../utils/nutrientAssessment'
 import { MacroDonut, WeightDonut } from '../components/MacroDonut'
 import { SliderGroup } from '../components/SliderGroup'
 import { Header } from '../components/Header'
@@ -26,9 +20,6 @@ const INGREDIENTS_STORAGE_KEY = 'foodCalculator.selectedIngredients'
 const PATHOLOGIES_STORAGE_KEY = 'foodCalculator.pathologies'
 const VALUES_STORAGE_KEY = 'foodCalculator.values'
 const DEFAULT_TARGET = 210
-
-// Fixed display order for nutrient rule cards
-const NUTRIENT_ORDER: NutrientKey[] = ['phosphorus', 'potassium', 'sodium', 'protein', 'fat', 'fiber']
 
 function readStoredTarget(): number | null {
   try {
@@ -303,7 +294,6 @@ export default function FoodCalculator() {
   }
 
   const TARGET = target
-  const activeRules = computeActiveRules(pathologies)
 
   const activeIngredients = INGREDIENTS.filter(i => selectedIds.includes(i.id))
   const r = calcNutrition(values, activeIngredients)
@@ -350,97 +340,7 @@ export default function FoodCalculator() {
     ? pathologies.map(id => PATHOLOGY_DEFS[id].label.toLowerCase()).join(' · ') + ' · canina'
     : 'canina'
 
-  // Map NutrientKey to computed per-serving values from calcNutrition
-  const actualValues: Record<NutrientKey, number> = {
-    fat: r.fat, protein: r.prot, phosphorus: r.phos, potassium: r.pot, sodium: r.na, fiber: r.fiber,
-  }
-
-  // Build mineral cards + alerts from active rules
-  type AlertType = 'ok' | 'warn' | 'danger'
-  const mineralCards: { key: string; el: ReactElement }[] = []
-  const alerts: [AlertType, string][] = []
-
-  // kcal alert is always shown
-  if (Math.abs(diffK) <= 5)   alerts.push(['ok',     `✓ Calorías en objetivo (${r.kcal.toFixed(1)} kcal)`])
-  else if (diffK < 0)         alerts.push(['warn',   `Faltan ${Math.abs(diffK).toFixed(1)} kcal para llegar a ${TARGET}`])
-  else                        alerts.push(['danger', `${diffK.toFixed(1)} kcal por encima del objetivo`])
-
-  for (const key of NUTRIENT_ORDER) {
-    const rule = activeRules[key]
-    if (!rule) continue
-
-    const meta       = NUTRIENT_META[key]
-    const actual     = actualValues[key]
-    const normalized = getNormalizedValue(actual, r.kcal, rule.basis, meta.kcalFactor)
-    const dUnit      = displayUnit(rule.basis, meta.unit)
-
-    // Color — explicit warn threshold takes precedence over the default 85%-of-max zone
-    const inWarnZone = rule.warn !== undefined
-      ? normalized >= rule.warn
-      : rule.max !== undefined && normalized > rule.max * 0.85
-    let color = '#1D9E75'
-    if      (rule.max !== undefined && normalized > rule.max)             color = '#E24B4A'
-    else if (inWarnZone)                                                  color = '#EF9F27'
-    else if (rule.min !== undefined && normalized < rule.min)             color = '#EF9F27'
-
-    // Bar reference
-    const barMax   = rule.max ?? ((rule.min ?? 0) * 2 || 100)
-    const barPct   = Math.min(100, (normalized / barMax) * 100)
-    const barLabel = rule.min !== undefined && rule.max !== undefined
-      ? `${rule.min}–${rule.max}${dUnit}`
-      : rule.warn !== undefined && rule.max !== undefined
-      ? `${rule.warn}–${rule.max}${dUnit}`
-      : rule.max !== undefined ? `límite ${rule.max}${dUnit}` : `mín ${rule.min}${dUnit}`
-
-    // Display value — 1 decimal for g and %, 0 for mg
-    const dispVal = rule.basis === 'pct_kcal' || meta.unit === 'g'
-      ? normalized.toFixed(1)
-      : normalized.toFixed(0)
-
-    mineralCards.push({
-      key,
-      el: (
-        <StatCard
-          value={dispVal}
-          valueColor={color}
-          label={`${meta.label} ${dUnit}`}
-          barPct={barPct}
-          barColor={color}
-          barLabel={barLabel}
-        />
-      ),
-    })
-
-    // Alert
-    const cap = meta.label.charAt(0).toUpperCase() + meta.label.slice(1)
-    if (rule.max !== undefined && normalized > rule.max) {
-      alerts.push(['danger', `${cap} ${dispVal} ${dUnit} — supera el límite de ${rule.max}${dUnit}`])
-    } else if (inWarnZone) {
-      alerts.push(['warn', `${cap} ${dispVal} ${dUnit} — cerca del límite`])
-    } else if (rule.min !== undefined && normalized < rule.min) {
-      alerts.push(['warn', `${cap} ${dispVal} ${dUnit} — por debajo del rango`])
-    } else {
-      alerts.push(['ok', `✓ ${cap} controlado (${dispVal} ${dUnit})`])
-    }
-  }
-
-  // Determine valueColor for macro stats cards
-  const fatRule  = activeRules.fat
-  const fatNorm  = fatRule ? getNormalizedValue(r.fat, r.kcal, fatRule.basis, NUTRIENT_META.fat.kcalFactor) : null
-  const fatOverLimit = fatRule?.max !== undefined && fatNorm !== null && fatNorm > fatRule.max
-
-  const protRule  = activeRules.protein
-  const protNorm  = protRule ? getNormalizedValue(r.prot, r.kcal, protRule.basis, NUTRIENT_META.protein.kcalFactor) : null
-  const protOverLimit = protRule?.max !== undefined && protNorm !== null && protNorm > protRule.max
-
-  const alertClass: Record<AlertType, string> = {
-    ok:     'bg-[#e1f5ee] text-[#0f6e56] dark:bg-[#0f3328] dark:text-[#7ad4b1]',
-    warn:   'bg-[#faeeda] text-[#854f0b] dark:bg-[#3a2a10] dark:text-[#e8b980]',
-    danger: 'bg-[#fcebeb] text-[#a32d2d] dark:bg-[#3a1616] dark:text-[#eb8585]',
-  }
-
-  // Footer notes from active pathologies
-  const footerNotes = pathologies.flatMap(id => PATHOLOGY_DEFS[id].notes ?? [])
+  const { mineralCards, alerts, fatOverLimit, protOverLimit, footerNotes } = buildNutrientAssessment(r, TARGET, pathologies)
 
   return (
     <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] flex-1 py-8 px-4 transition-colors">
@@ -574,37 +474,11 @@ export default function FoodCalculator() {
             </div>
           </div>
 
-          {mineralCards.length > 0 && (
-            <div className="p-5 max-[720px]:order-3 min-[721px]:border-t min-[721px]:border-black/10 dark:min-[721px]:border-white/10">
-              <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
-                Minerales y parámetros
-              </div>
-              <div className="grid grid-cols-3 max-[520px]:grid-cols-2 gap-2">
-                {mineralCards.map(({ key, el }) => (
-                  <div key={key}>{el}</div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-1.25 mt-3">
-                {alerts.map(([type, msg], i) => (
-                  <div key={i} className={`text-xs py-1.5 px-3 rounded-md font-serif ${alertClass[type]}`}>
-                    {msg}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {mineralCards.length === 0 && (
-            <div className="p-5 max-[720px]:order-3 min-[721px]:border-t min-[721px]:border-black/10 dark:min-[721px]:border-white/10">
-              <div className="flex flex-col gap-1.25">
-                {alerts.map(([type, msg], i) => (
-                  <div key={i} className={`text-xs py-1.5 px-3 rounded-md font-serif ${alertClass[type]}`}>
-                    {msg}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <NutrientRulesPanel
+            mineralCards={mineralCards}
+            alerts={alerts}
+            className="max-[720px]:order-3 min-[721px]:border-t min-[721px]:border-black/10 dark:min-[721px]:border-white/10"
+          />
 
           </div>
 
