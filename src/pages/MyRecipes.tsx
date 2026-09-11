@@ -29,9 +29,19 @@ export default function MyRecipes() {
         <header className="mb-6">
           <div className="flex items-baseline justify-between gap-4">
             <h1 className="text-2xl font-normal tracking-tight leading-tight">Mis recetas</h1>
-            <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">
-              {recipes.length} {recipes.length === 1 ? 'receta' : 'recetas'}
-            </span>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono">
+                {recipes.length} {recipes.length === 1 ? 'receta' : 'recetas'}
+              </span>
+              {recipes.length >= 2 && (
+                <Link
+                  to="/recetas/comparar"
+                  className="px-3 py-1.5 text-[11px] font-mono text-[#5B8DEF] border border-black/15 dark:border-white/15 rounded-md hover:border-[#5B8DEF] transition-colors"
+                >
+                  ⇄ Comparar
+                </Link>
+              )}
+            </div>
           </div>
           <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-mono">
             recetas guardadas desde la calculadora de dieta

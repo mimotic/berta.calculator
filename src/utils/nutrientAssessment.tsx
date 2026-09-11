@@ -3,6 +3,7 @@ import type { NutritionResult } from '../data/ingredients'
 import {
   type PathologyId,
   type NutrientKey,
+  type NutrientRule,
   PATHOLOGY_DEFS,
   NUTRIENT_META,
   computeActiveRules,
@@ -20,6 +21,21 @@ export const ALERT_CLASS: Record<AlertType, string> = {
   ok:     'bg-[#e1f5ee] text-[#0f6e56] dark:bg-[#0f3328] dark:text-[#7ad4b1]',
   warn:   'bg-[#faeeda] text-[#854f0b] dark:bg-[#3a2a10] dark:text-[#e8b980]',
   danger: 'bg-[#fcebeb] text-[#a32d2d] dark:bg-[#3a1616] dark:text-[#eb8585]',
+}
+
+/** Explicit warn threshold takes precedence over the default 85%-of-max zone. */
+export function isInWarnZone(normalized: number, rule: NutrientRule): boolean {
+  return rule.warn !== undefined
+    ? normalized >= rule.warn
+    : rule.max !== undefined && normalized > rule.max * 0.85
+}
+
+/** Traffic-light color for a normalized nutrient value against a rule. */
+export function ruleColor(normalized: number, rule: NutrientRule): string {
+  if (rule.max !== undefined && normalized > rule.max) return '#E24B4A'
+  if (isInWarnZone(normalized, rule)) return '#EF9F27'
+  if (rule.min !== undefined && normalized < rule.min) return '#EF9F27'
+  return '#1D9E75'
 }
 
 export interface NutrientAssessment {
@@ -65,14 +81,8 @@ export function buildNutrientAssessment(
     const normalized = getNormalizedValue(actual, r.kcal, rule.basis, meta.kcalFactor)
     const dUnit      = displayUnit(rule.basis, meta.unit)
 
-    // Color — explicit warn threshold takes precedence over the default 85%-of-max zone
-    const inWarnZone = rule.warn !== undefined
-      ? normalized >= rule.warn
-      : rule.max !== undefined && normalized > rule.max * 0.85
-    let color = '#1D9E75'
-    if      (rule.max !== undefined && normalized > rule.max)             color = '#E24B4A'
-    else if (inWarnZone)                                                  color = '#EF9F27'
-    else if (rule.min !== undefined && normalized < rule.min)             color = '#EF9F27'
+    const inWarnZone = isInWarnZone(normalized, rule)
+    const color = ruleColor(normalized, rule)
 
     // Bar reference
     const barMax   = rule.max ?? ((rule.min ?? 0) * 2 || 100)

@@ -9,6 +9,7 @@ import ToxicityCalculator from './pages/ToxicityCalculator.tsx'
 import HumanYearsCalculator from './pages/HumanYearsCalculator.tsx'
 import MyRecipes from './pages/MyRecipes.tsx'
 import RecipeDetail from './pages/RecipeDetail.tsx'
+import CompareRecipes from './pages/CompareRecipes.tsx'
 import PrivacyPolicy from './pages/PrivacyPolicy.tsx'
 import LegalAdvice from './pages/LegalAdvice.tsx'
 import { ThemeToggle } from './components/ThemeToggle.tsx'
@@ -24,6 +25,7 @@ const router = createHashRouter([
       { path: '/toxicidad', element: <ToxicityCalculator /> },
       { path: '/anos-humanos', element: <HumanYearsCalculator /> },
       { path: '/recetas', element: <MyRecipes /> },
+      { path: '/recetas/comparar', element: <CompareRecipes /> },
       { path: '/recetas/:id', element: <RecipeDetail /> },
       { path: '/politica-privacidad', element: <PrivacyPolicy /> },
       { path: '/aviso-legal', element: <LegalAdvice /> },
