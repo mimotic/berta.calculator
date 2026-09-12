@@ -48,6 +48,12 @@ const MICROS: { key: keyof NutritionResult; label: string; unit: string; decimal
 const A_COLOR = '#5B8DEF'
 const B_COLOR = '#EF9F27'
 
+// Shared column templates so header and rows always line up
+const COLS = 'grid grid-cols-[minmax(0,1fr)_5rem_5rem_3.5rem] md:grid-cols-[minmax(0,1fr)_7rem_7rem_4.5rem] gap-x-2 md:gap-x-4'
+const COLS_RULES = 'grid grid-cols-[minmax(0,1fr)_3.5rem_3.5rem_3rem_3.5rem] md:grid-cols-[minmax(0,1fr)_6rem_6rem_4.5rem_6rem] gap-x-2 md:gap-x-4'
+// Ingredient amounts are short ("180 g"), so the label column can keep more room on mobile
+const COLS_ING = 'grid grid-cols-[minmax(0,1fr)_3.5rem_3.5rem_3rem] md:grid-cols-[minmax(0,1fr)_7rem_7rem_4.5rem] gap-x-2 md:gap-x-4'
+
 function formatDate(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
@@ -80,13 +86,13 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
-function ColumnHeads({ a, b, showDelta = true }: { a: SavedRecipe; b: SavedRecipe; showDelta?: boolean }) {
+function ColumnHeads({ a, b, cols = COLS }: { a: SavedRecipe; b: SavedRecipe; cols?: string }) {
   return (
-    <div className={`grid ${showDelta ? 'grid-cols-[1fr_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto]'} gap-x-4 pb-2 mb-1 border-b border-black/10 dark:border-white/10 text-[10px] font-mono uppercase tracking-wider`}>
+    <div className={`${cols} pb-2 mb-1 border-b border-black/10 dark:border-white/10 text-[10px] font-mono uppercase tracking-wider`}>
       <span />
-      <span className="text-right truncate max-w-28" style={{ color: A_COLOR }} title={a.title}>A</span>
-      <span className="text-right truncate max-w-28" style={{ color: B_COLOR }} title={b.title}>B</span>
-      {showDelta && <span className="text-right text-[#9a9a95] dark:text-[#6b6b67]">Δ B−A</span>}
+      <span className="text-right" style={{ color: A_COLOR }} title={a.title}>A</span>
+      <span className="text-right" style={{ color: B_COLOR }} title={b.title}>B</span>
+      <span className="text-right text-[#9a9a95] dark:text-[#6b6b67]">Δ B−A</span>
     </div>
   )
 }
@@ -303,15 +309,13 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
     }
   })
 
-  const ingredientCols = 'grid-cols-[1fr_auto_auto_auto]'
-
   return (
     <div className="flex flex-col gap-4">
 
       {/* Ingredients */}
       <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl p-5">
         <SectionTitle>Ingredientes</SectionTitle>
-        <ColumnHeads a={a} b={b} />
+        <ColumnHeads a={a} b={b} cols={COLS_ING} />
         {union.length === 0 && (
           <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] font-mono">ninguna de las dos recetas tiene ingredientes</p>
         )}
@@ -331,8 +335,8 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
                   const onlyA = gA > 0 && gB === 0
                   const onlyB = gB > 0 && gA === 0
                   return (
-                    <li key={ing.id} className={`grid ${ingredientCols} gap-x-4 items-baseline py-1.5 text-[13px]`}>
-                      <span className="font-serif truncate">
+                    <li key={ing.id} className={`${COLS_ING} items-baseline py-1.5 text-[13px]`}>
+                      <span className="font-serif">
                         {ing.label}
                         {onlyA && <span className="ml-2 text-[10px] font-mono" style={{ color: A_COLOR }}>solo A</span>}
                         {onlyB && <span className="ml-2 text-[10px] font-mono" style={{ color: B_COLOR }}>solo B</span>}
@@ -361,7 +365,7 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
             <ColumnHeads a={a} b={b} />
             <ul className="divide-y divide-black/5 dark:divide-white/5">
               {macroRows.map(row => (
-                <li key={row.label} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-baseline py-2 text-[13px]">
+                <li key={row.label} className={`${COLS} items-baseline py-2 text-[13px]`}>
                   <span className="font-serif">{row.label}</span>
                   <span className="font-mono tabular-nums text-right whitespace-nowrap" style={{ color: row.colorA ?? 'inherit' }}>
                     {row.a.toFixed(row.decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{row.unit}</span>
@@ -400,7 +404,7 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
               ? `límites según ${unionPathologies.map(id => PATHOLOGY_DEFS[id]?.label.toLowerCase()).join(' · ')}`
               : `las recetas tienen patologías distintas · se aplica el límite más estricto de ${unionPathologies.map(id => PATHOLOGY_DEFS[id]?.label.toLowerCase()).join(' · ')}`}
         </p>
-        <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-4 pb-2 mb-1 border-b border-black/10 dark:border-white/10 text-[10px] font-mono uppercase tracking-wider">
+        <div className={`${COLS_RULES} pb-2 mb-1 border-b border-black/10 dark:border-white/10 text-[10px] font-mono uppercase tracking-wider`}>
           <span />
           <span className="text-right" style={{ color: A_COLOR }}>A</span>
           <span className="text-right" style={{ color: B_COLOR }}>B</span>
@@ -409,10 +413,10 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
         </div>
         <ul className="divide-y divide-black/5 dark:divide-white/5">
           {ruleRows.map(row => (
-            <li key={row.key} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-4 items-baseline py-2 text-[13px]">
+            <li key={row.key} className={`${COLS_RULES} items-baseline py-2 text-[13px]`}>
               <span className="font-serif">
                 {row.label.charAt(0).toUpperCase() + row.label.slice(1)}
-                <span className="text-[10px] font-mono text-[#9a9a95] dark:text-[#6b6b67] ml-1.5">{row.unit}</span>
+                <span className="block md:inline text-[10px] font-mono text-[#9a9a95] dark:text-[#6b6b67] md:ml-1.5">{row.unit}</span>
               </span>
               <span className="font-mono tabular-nums text-right" style={{ color: row.colorA ?? 'inherit' }}>{row.a.toFixed(row.decimals)}</span>
               <span className="font-mono tabular-nums text-right" style={{ color: row.colorB ?? 'inherit' }}>{row.b.toFixed(row.decimals)}</span>
@@ -452,7 +456,7 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
         <SectionTitle>Micronutrientes</SectionTitle>
         <ColumnHeads a={a} b={b} />
         <ul className="divide-y divide-black/5 dark:divide-white/5">
-          <li className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-baseline py-2 text-[13px]">
+          <li className={`${COLS} items-baseline py-2 text-[13px]`}>
             <span className="font-serif">Ratio Ca:P</span>
             <span className="font-mono tabular-nums text-right">{rA.phos > 0 ? `${(rA.ca / rA.phos).toFixed(2)}:1` : '—'}</span>
             <span className="font-mono tabular-nums text-right">{rB.phos > 0 ? `${(rB.ca / rB.phos).toFixed(2)}:1` : '—'}</span>
@@ -463,7 +467,7 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
             </span>
           </li>
           {MICROS.map(({ key, label, unit, decimals }) => (
-            <li key={key} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-baseline py-2 text-[13px]">
+            <li key={key} className={`${COLS} items-baseline py-2 text-[13px]`}>
               <span className="font-serif">{label}</span>
               <span className="font-mono tabular-nums text-right whitespace-nowrap">
                 {rA[key].toFixed(decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>
