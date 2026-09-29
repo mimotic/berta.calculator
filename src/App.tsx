@@ -1,17 +1,32 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import logo from './assets/berta_logo.png'
 import './index.css'
 
 export default function App() {
+  const [greeting, setGreeting] = useState(0)
+
   return (
-    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] flex-1 flex items-center justify-center px-4 transition-colors">
+    <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] flex-1 flex items-center justify-center px-4 py-6 transition-colors">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-10">
-          <img
-            src={logo}
-            alt="berta"
-            className="w-20 h-20 mx-auto mb-2 [image-rendering:pixelated]"
-          />
+          <button
+            type="button"
+            onClick={() => setGreeting(count => count + 1)}
+            aria-label="Saludar a Berta"
+            title="¡Saluda a Berta!"
+            className="block w-20 h-20 mx-auto mb-2 rounded-lg cursor-pointer touch-manipulation focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+          >
+            <img
+              key={greeting}
+              src={logo}
+              alt=""
+              width={80}
+              height={80}
+              draggable={false}
+              className={`w-full h-full [image-rendering:pixelated]${greeting > 0 ? ' berta-greeting' : ''}`}
+            />
+          </button>
           <h1 className="text-[32px] font-normal tracking-tight mb-2">Nutrición canina</h1>
           <p className="text-[13px] font-mono text-[#7a7a75] dark:text-[#8a8a85]">Herramientas para planificar la dieta</p>
         </div>
