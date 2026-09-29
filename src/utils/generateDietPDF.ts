@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf'
 import logoUrl from '../assets/berta_logo.png'
 import type { Values, NutritionResult } from '../data/ingredients'
-import type { Ingredient } from '../data/ingredients'
+import { INGREDIENT_GROUPS, ingredientGrams, formatIngredientQuantity, hasPartialNutrition, PARTIAL_NUTRITION_NOTE, type Ingredient } from '../data/ingredients'
 import type { PathologyId, NutrientKey } from '../data/pathologies'
 import {
   PATHOLOGY_DEFS,
@@ -120,15 +120,8 @@ export async function generateDietPDF(
   doc.text('INGREDIENTES', margin, y)
   y += 5
 
-  const groups: { label: string; group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat' }[] = [
-    { label: 'Hidratos', group: 'hc' },
-    { label: 'Verduras', group: 'verdura' },
-    { label: 'Frutas', group: 'fruta' },
-    { label: 'Proteína', group: 'prot' },
-    { label: 'Grasa', group: 'fat' },
-  ]
 
-  for (const { label, group } of groups) {
+  for (const { label, group } of INGREDIENT_GROUPS) {
     const items = activeIngredients.filter(i => i.group === group && (values[i.id] ?? 0) > 0)
     if (items.length === 0) continue
 
@@ -145,7 +138,7 @@ export async function generateDietPDF(
       setColor(doc, BRAND)
       doc.text(`${ing.label}`, margin + 3, y)
       doc.setFont('helvetica', 'bold')
-      doc.text(`${g} g`, pageW - margin, y, { align: 'right' })
+      doc.text(formatIngredientQuantity(ing, g), pageW - margin, y, { align: 'right' })
       y += 5
     }
     y += 1
@@ -153,6 +146,15 @@ export async function generateDietPDF(
 
   drawHRule(doc, y)
   y += 7
+
+  if (hasPartialNutrition(activeIngredients, values)) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    setColor(doc, MUTED)
+    const lines = doc.splitTextToSize(PARTIAL_NUTRITION_NOTE, pageW - margin * 2)
+    doc.text(lines, margin, y)
+    y += lines.length * 4 + 5
+  }
 
   // ── Macros (2-column) ──────────────────────────────────────────────────────
   doc.setFont('helvetica', 'bold')
@@ -163,7 +165,7 @@ export async function generateDietPDF(
 
   const diffK = r.kcal - target
   const kcalColor = Math.abs(diffK) <= 8 ? GREEN : diffK < 0 ? ORANGE : RED
-  const totalG = activeIngredients.reduce((s, i) => s + (values[i.id] ?? 0), 0)
+  const totalG = activeIngredients.reduce((s, i) => s + ingredientGrams(i, values[i.id] ?? 0), 0)
 
   const macros = [
     { label: 'kcal', value: r.kcal.toFixed(1), color: kcalColor },

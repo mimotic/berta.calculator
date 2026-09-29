@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import '../index.css'
-import { INGREDIENTS, calcNutrition } from '../data/ingredients'
-import type { Values } from '../data/ingredients'
+import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, withUnitWeights, hasPartialNutrition, PARTIAL_NUTRITION_NOTE } from '../data/ingredients'
+import type { Values, UnitWeights } from '../data/ingredients'
 import { getRecipe, saveRecipe, updateRecipe, type SavedRecipe } from '../data/recipes'
 import { type PathologyId, PATHOLOGY_DEFS } from '../data/pathologies'
 import { generateDietPDF } from '../utils/generateDietPDF'
@@ -19,6 +19,7 @@ const STORAGE_KEY = 'foodCalculator.kcalTarget'
 const INGREDIENTS_STORAGE_KEY = 'foodCalculator.selectedIngredients'
 const PATHOLOGIES_STORAGE_KEY = 'foodCalculator.pathologies'
 const VALUES_STORAGE_KEY = 'foodCalculator.values'
+const UNIT_WEIGHTS_STORAGE_KEY = 'foodCalculator.unitWeights'
 const DEFAULT_TARGET = 210
 
 function readStoredTarget(): number | null {
@@ -53,6 +54,18 @@ function readStoredValues(): Values | null {
     return parsed as Values
   } catch {
     return null
+  }
+}
+
+function readStoredUnitWeights(): UnitWeights {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(UNIT_WEIGHTS_STORAGE_KEY) ?? '{}')
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, number] =>
+      typeof entry[1] === 'number' && Number.isFinite(entry[1]) && entry[1] > 0
+    ))
+  } catch {
+    return {}
   }
 }
 
@@ -228,6 +241,7 @@ export default function FoodCalculator() {
     return stored ? { ...defaults, ...stored } : defaults
   })
   const [microOpen, setMicroOpen] = useState(false)
+  const [unitWeights, setUnitWeights] = useState<UnitWeights>(() => editingRecipe ? editingRecipe.unitWeights ?? {} : readStoredUnitWeights())
   const [saveOpen, setSaveOpen] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
 
@@ -295,8 +309,17 @@ export default function FoodCalculator() {
 
   const TARGET = target
 
-  const activeIngredients = INGREDIENTS.filter(i => selectedIds.includes(i.id))
+  const activeIngredients = withUnitWeights(INGREDIENTS.filter(i => selectedIds.includes(i.id)), unitWeights)
   const r = calcNutrition(values, activeIngredients)
+
+  const handleUnitWeightChange = (id: string, grams: number) => {
+    if (!Number.isFinite(grams) || grams <= 0) return
+    const next = { ...unitWeights, [id]: grams }
+    if (!editingRecipe) {
+      try { localStorage.setItem(UNIT_WEIGHTS_STORAGE_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ }
+    }
+    setUnitWeights(next)
+  }
 
   const handleChange = (id: string, val: number) =>
     setValues(prev => {
@@ -322,10 +345,10 @@ export default function FoodCalculator() {
       if (g > 0) recipeValues[ing.id] = g
     }
     if (editingRecipe) {
-      const updated = updateRecipe(editingRecipe.id, { title, kcalTarget: TARGET, pathologies, values: recipeValues })
+      const updated = updateRecipe(editingRecipe.id, { title, kcalTarget: TARGET, pathologies, values: recipeValues, unitWeights })
       if (updated) setEditingRecipe(updated)
     } else {
-      saveRecipe({ title, kcalTarget: TARGET, pathologies, values: recipeValues })
+      saveRecipe({ title, kcalTarget: TARGET, pathologies, values: recipeValues, unitWeights })
     }
     setSaveOpen(false)
     setJustSaved(true)
@@ -334,7 +357,7 @@ export default function FoodCalculator() {
   const diffK     = r.kcal - TARGET
   const pct       = Math.min(100, (r.kcal / TARGET) * 100)
   const kcalColor = Math.abs(diffK) <= 8 ? '#1D9E75' : diffK < 0 ? '#EF9F27' : '#E24B4A'
-  const totalG    = activeIngredients.reduce((s, i) => s + (values[i.id] ?? 0), 0)
+  const totalG    = activeIngredients.reduce((s, i) => s + ingredientGrams(i, values[i.id] ?? 0), 0)
 
   const pathologyChip = pathologies.length > 0
     ? pathologies.map(id => PATHOLOGY_DEFS[id].label.toLowerCase()).join(' · ') + ' · canina'
@@ -362,7 +385,7 @@ export default function FoodCalculator() {
             <h1 className="text-2xl font-normal tracking-tight leading-tight">Calculadora dieta</h1>
             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono shrink-0">{pathologyChip}</span>
           </div>
-          <div className="flex items-center justify-between gap-4 mt-1">
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
             <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] font-mono">
               objetivo: {TARGET} kcal{' '}
               <button
@@ -411,19 +434,11 @@ export default function FoodCalculator() {
             <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
               Ingredientes
             </div>
-            <SliderGroup label="Hidratos"  group="hc"      values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
-            <div className="mt-3">
-              <SliderGroup label="Verduras" group="verdura" values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
-            </div>
-            <div className="mt-3">
-              <SliderGroup label="Frutas"   group="fruta"   values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
-            </div>
-            <div className="mt-3">
-              <SliderGroup label="Proteína" group="prot"    values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
-            </div>
-            <div className="mt-3">
-              <SliderGroup label="Grasa"    group="fat"     values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
-            </div>
+            {INGREDIENT_GROUPS.map(({ group, label }) => (
+              <div key={group} className="mt-3 first:mt-0">
+                <SliderGroup label={label} group={group} values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} onUnitWeightChange={handleUnitWeightChange} />
+              </div>
+            ))}
             <div className="mt-4 flex items-center gap-3">
               <button
                 onClick={() => setEditingIngredients(true)}
@@ -444,6 +459,9 @@ export default function FoodCalculator() {
           <div className="bg-black/10 dark:bg-white/10 max-[720px]:hidden min-[721px]:row-span-2"></div>
 
           <div className="p-5 bg-[#fafaf7] dark:bg-[#141412] flex flex-col gap-5 max-[720px]:order-2 min-[721px]:row-span-2">
+            {hasPartialNutrition(activeIngredients, values) && (
+              <p className="text-xs leading-relaxed text-[#6b6b67] dark:text-[#8a8a85]">{PARTIAL_NUTRITION_NOTE}</p>
+            )}
             <div>
               <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
                 Energía y macros

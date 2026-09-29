@@ -1,11 +1,11 @@
-import type { Ingredient } from '../data/ingredients'
+import type { Ingredient, NutritionKey } from '../data/ingredients'
 
 interface IngredientModalProps {
   ingredient: Ingredient
   onClose: () => void
 }
 
-const ROWS: { label: string; key: keyof Ingredient; unit: string; decimals: number }[] = [
+const ROWS: { label: string; key: NutritionKey; unit: string; decimals: number }[] = [
   { label: 'Energía',      key: 'kcal',  unit: 'kcal', decimals: 0 },
   { label: 'Proteína',     key: 'prot',  unit: 'g',    decimals: 1 },
   { label: 'Grasa',        key: 'fat',   unit: 'g',    decimals: 1 },
@@ -50,6 +50,11 @@ export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
             <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono mt-0.5">
               por 100 g{ingredient.isOil ? ' / ml' : ''}
             </p>
+            {ingredient.portion?.grams && (
+              <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono mt-1">
+                1 {ingredient.portion.singular} = {ingredient.portion.grams.toLocaleString('es-ES')} g
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -60,21 +65,31 @@ export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
           </button>
         </div>
 
-        <ul className="divide-y divide-black/5 dark:divide-white/5 px-4 pb-2 max-h-[60vh] overflow-y-auto">
+        <div className="max-h-[60vh] overflow-y-auto">
+        {ingredient.sourceUrl && (
+          <div className="px-4 pt-3 text-xs text-[#6b6b67] dark:text-[#8a8a85]">
+            <a href={ingredient.sourceUrl} target="_blank" rel="noreferrer" className="underline">Ficha de Edgard & Cooper</a>
+            <p className="mt-2">{ingredient.nutritionNote}</p>
+          </div>
+        )}
+        <ul className="divide-y divide-black/5 dark:divide-white/5 px-4 pb-2">
           {ROWS.map(({ label, key, unit, decimals }) => {
             const raw = ingredient[key]
-            const val = typeof raw === 'number' ? raw.toFixed(decimals) : String(raw)
+            const estimated = key === 'carb' && !!ingredient.declaredNutrients && raw > 0
+            const known = !ingredient.declaredNutrients || ingredient.declaredNutrients.includes(key) || estimated
+            const val = known ? `${estimated ? '≈ ' : ''}${raw.toFixed(decimals)}` : 'No declarado'
             return (
               <li key={key} className="flex items-baseline justify-between py-2 text-[13px]">
                 <span className="font-serif text-[#1a1a18] dark:text-[#e8e6e0]">{label}</span>
                 <span className="font-mono tabular-nums">
                   {val}
-                  <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>
+                  {known && <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>}
                 </span>
               </li>
             )
           })}
         </ul>
+        </div>
       </div>
     </div>
   )

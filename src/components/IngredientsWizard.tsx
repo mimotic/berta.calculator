@@ -1,16 +1,10 @@
 import { useState } from 'react'
-import { INGREDIENTS } from '../data/ingredients'
+import { INGREDIENTS, INGREDIENT_GROUPS } from '../data/ingredients'
 import { Header } from './Header'
 
-type Group = 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat'
-
-const STEPS: Array<{ group: Group; title: string; subtitle: string }> = [
-  { group: 'hc',      title: 'Hidratos', subtitle: 'paso 1 · hidratos' },
-  { group: 'verdura', title: 'Verduras', subtitle: 'paso 2 · verduras' },
-  { group: 'fruta',   title: 'Frutas',   subtitle: 'paso 3 · frutas' },
-  { group: 'prot',    title: 'Proteína', subtitle: 'paso 4 · proteína' },
-  { group: 'fat',     title: 'Grasa',    subtitle: 'paso 5 · grasa' },
-]
+const STEPS = INGREDIENT_GROUPS.map(({ group, label }, index) => ({
+  group, title: label, subtitle: `paso ${index + 1} · ${label.toLowerCase()}`,
+}))
 
 type Props = {
   initial: string[]
@@ -71,7 +65,7 @@ export function IngredientsWizard({ initial, onSubmit, onCancel }: Props) {
                     className="accent-black dark:accent-white w-4 h-4 shrink-0"
                   />
                   <span className="text-[13px] font-serif flex-1">{ing.label}</span>
-                  <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono tabular-nums">
+                  <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono tabular-nums shrink-0">
                     {ing.kcal} kcal/100{ing.isOil ? 'ml' : 'g'}
                   </span>
                 </label>

@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router'
 import '../index.css'
-import { INGREDIENTS, calcNutrition, type NutritionResult } from '../data/ingredients'
+import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, ingredientUnit, withUnitWeights, hasPartialNutrition, PARTIAL_NUTRITION_NOTE, type NutritionResult } from '../data/ingredients'
 import { loadRecipes, type SavedRecipe } from '../data/recipes'
 import {
   PATHOLOGY_DEFS,
@@ -15,13 +15,6 @@ import { Header } from '../components/Header'
 import { MacroDonut } from '../components/MacroDonut'
 import { ALERT_CLASS, buildNutrientAssessment, ruleColor } from '../utils/nutrientAssessment'
 
-const GROUP_LABELS: { group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat'; label: string }[] = [
-  { group: 'hc', label: 'Hidratos' },
-  { group: 'verdura', label: 'Verduras' },
-  { group: 'fruta', label: 'Frutas' },
-  { group: 'prot', label: 'Proteína' },
-  { group: 'fat', label: 'Grasa' },
-]
 
 const NUTRIENT_ORDER: NutrientKey[] = ['phosphorus', 'potassium', 'sodium', 'protein', 'fat', 'fiber']
 
@@ -248,15 +241,15 @@ export default function CompareRecipes() {
 }
 
 function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
-  const usedA = INGREDIENTS.filter(i => (a.values[i.id] ?? 0) > 0)
-  const usedB = INGREDIENTS.filter(i => (b.values[i.id] ?? 0) > 0)
+  const usedA = withUnitWeights(INGREDIENTS.filter(i => (a.values[i.id] ?? 0) > 0), a.unitWeights)
+  const usedB = withUnitWeights(INGREDIENTS.filter(i => (b.values[i.id] ?? 0) > 0), b.unitWeights)
   const usedIds = new Set([...usedA, ...usedB].map(i => i.id))
   const union = INGREDIENTS.filter(i => usedIds.has(i.id))
 
   const rA = calcNutrition(a.values, usedA)
   const rB = calcNutrition(b.values, usedB)
-  const totalA = usedA.reduce((s, i) => s + (a.values[i.id] ?? 0), 0)
-  const totalB = usedB.reduce((s, i) => s + (b.values[i.id] ?? 0), 0)
+  const totalA = usedA.reduce((s, i) => s + ingredientGrams(i, a.values[i.id] ?? 0), 0)
+  const totalB = usedB.reduce((s, i) => s + ingredientGrams(i, b.values[i.id] ?? 0), 0)
 
   const assessA = buildNutrientAssessment(rA, a.kcalTarget, a.pathologies)
   const assessB = buildNutrientAssessment(rB, b.kcalTarget, b.pathologies)
@@ -312,6 +305,9 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
   return (
     <div className="flex flex-col gap-4">
 
+      {(hasPartialNutrition(usedA, a.values) || hasPartialNutrition(usedB, b.values)) && (
+        <p className="text-xs leading-relaxed text-[#6b6b67] dark:text-[#8a8a85]">{PARTIAL_NUTRITION_NOTE}</p>
+      )}
       {/* Ingredients */}
       <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl p-5">
         <SectionTitle>Ingredientes</SectionTitle>
@@ -319,7 +315,7 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
         {union.length === 0 && (
           <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85] font-mono">ninguna de las dos recetas tiene ingredientes</p>
         )}
-        {GROUP_LABELS.map(({ group, label }) => {
+        {INGREDIENT_GROUPS.map(({ group, label }) => {
           const items = union.filter(i => i.group === group)
           if (items.length === 0) return null
           return (
@@ -331,7 +327,6 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
                 {items.map(ing => {
                   const gA = a.values[ing.id] ?? 0
                   const gB = b.values[ing.id] ?? 0
-                  const unit = ing.isOil ? 'ml' : 'g'
                   const onlyA = gA > 0 && gB === 0
                   const onlyB = gB > 0 && gA === 0
                   return (
@@ -341,11 +336,11 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
                         {onlyA && <span className="ml-2 text-[10px] font-mono" style={{ color: A_COLOR }}>solo A</span>}
                         {onlyB && <span className="ml-2 text-[10px] font-mono" style={{ color: B_COLOR }}>solo B</span>}
                       </span>
-                      <span className={`font-mono tabular-nums text-right whitespace-nowrap ${gA === 0 ? 'text-[#c0beb8] dark:text-[#4a4a46]' : ''}`}>
-                        {gA}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>
+                      <span className={`font-mono tabular-nums text-right ${gA === 0 ? 'text-[#c0beb8] dark:text-[#4a4a46]' : ''}`}>
+                        {gA}{' '}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85]">{ingredientUnit(ing, gA)}</span>
                       </span>
-                      <span className={`font-mono tabular-nums text-right whitespace-nowrap ${gB === 0 ? 'text-[#c0beb8] dark:text-[#4a4a46]' : ''}`}>
-                        {gB}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>
+                      <span className={`font-mono tabular-nums text-right ${gB === 0 ? 'text-[#c0beb8] dark:text-[#4a4a46]' : ''}`}>
+                        {gB}{' '}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85]">{ingredientUnit(ing, gB)}</span>
                       </span>
                       <span className="text-right"><DeltaCell a={gA} b={gB} decimals={0} /></span>
                     </li>

@@ -1,4 +1,4 @@
-import { calcNutrition, type Ingredient } from '../data/ingredients'
+import { calcNutrition, ingredientGrams, type Ingredient } from '../data/ingredients'
 
 const DONUT_C = 2 * Math.PI * 40
 
@@ -91,22 +91,22 @@ const WEIGHT_GROUPS: { group: Ingredient['group']; name: string; color: string }
   { group: 'verdura', name: 'Verduras', color: '#7CB342' },
   { group: 'fruta',   name: 'Frutas',   color: '#C2559C' },
   { group: 'fat',     name: 'Grasas',   color: '#EF9F27' },
+  { group: 'treats',  name: 'Treats',   color: '#9270B8' },
 ]
 
 export function WeightDonut({ ingredients, values }: { ingredients: Ingredient[]; values: Record<string, number> }) {
   const sumGroup = (group: Ingredient['group']) =>
-    ingredients.filter(i => i.group === group).reduce((s, i) => s + (values[i.id] ?? 0), 0)
+    ingredients.filter(i => i.group === group).reduce((s, i) => s + ingredientGrams(i, values[i.id] ?? 0), 0)
 
   const grams = WEIGHT_GROUPS.map(g => sumGroup(g.group))
   const total = grams.reduce((s, g) => s + g, 0)
   const C     = DONUT_C
 
-  let acc = 0
   const legend = WEIGHT_GROUPS.map((g, i) => {
     const pct = total > 0 ? (grams[i] / total) * 100 : 0
     const len = (pct / 100) * C
-    const offset = C - acc
-    acc += len
+    const precedingGrams = grams.slice(0, i).reduce((sum, weight) => sum + weight, 0)
+    const offset = C - (total > 0 ? precedingGrams / total * C : 0)
     return { ...g, g: grams[i], pct, len, offset }
   })
 

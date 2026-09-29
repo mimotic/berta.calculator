@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router'
 import '../index.css'
-import { INGREDIENTS, calcNutrition } from '../data/ingredients'
+import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, ingredientUnit, withUnitWeights, hasPartialNutrition, PARTIAL_NUTRITION_NOTE } from '../data/ingredients'
 import { getRecipe } from '../data/recipes'
 import { PATHOLOGY_DEFS } from '../data/pathologies'
 import { StatCard } from '../components/StatCard'
@@ -8,13 +8,6 @@ import { MacroDonut } from '../components/MacroDonut'
 import { NutrientRulesPanel } from '../components/NutrientRulesPanel'
 import { buildNutrientAssessment } from '../utils/nutrientAssessment'
 
-const GROUP_LABELS: { group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat'; label: string }[] = [
-  { group: 'hc', label: 'Hidratos' },
-  { group: 'verdura', label: 'Verduras' },
-  { group: 'fruta', label: 'Frutas' },
-  { group: 'prot', label: 'Proteína' },
-  { group: 'fat', label: 'Grasa' },
-]
 
 function formatDate(iso: string): string {
   const d = new Date(iso)
@@ -48,9 +41,9 @@ export default function RecipeDetail() {
     )
   }
 
-  const usedIngredients = INGREDIENTS.filter(i => (recipe.values[i.id] ?? 0) > 0)
+  const usedIngredients = withUnitWeights(INGREDIENTS.filter(i => (recipe.values[i.id] ?? 0) > 0), recipe.unitWeights)
   const r = calcNutrition(recipe.values, usedIngredients)
-  const totalG = usedIngredients.reduce((s, i) => s + (recipe.values[i.id] ?? 0), 0)
+  const totalG = usedIngredients.reduce((s, i) => s + ingredientGrams(i, recipe.values[i.id] ?? 0), 0)
 
   const diffK = r.kcal - recipe.kcalTarget
   const pct = Math.min(100, (r.kcal / recipe.kcalTarget) * 100)
@@ -106,7 +99,10 @@ export default function RecipeDetail() {
                   esta receta no tiene ingredientes
                 </p>
               )}
-              {GROUP_LABELS.map(({ group, label }) => {
+              {hasPartialNutrition(usedIngredients, recipe.values) && (
+                <p className="text-xs leading-relaxed text-[#6b6b67] dark:text-[#8a8a85] mb-4">{PARTIAL_NUTRITION_NOTE}</p>
+              )}
+              {INGREDIENT_GROUPS.map(({ group, label }) => {
                 const items = usedIngredients.filter(i => i.group === group)
                 if (items.length === 0) return null
                 return (
@@ -121,7 +117,7 @@ export default function RecipeDetail() {
                           <span className="font-mono tabular-nums whitespace-nowrap">
                             {recipe.values[ing.id]}
                             <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">
-                              {ing.isOil ? 'ml' : 'g'}
+                              {ingredientUnit(ing, recipe.values[ing.id])}
                             </span>
                           </span>
                         </li>

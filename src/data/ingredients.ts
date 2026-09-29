@@ -1,11 +1,17 @@
 export interface Ingredient {
   id: string
   label: string
-  group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat'
+  group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat' | 'treats'
   val: number
   max: number
   step: number
   isOil: boolean
+  // Las cantidades de estos ingredientes se guardan en unidades, no en gramos.
+  portion?: { singular: string; plural: string; grams?: number }
+  sourceUrl?: string
+  // Los ceros de campos no publicados no representan ausencia del nutriente.
+  declaredNutrients?: NutritionKey[]
+  nutritionNote?: string
   // true en variantes crudas: se hervirán después, así que se les aplica la
   // pérdida de minerales por lixiviación (BOILING_RETENTION). Los ingredientes
   // cocidos ya tienen esas pérdidas descontadas en sus valores.
@@ -31,6 +37,22 @@ export interface Ingredient {
   b9: number
   b12: number
   fiber: number
+}
+
+export type NutritionKey = 'kcal' | 'prot' | 'fat' | 'carb' | 'fiber' | 'phos' | 'pot' | 'ca' | 'na' | 'fe' | 'zn' | 'vitA' | 'vitD' | 'vitE' | 'vitC' | 'b1' | 'b2' | 'b3' | 'b6' | 'b9' | 'b12'
+
+export const INGREDIENT_GROUPS: { group: Ingredient['group']; label: string }[] = [
+  { group: 'hc', label: 'Hidratos' },
+  { group: 'verdura', label: 'Verduras' },
+  { group: 'fruta', label: 'Frutas' },
+  { group: 'prot', label: 'Proteína' },
+  { group: 'fat', label: 'Grasa' },
+  { group: 'treats', label: 'Treats' },
+]
+
+const UNREPORTED_MICROS = {
+  phos: 0, pot: 0, ca: 0, na: 0, fe: 0, zn: 0,
+  vitA: 0, vitD: 0, vitE: 0, vitC: 0, b1: 0, b2: 0, b3: 0, b6: 0, b9: 0, b12: 0,
 }
 
 export const INGREDIENTS: Ingredient[] = [
@@ -90,7 +112,58 @@ export const INGREDIENTS: Ingredient[] = [
   { id:'yema',      label:'Yema de huevo',            group:'fat',  val:0,  max:20,  step:1,    isOil:false, kcal:322, prot:15.9, fat:26.5, phos:443, pot:102, carb:3.6,  ca:129, na:48,  fe:2.73, zn:2.30, vitA:381,  vitD:5.4,  vitE:2.58, vitC:0,    b1:0.176, b2:0.528, b3:0.02,  b6:0.35,  b9:146, b12:2.0,  fiber:0   },
   { id:'aceite',    label:'Aceite oliva (ml)',        group:'fat',  val:0,  max:20,  step:0.25, isOil:true,  kcal:884, prot:0,    fat:100,  phos:0,   pot:1,   carb:0,    ca:1,   na:2,   fe:0.56, zn:0,    vitA:0,    vitD:0,    vitE:14.35,vitC:0,    b1:0,     b2:0,     b3:0,     b6:0,     b9:0,   b12:0,    fiber:0   },
   { id:'aceite_coco', label:'Aceite de coco (ml)',    group:'fat',  val:0,  max:20,  step:0.25, isOil:true,  kcal:892, prot:0,    fat:100,  phos:0,   pot:0,   carb:0,    ca:0,   na:0,   fe:0,    zn:0,    vitA:0,    vitD:0,    vitE:0.11, vitC:0,    b1:0,     b2:0,     b3:0,     b6:0,     b9:0,   b12:0,    fiber:0   },
+  // Fichas oficiales de Edgard & Cooper, consultadas el 29/09/2026.
+  // El fabricante no publica peso por pieza ni micronutrientes.
+  {
+    ...UNREPORTED_MICROS,
+    id: 'ec_bocaditos_manzana_arandanos', label: 'Edgard & Cooper · Bocaditos de manzana y arándanos',
+    group: 'treats', val: 0, max: 60, step: 1, isOil: false,
+    portion: { singular: 'premio', plural: 'premios' },
+    sourceUrl: 'https://www.edgardcooper.com/es/products/dog-bites-apple-blueberry/',
+    kcal: 266.8, prot: 5.5, fat: 2, fiber: 5.3, carb: 63.8,
+    declaredNutrients: ['kcal', 'prot', 'fat', 'fiber'],
+    nutritionNote: 'Hidratos estimados por diferencia: 100 − proteína 5,5 − grasa 2 − fibra 5,3 − cenizas 3,4 − humedad 20 = 63,8 g/100 g. Minerales y vitaminas no declarados.',
+  },
+  {
+    ...UNREPORTED_MICROS,
+    id: 'ec_galletas_manzana_arandanos', label: 'Edgard & Cooper · Galletas de manzana y arándanos',
+    group: 'treats', val: 0, max: 20, step: 1, isOil: false,
+    portion: { singular: 'galleta', plural: 'galletas' },
+    sourceUrl: 'https://www.edgardcooper.com/es/products/dog-biscuits-apple-blueberry/',
+    kcal: 349, prot: 7.7, fat: 8, fiber: 3.5, carb: 0,
+    declaredNutrients: ['kcal', 'prot', 'fat', 'fiber'],
+    nutritionNote: 'Hidratos, minerales y vitaminas no declarados. No se calculan los hidratos por diferencia porque la ficha no indica la humedad.',
+  },
 ]
+
+export type UnitWeights = Record<string, number>
+
+export function withUnitWeights(ingredients: Ingredient[], weights: UnitWeights = {}): Ingredient[] {
+  return ingredients.map(ing => {
+    const grams = weights[ing.id]
+    return ing.portion && Number.isFinite(grams) && grams > 0
+      ? { ...ing, portion: { ...ing.portion, grams } }
+      : ing
+  })
+}
+
+export function ingredientGrams(ing: Ingredient, quantity: number): number {
+  return ing.portion ? quantity * (ing.portion.grams ?? 0) : quantity
+}
+
+export function ingredientUnit(ing: Ingredient, quantity: number): string {
+  return ing.portion ? (quantity === 1 ? ing.portion.singular : ing.portion.plural) : ing.isOil ? 'ml' : 'g'
+}
+
+export function formatIngredientQuantity(ing: Ingredient, quantity: number): string {
+  return `${quantity.toLocaleString('es-ES', { maximumFractionDigits: 2 })} ${ingredientUnit(ing, quantity)}`
+}
+
+export const PARTIAL_NUTRITION_NOTE = 'Cálculo parcial: los Treats no declaran minerales ni vitaminas; las galletas tampoco declaran hidratos. Estos datos no se suman y no equivalen a cero. Las valoraciones nutricionales pueden estar incompletas.'
+
+export function hasPartialNutrition(ingredients: Ingredient[], values: Values): boolean {
+  return ingredients.some(ing => ing.declaredNutrients && (values[ing.id] ?? 0) > 0)
+}
 
 // kcal ranges: upTo is exclusive upper bound (Infinity = no limit)
 const KCAL_RANGES: { upTo: number; factor: number }[] = [
@@ -113,6 +186,7 @@ const KCAL_RANGES: { upTo: number; factor: number }[] = [
 const MAX_HEADROOM = 1.3
 
 export function getIngredientMax(ing: Ingredient, targetKcal: number): number {
+  if (ing.portion) return ing.max
   const range = KCAL_RANGES.find(r => targetKcal < r.upTo) ?? KCAL_RANGES[KCAL_RANGES.length - 1]
   const raw = ing.max * range.factor * MAX_HEADROOM
   return Math.max(ing.step, Math.round(raw / ing.step) * ing.step)
@@ -131,7 +205,7 @@ export function calcNutrition(values: Values, ingredients: Ingredient[] = INGRED
   let ca = 0, na = 0, fe = 0, zn = 0, vitA = 0, vitD = 0, vitE = 0, fiber = 0
   let vitC = 0, b1 = 0, b2 = 0, b3 = 0, b6 = 0, b9 = 0, b12 = 0
   for (const ing of ingredients) {
-    const g = values[ing.id] ?? 0
+    const g = ingredientGrams(ing, values[ing.id] ?? 0)
     const retention = ing.isRaw ? BOILING_RETENTION : 1
     kcal  += (g / 100) * ing.kcal
     prot  += (g / 100) * ing.prot

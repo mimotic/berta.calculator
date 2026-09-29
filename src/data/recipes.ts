@@ -1,4 +1,4 @@
-import type { Values } from './ingredients'
+import type { Values, UnitWeights } from './ingredients'
 import type { PathologyId } from './pathologies'
 
 export interface SavedRecipe {
@@ -8,6 +8,7 @@ export interface SavedRecipe {
   kcalTarget: number
   pathologies: PathologyId[]
   values: Values
+  unitWeights?: UnitWeights
 }
 
 const RECIPES_STORAGE_KEY = 'foodCalculator.recipes'
