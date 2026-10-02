@@ -215,10 +215,8 @@ export default function FoodCalculator() {
   const [editingGoal, setEditingGoal] = useState(false)
   const [pathologies, setPathologies] = useState<PathologyId[] | null>(() => editingRecipe?.pathologies ?? readStoredPathologies())
   const [editingPathology, setEditingPathology] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<string[]>(() =>
-    editingRecipe
-      ? Object.keys(editingRecipe.values)
-      : readStoredIngredients() ?? INGREDIENTS.map(i => i.id)
+  const [selectedIds, setSelectedIds] = useState<string[] | null>(() =>
+    editingRecipe ? Object.keys(editingRecipe.values) : readStoredIngredients()
   )
   const [editingIngredients, setEditingIngredients] = useState(false)
   const [values, setValues] = useState<Values>(() => {
@@ -283,12 +281,12 @@ export default function FoodCalculator() {
     )
   }
 
-  if (editingIngredients) {
+  if (selectedIds === null || editingIngredients) {
     return (
       <IngredientsWizard
-        initial={selectedIds}
+        initial={selectedIds ?? []}
         onSubmit={commitIngredients}
-        onCancel={() => setEditingIngredients(false)}
+        onCancel={editingIngredients ? () => setEditingIngredients(false) : undefined}
       />
     )
   }

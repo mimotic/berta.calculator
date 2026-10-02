@@ -29,6 +29,17 @@ export function IngredientsWizard({ initial, onSubmit, onCancel }: Props) {
     })
   }
 
+  const setAll = (checked: boolean) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      for (const ing of items) {
+        if (checked) next.add(ing.id)
+        else next.delete(ing.id)
+      }
+      return next
+    })
+  }
+
   return (
     <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] min-h-screen py-8 px-4 transition-colors">
       <div className="max-w-220 mx-auto">
@@ -46,8 +57,25 @@ export function IngredientsWizard({ initial, onSubmit, onCancel }: Props) {
         </header>
 
         <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl p-5">
-          <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
-            {current.title}
+          <div className="flex items-baseline justify-between gap-3 mb-4">
+            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] font-mono">
+              {current.title}
+            </div>
+            <div className="flex items-center gap-2 text-[11px] font-mono text-[#6b6b67] dark:text-[#8a8a85] shrink-0">
+              <button
+                onClick={() => setAll(true)}
+                className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
+              >
+                marcar todo
+              </button>
+              <span>·</span>
+              <button
+                onClick={() => setAll(false)}
+                className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
+              >
+                desmarcar todo
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
