@@ -10,6 +10,7 @@ import {
   getNormalizedValue,
   displayUnit,
 } from '../data/pathologies'
+import { macroDistribution } from './macroDistribution'
 
 const NUTRIENT_ORDER: NutrientKey[] = ['phosphorus', 'potassium', 'sodium', 'protein', 'fat', 'fiber']
 
@@ -18,6 +19,7 @@ const MUTED = '#6b6b67'
 const GREEN = '#1D9E75'
 const ORANGE = '#EF9F27'
 const RED = '#E24B4A'
+const TRACK = '#e5e2dc'
 
 function hexToRgb(hex: string): [number, number, number] {
   const r = parseInt(hex.slice(1, 3), 16)
@@ -34,6 +36,76 @@ function drawHRule(doc: jsPDF, y: number, x = 14, w = 182) {
   doc.setDrawColor(220, 218, 214)
   doc.setLineWidth(0.3)
   doc.line(x, y, x + w, y)
+}
+
+// Traza un arco con curvas de Bézier (una por tramo de ≤90°). 0° queda arriba
+// y el sentido es horario, igual que el donut de la calculadora.
+function strokeArc(doc: jsPDF, cx: number, cy: number, radius: number, fromDeg: number, toDeg: number) {
+  const toRad = (deg: number) => ((deg - 90) * Math.PI) / 180
+  const chunks = Math.max(1, Math.ceil((toDeg - fromDeg) / 90))
+  const sweep = (toRad(toDeg) - toRad(fromDeg)) / chunks
+  const k = (4 / 3) * Math.tan(sweep / 4) * radius
+  const curves: number[][] = []
+  for (let i = 0; i < chunks; i++) {
+    const a0 = toRad(fromDeg) + i * sweep
+    const a1 = a0 + sweep
+    const x0 = Math.cos(a0) * radius, y0 = Math.sin(a0) * radius
+    const x3 = Math.cos(a1) * radius, y3 = Math.sin(a1) * radius
+    curves.push([
+      -k * Math.sin(a0), k * Math.cos(a0),
+      x3 + k * Math.sin(a1) - x0, y3 - k * Math.cos(a1) - y0,
+      x3 - x0, y3 - y0,
+    ])
+  }
+  const start = toRad(fromDeg)
+  doc.lines(curves, cx + Math.cos(start) * radius, cy + Math.sin(start) * radius, [1, 1], 'S')
+}
+
+// Donut de distribución de macros (% kcal) con su leyenda a la derecha. Ocupa
+// 20 mm de alto, lo mismo que las dos filas de la rejilla de macros.
+// (x, y) es la esquina superior izquierda; right, el borde derecho de la leyenda.
+function drawMacroDonut(doc: jsPDF, r: NutritionResult, x: number, y: number, right: number) {
+  const macros = macroDistribution(r)
+  const radius = 8.8
+  const cx = x + 10.2
+  const cy = y + 10.2
+
+  doc.setLineCap('butt')
+  doc.setLineWidth(2.8)
+  doc.setDrawColor(...hexToRgb(TRACK))
+  doc.circle(cx, cy, radius, 'S')
+  let fromDeg = 0
+  for (const m of macros) {
+    const toDeg = fromDeg + (m.pct / 100) * 360
+    if (m.pct > 0) {
+      doc.setDrawColor(...hexToRgb(m.color))
+      strokeArc(doc, cx, cy, radius, fromDeg, toDeg)
+    }
+    fromDeg = toDeg
+  }
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(5.5)
+  setColor(doc, MUTED)
+  doc.text('macros', cx, cy - 0.3, { align: 'center' })
+  doc.text('% kcal', cx, cy + 2.1, { align: 'center' })
+
+  const legendX = x + 25
+  macros.forEach((m, i) => {
+    const ly = cy - 6 + i * 7
+    doc.setFillColor(...hexToRgb(m.color))
+    doc.circle(legendX + 1, ly - 1, 1, 'F')
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    setColor(doc, BRAND)
+    doc.text(m.name, legendX + 3.5, ly)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`${m.pct.toFixed(1)}%`, right, ly, { align: 'right' })
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(6)
+    setColor(doc, MUTED)
+    doc.text(`ref. adulto sano ${m.range}`, legendX + 3.5, ly + 2.8)
+  })
 }
 
 async function loadImageAsDataUrl(url: string): Promise<string> {
@@ -58,8 +130,17 @@ export async function generateDietPDF(
 
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
+  const pageH = doc.internal.pageSize.getHeight()
   const margin = 14
-  let y = 18
+  const top = 18
+  let y = top
+
+  // Pasa a una página nueva si los próximos h mm no caben en la actual.
+  const ensureSpace = (h: number) => {
+    if (y + h <= pageH - 5) return
+    doc.addPage()
+    y = top
+  }
 
   // ── Header ─────────────────────────────────────────────────────────────────
   const logoH = 10
@@ -125,6 +206,8 @@ export async function generateDietPDF(
     const items = activeIngredients.filter(i => i.group === group && (values[i.id] ?? 0) > 0)
     if (items.length === 0) continue
 
+    // La etiqueta del grupo no se separa de su primer ingrediente.
+    ensureSpace(9)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(8)
     setColor(doc, BRAND)
@@ -133,6 +216,7 @@ export async function generateDietPDF(
 
     for (const ing of items) {
       const g = values[ing.id] ?? 0
+      ensureSpace(5)
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(9)
       setColor(doc, BRAND)
@@ -152,16 +236,25 @@ export async function generateDietPDF(
     doc.setFontSize(8)
     setColor(doc, MUTED)
     const lines = doc.splitTextToSize(PARTIAL_NUTRITION_NOTE, pageW - margin * 2)
+    ensureSpace(lines.length * 4)
     doc.text(lines, margin, y)
     y += lines.length * 4 + 5
   }
 
-  // ── Macros (2-column) ──────────────────────────────────────────────────────
+  // ── Macros (dos tercios del ancho) + distribución (último tercio) ──────────
+  const colW = (pageW - margin * 2) / 3
+  const macroColW = (colW * 2) / 3
+  const chartX = margin + colW * 2
+
+  ensureSpace(29)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(8)
   setColor(doc, MUTED)
   doc.text('ENERGÍA Y MACROS', margin, y)
+  doc.text('DISTRIBUCIÓN MACROS', chartX, y)
   y += 5
+
+  drawMacroDonut(doc, r, chartX, y, pageW - margin)
 
   const diffK = r.kcal - target
   const kcalColor = Math.abs(diffK) <= 8 ? GREEN : diffK < 0 ? ORANGE : RED
@@ -176,9 +269,8 @@ export async function generateDietPDF(
     { label: 'peso total g', value: totalG.toFixed(0), color: BRAND },
   ]
 
-  const colW = (pageW - margin * 2) / 3
   macros.forEach((m, i) => {
-    const cx = margin + (i % 3) * colW
+    const cx = margin + (i % 3) * macroColW
     const cy = y + Math.floor(i / 3) * 10
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(13)
@@ -227,6 +319,7 @@ export async function generateDietPDF(
     })
 
   if (nutrientRows.length > 0) {
+    ensureSpace(5 + Math.ceil(nutrientRows.length / 3) * 10 + 4)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(8)
     setColor(doc, MUTED)
@@ -252,12 +345,6 @@ export async function generateDietPDF(
   }
 
   // ── Micronutrientes ────────────────────────────────────────────────────────
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
-  setColor(doc, MUTED)
-  doc.text('MICRONUTRIENTES', margin, y)
-  y += 5
-
   const micros = [
     { label: 'Calcio',       value: r.ca.toFixed(1),    unit: 'mg' },
     { label: 'Fósforo',      value: r.phos.toFixed(1),  unit: 'mg' },
@@ -281,6 +368,15 @@ export async function generateDietPDF(
 
   const microCols = 4
   const microColW = (pageW - margin * 2) / microCols
+
+  // Reserva también el pie, para que no quede solo en la página siguiente.
+  ensureSpace(5 + Math.ceil(micros.length / microCols) * 9 + 12)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8)
+  setColor(doc, MUTED)
+  doc.text('MICRONUTRIENTES', margin, y)
+  y += 5
+
   micros.forEach((m, i) => {
     const cx = margin + (i % microCols) * microColW
     const cy = y + Math.floor(i / microCols) * 9
