@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router'
 import '../index.css'
-import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, ingredientUnit, withUnitWeights, hasPartialNutrition, PARTIAL_NUTRITION_NOTE, type NutritionResult } from '../data/ingredients'
+import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, ingredientUnit, hasPartialNutrition, PARTIAL_NUTRITION_NOTE, type NutritionResult } from '../data/ingredients'
 import { loadRecipes, type SavedRecipe } from '../data/recipes'
 import {
   PATHOLOGY_DEFS,
@@ -241,8 +241,8 @@ export default function CompareRecipes() {
 }
 
 function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
-  const usedA = withUnitWeights(INGREDIENTS.filter(i => (a.values[i.id] ?? 0) > 0), a.unitWeights)
-  const usedB = withUnitWeights(INGREDIENTS.filter(i => (b.values[i.id] ?? 0) > 0), b.unitWeights)
+  const usedA = INGREDIENTS.filter(i => (a.values[i.id] ?? 0) > 0)
+  const usedB = INGREDIENTS.filter(i => (b.values[i.id] ?? 0) > 0)
   const usedIds = new Set([...usedA, ...usedB].map(i => i.id))
   const union = INGREDIENTS.filter(i => usedIds.has(i.id))
 

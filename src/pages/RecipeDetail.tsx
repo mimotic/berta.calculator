@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router'
 import '../index.css'
-import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, ingredientUnit, withUnitWeights, hasPartialNutrition, PARTIAL_NUTRITION_NOTE } from '../data/ingredients'
+import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, ingredientUnit, hasPartialNutrition, PARTIAL_NUTRITION_NOTE } from '../data/ingredients'
 import { getRecipe } from '../data/recipes'
 import { PATHOLOGY_DEFS } from '../data/pathologies'
 import { StatCard } from '../components/StatCard'
@@ -41,7 +41,7 @@ export default function RecipeDetail() {
     )
   }
 
-  const usedIngredients = withUnitWeights(INGREDIENTS.filter(i => (recipe.values[i.id] ?? 0) > 0), recipe.unitWeights)
+  const usedIngredients = INGREDIENTS.filter(i => (recipe.values[i.id] ?? 0) > 0)
   const r = calcNutrition(recipe.values, usedIngredients)
   const totalG = usedIngredients.reduce((s, i) => s + ingredientGrams(i, recipe.values[i.id] ?? 0), 0)
 

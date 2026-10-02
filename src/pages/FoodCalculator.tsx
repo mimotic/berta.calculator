@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import '../index.css'
-import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, withUnitWeights, hasPartialNutrition, PARTIAL_NUTRITION_NOTE } from '../data/ingredients'
-import type { Values, UnitWeights } from '../data/ingredients'
+import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, hasPartialNutrition, PARTIAL_NUTRITION_NOTE } from '../data/ingredients'
+import type { Values } from '../data/ingredients'
 import { getRecipe, saveRecipe, updateRecipe, type SavedRecipe } from '../data/recipes'
 import { type PathologyId, PATHOLOGY_DEFS } from '../data/pathologies'
 import { generateDietPDF } from '../utils/generateDietPDF'
@@ -19,7 +19,6 @@ const STORAGE_KEY = 'foodCalculator.kcalTarget'
 const INGREDIENTS_STORAGE_KEY = 'foodCalculator.selectedIngredients'
 const PATHOLOGIES_STORAGE_KEY = 'foodCalculator.pathologies'
 const VALUES_STORAGE_KEY = 'foodCalculator.values'
-const UNIT_WEIGHTS_STORAGE_KEY = 'foodCalculator.unitWeights'
 const DEFAULT_TARGET = 210
 
 function readStoredTarget(): number | null {
@@ -54,18 +53,6 @@ function readStoredValues(): Values | null {
     return parsed as Values
   } catch {
     return null
-  }
-}
-
-function readStoredUnitWeights(): UnitWeights {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(UNIT_WEIGHTS_STORAGE_KEY) ?? '{}')
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, number] =>
-      typeof entry[1] === 'number' && Number.isFinite(entry[1]) && entry[1] > 0
-    ))
-  } catch {
-    return {}
   }
 }
 
@@ -241,7 +228,6 @@ export default function FoodCalculator() {
     return stored ? { ...defaults, ...stored } : defaults
   })
   const [microOpen, setMicroOpen] = useState(false)
-  const [unitWeights, setUnitWeights] = useState<UnitWeights>(() => editingRecipe ? editingRecipe.unitWeights ?? {} : readStoredUnitWeights())
   const [saveOpen, setSaveOpen] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
 
@@ -309,17 +295,8 @@ export default function FoodCalculator() {
 
   const TARGET = target
 
-  const activeIngredients = withUnitWeights(INGREDIENTS.filter(i => selectedIds.includes(i.id)), unitWeights)
+  const activeIngredients = INGREDIENTS.filter(i => selectedIds.includes(i.id))
   const r = calcNutrition(values, activeIngredients)
-
-  const handleUnitWeightChange = (id: string, grams: number) => {
-    if (!Number.isFinite(grams) || grams <= 0) return
-    const next = { ...unitWeights, [id]: grams }
-    if (!editingRecipe) {
-      try { localStorage.setItem(UNIT_WEIGHTS_STORAGE_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ }
-    }
-    setUnitWeights(next)
-  }
 
   const handleChange = (id: string, val: number) =>
     setValues(prev => {
@@ -345,10 +322,10 @@ export default function FoodCalculator() {
       if (g > 0) recipeValues[ing.id] = g
     }
     if (editingRecipe) {
-      const updated = updateRecipe(editingRecipe.id, { title, kcalTarget: TARGET, pathologies, values: recipeValues, unitWeights })
+      const updated = updateRecipe(editingRecipe.id, { title, kcalTarget: TARGET, pathologies, values: recipeValues })
       if (updated) setEditingRecipe(updated)
     } else {
-      saveRecipe({ title, kcalTarget: TARGET, pathologies, values: recipeValues, unitWeights })
+      saveRecipe({ title, kcalTarget: TARGET, pathologies, values: recipeValues })
     }
     setSaveOpen(false)
     setJustSaved(true)
@@ -436,7 +413,7 @@ export default function FoodCalculator() {
             </div>
             {INGREDIENT_GROUPS.map(({ group, label }) => (
               <div key={group} className="mt-3 first:mt-0">
-                <SliderGroup label={label} group={group} values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} onUnitWeightChange={handleUnitWeightChange} />
+                <SliderGroup label={label} group={group} values={values} onChange={handleChange} ingredients={activeIngredients} targetKcal={TARGET} />
               </div>
             ))}
             <div className="mt-4 flex items-center gap-3">

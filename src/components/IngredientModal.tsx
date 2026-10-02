@@ -50,7 +50,7 @@ export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
             <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono mt-0.5">
               por 100 g{ingredient.isOil ? ' / ml' : ''}
             </p>
-            {ingredient.portion?.grams && (
+            {ingredient.portion && (
               <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono mt-1">
                 1 {ingredient.portion.singular} = {ingredient.portion.grams.toLocaleString('es-ES')} g
               </p>

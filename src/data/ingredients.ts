@@ -6,8 +6,9 @@ export interface Ingredient {
   max: number
   step: number
   isOil: boolean
-  // Las cantidades de estos ingredientes se guardan en unidades, no en gramos.
-  portion?: { singular: string; plural: string; grams?: number }
+  // Las cantidades de estos ingredientes se guardan en unidades, no en gramos;
+  // grams es el peso fijo de una unidad.
+  portion?: { singular: string; plural: string; grams: number }
   sourceUrl?: string
   // Los ceros de campos no publicados no representan ausencia del nutriente.
   declaredNutrients?: NutritionKey[]
@@ -113,12 +114,13 @@ export const INGREDIENTS: Ingredient[] = [
   { id:'aceite',    label:'Aceite oliva (ml)',        group:'fat',  val:0,  max:20,  step:0.25, isOil:true,  kcal:884, prot:0,    fat:100,  phos:0,   pot:1,   carb:0,    ca:1,   na:2,   fe:0.56, zn:0,    vitA:0,    vitD:0,    vitE:14.35,vitC:0,    b1:0,     b2:0,     b3:0,     b6:0,     b9:0,   b12:0,    fiber:0   },
   { id:'aceite_coco', label:'Aceite de coco (ml)',    group:'fat',  val:0,  max:20,  step:0.25, isOil:true,  kcal:892, prot:0,    fat:100,  phos:0,   pot:0,   carb:0,    ca:0,   na:0,   fe:0,    zn:0,    vitA:0,    vitD:0,    vitE:0.11, vitC:0,    b1:0,     b2:0,     b3:0,     b6:0,     b9:0,   b12:0,    fiber:0   },
   // Fichas oficiales de Edgard & Cooper, consultadas el 29/09/2026.
-  // El fabricante no publica peso por pieza ni micronutrientes.
+  // El fabricante no publica micronutrientes ni peso por pieza: portion.grams
+  // es un peso fijo propio, no un dato de la ficha.
   {
     ...UNREPORTED_MICROS,
     id: 'ec_bocaditos_manzana_arandanos', label: 'Edgard & Cooper · Bocaditos de manzana y arándanos',
     group: 'treats', val: 0, max: 60, step: 1, isOil: false,
-    portion: { singular: 'premio', plural: 'premios' },
+    portion: { singular: 'premio', plural: 'premios', grams: 0.9 },
     sourceUrl: 'https://www.edgardcooper.com/es/products/dog-bites-apple-blueberry/',
     kcal: 266.8, prot: 5.5, fat: 2, fiber: 5.3, carb: 63.8,
     declaredNutrients: ['kcal', 'prot', 'fat', 'fiber'],
@@ -128,7 +130,7 @@ export const INGREDIENTS: Ingredient[] = [
     ...UNREPORTED_MICROS,
     id: 'ec_galletas_manzana_arandanos', label: 'Edgard & Cooper · Galletas de manzana y arándanos',
     group: 'treats', val: 0, max: 20, step: 1, isOil: false,
-    portion: { singular: 'galleta', plural: 'galletas' },
+    portion: { singular: 'galleta', plural: 'galletas', grams: 2.9 },
     sourceUrl: 'https://www.edgardcooper.com/es/products/dog-biscuits-apple-blueberry/',
     kcal: 349, prot: 7.7, fat: 8, fiber: 3.5, carb: 0,
     declaredNutrients: ['kcal', 'prot', 'fat', 'fiber'],
@@ -136,19 +138,8 @@ export const INGREDIENTS: Ingredient[] = [
   },
 ]
 
-export type UnitWeights = Record<string, number>
-
-export function withUnitWeights(ingredients: Ingredient[], weights: UnitWeights = {}): Ingredient[] {
-  return ingredients.map(ing => {
-    const grams = weights[ing.id]
-    return ing.portion && Number.isFinite(grams) && grams > 0
-      ? { ...ing, portion: { ...ing.portion, grams } }
-      : ing
-  })
-}
-
 export function ingredientGrams(ing: Ingredient, quantity: number): number {
-  return ing.portion ? quantity * (ing.portion.grams ?? 0) : quantity
+  return ing.portion ? quantity * ing.portion.grams : quantity
 }
 
 export function ingredientUnit(ing: Ingredient, quantity: number): string {
