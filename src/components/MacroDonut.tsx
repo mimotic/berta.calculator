@@ -66,6 +66,7 @@ const WEIGHT_GROUPS: { group: Ingredient['group']; name: string; color: string }
   { group: 'verdura', name: 'Verduras', color: '#7CB342' },
   { group: 'fruta',   name: 'Frutas',   color: '#C2559C' },
   { group: 'fat',     name: 'Grasas',   color: '#EF9F27' },
+  { group: 'pienso',  name: 'Pienso',   color: '#A5703F' },
   { group: 'treats',  name: 'Treats',   color: '#9270B8' },
 ]
 

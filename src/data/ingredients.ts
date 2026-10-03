@@ -1,7 +1,7 @@
 export interface Ingredient {
   id: string
   label: string
-  group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat' | 'treats'
+  group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat' | 'pienso' | 'treats'
   val: number
   max: number
   step: number
@@ -10,6 +10,8 @@ export interface Ingredient {
   // grams es el peso fijo de una unidad.
   portion?: { singular: string; plural: string; grams: number }
   sourceUrl?: string
+  // Texto del enlace a la ficha del fabricante (por defecto «Ficha del fabricante»).
+  sourceLabel?: string
   // Los ceros de campos no publicados no representan ausencia del nutriente.
   declaredNutrients?: NutritionKey[]
   nutritionNote?: string
@@ -48,6 +50,7 @@ export const INGREDIENT_GROUPS: { group: Ingredient['group']; label: string }[] 
   { group: 'fruta', label: 'Frutas' },
   { group: 'prot', label: 'Proteína' },
   { group: 'fat', label: 'Grasa' },
+  { group: 'pienso', label: 'Pienso comercial' },
   { group: 'treats', label: 'Treats' },
 ]
 
@@ -113,6 +116,37 @@ export const INGREDIENTS: Ingredient[] = [
   { id:'yema',      label:'Yema de huevo',            group:'fat',  val:0,  max:20,  step:1,    isOil:false, kcal:322, prot:15.9, fat:26.5, phos:443, pot:102, carb:3.6,  ca:129, na:48,  fe:2.73, zn:2.30, vitA:381,  vitD:5.4,  vitE:2.58, vitC:0,    b1:0.176, b2:0.528, b3:0.02,  b6:0.35,  b9:146, b12:2.0,  fiber:0   },
   { id:'aceite',    label:'Aceite oliva (ml)',        group:'fat',  val:0,  max:20,  step:0.25, isOil:true,  kcal:884, prot:0,    fat:100,  phos:0,   pot:1,   carb:0,    ca:1,   na:2,   fe:0.56, zn:0,    vitA:0,    vitD:0,    vitE:14.35,vitC:0,    b1:0,     b2:0,     b3:0,     b6:0,     b9:0,   b12:0,    fiber:0   },
   { id:'aceite_coco', label:'Aceite de coco (ml)',    group:'fat',  val:0,  max:20,  step:0.25, isOil:true,  kcal:892, prot:0,    fat:100,  phos:0,   pot:0,   carb:0,    ca:0,   na:0,   fe:0,    zn:0,    vitA:0,    vitD:0,    vitE:0.11, vitC:0,    b1:0,     b2:0,     b3:0,     b6:0,     b9:0,   b12:0,    fiber:0   },
+  // Piensos comerciales: valores por 100 g de producto tal cual (as fed), tomados de
+  // la ficha oficial de cada fabricante y convertidos de %, mg/kg y UI/kg.
+  // Conversiones: vit. A 1 UI = 0,3 µg; vit. D 1 UI = 0,025 µg; vit. E 1 UI = 0,67 mg.
+  // No llevan isRaw: no se hierven, así que no se les descuenta fósforo ni potasio.
+  // Hill's España, ficha consultada el 03/10/2026. Declara la tabla completa (3348 kcal/kg).
+  {
+    id: 'hills_id_low_fat', label: "Hill's · Prescription Diet i/d Low Fat",
+    group: 'pienso', val: 0, max: 120, step: 1, isOil: false,
+    sourceUrl: 'https://www.hillspet.es/dog-food/pd-canine-prescription-diet-id-low-fat-dry',
+    sourceLabel: "Ficha de Hill's",
+    kcal: 335, prot: 24, fat: 8.2, carb: 51.8, fiber: 2.1,
+    ca: 800, phos: 600, pot: 790, na: 310, fe: 7.36, zn: 12.9,
+    vitA: 259, vitD: 1.76, vitE: 38.7, vitC: 10,
+    b1: 3.1, b2: 1.01, b3: 10.6, b6: 1.03, b9: 376, b12: 21,
+    nutritionNote: 'Valores de la ficha oficial de Hill\'s España por 100 g de pienso (3348 kcal/kg, humedad 8 %). Fibra = fibra bruta; la fibra alimentaria total es 5,5 g. Conversiones: vit. A 8626 UI/kg → 259 µg; vit. D 705 UI/kg → 1,76 µg; vit. E 577 UI/kg → 38,7 mg.',
+  },
+  // Royal Canin España, ficha consultada el 03/10/2026. La web oficial solo declara macros,
+  // Ca, P, K, Na y los aditivos nutricionales; energía, humedad y vitamina E salen de la
+  // ficha técnica del fabricante publicada por distribuidores (coherente con su guía de ración).
+  {
+    ...UNREPORTED_MICROS,
+    id: 'rc_renal_small_dog', label: 'Royal Canin · Renal Small Dog',
+    group: 'pienso', val: 0, max: 120, step: 1, isOil: false,
+    sourceUrl: 'https://www.royalcanin.com/es/dogs/products/vet-products/renal-small-dog-1249',
+    sourceLabel: 'Ficha de Royal Canin',
+    kcal: 398.4, prot: 14, fat: 18, carb: 52.1, fiber: 2.4,
+    ca: 400, phos: 200, pot: 600, na: 350, fe: 4, zn: 15.6,
+    vitA: 465, vitD: 2.5, vitE: 33.5,
+    declaredNutrients: ['kcal', 'prot', 'fat', 'fiber', 'ca', 'phos', 'pot', 'na', 'fe', 'zn', 'vitA', 'vitD', 'vitE'],
+    nutritionNote: 'Valores por 100 g de pienso (3984 kcal/kg, humedad 9,5 %). Hidratos estimados por diferencia: 100 − proteína 14 − grasa 18 − fibra 2,4 − cenizas 4 − humedad 9,5 = 52,1 g/100 g. Fibra = fibra bruta; la fibra alimentaria total es 8,1 g. Hierro y zinc son las cantidades añadidas como aditivos (40 y 156 mg/kg), no el total. Conversiones: vit. A 15 500 UI/kg → 465 µg; vit. D3 1000 UI/kg → 2,5 µg; vit. E 500 UI/kg → 33,5 mg. Vitamina C y vitaminas B no declaradas.',
+  },
   // Fichas oficiales de Edgard & Cooper, consultadas el 29/09/2026.
   // El fabricante no publica micronutrientes ni peso por pieza: portion.grams
   // es un peso fijo propio, no un dato de la ficha.
@@ -121,6 +155,7 @@ export const INGREDIENTS: Ingredient[] = [
     id: 'ec_bocaditos_manzana_arandanos', label: 'Edgard & Cooper · Bocaditos de manzana y arándanos',
     group: 'treats', val: 0, max: 60, step: 1, isOil: false,
     portion: { singular: 'premio', plural: 'premios', grams: 0.9 },
+    sourceLabel: 'Ficha de Edgard & Cooper',
     sourceUrl: 'https://www.edgardcooper.com/es/products/dog-bites-apple-blueberry/',
     kcal: 266.8, prot: 5.5, fat: 2, fiber: 5.3, carb: 63.8,
     declaredNutrients: ['kcal', 'prot', 'fat', 'fiber'],
@@ -131,6 +166,7 @@ export const INGREDIENTS: Ingredient[] = [
     id: 'ec_galletas_manzana_arandanos', label: 'Edgard & Cooper · Galletas de manzana y arándanos',
     group: 'treats', val: 0, max: 20, step: 1, isOil: false,
     portion: { singular: 'galleta', plural: 'galletas', grams: 2.9 },
+    sourceLabel: 'Ficha de Edgard & Cooper',
     sourceUrl: 'https://www.edgardcooper.com/es/products/dog-biscuits-apple-blueberry/',
     kcal: 349, prot: 7.7, fat: 8, fiber: 3.5, carb: 0,
     declaredNutrients: ['kcal', 'prot', 'fat', 'fiber'],
@@ -150,7 +186,7 @@ export function formatIngredientQuantity(ing: Ingredient, quantity: number): str
   return `${quantity.toLocaleString('es-ES', { maximumFractionDigits: 2 })} ${ingredientUnit(ing, quantity)}`
 }
 
-export const PARTIAL_NUTRITION_NOTE = 'Cálculo parcial: los Treats no declaran minerales ni vitaminas; las galletas tampoco declaran hidratos. Estos datos no se suman y no equivalen a cero. Las valoraciones nutricionales pueden estar incompletas.'
+export const PARTIAL_NUTRITION_NOTE = 'Cálculo parcial: algunos productos comerciales (treats y piensos) no declaran todos los minerales y vitaminas, y las galletas tampoco declaran hidratos. Los nutrientes no declarados no se suman y no equivalen a cero. Las valoraciones nutricionales pueden estar incompletas.'
 
 export function hasPartialNutrition(ingredients: Ingredient[], values: Values): boolean {
   return ingredients.some(ing => ing.declaredNutrients && (values[ing.id] ?? 0) > 0)

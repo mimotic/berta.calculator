@@ -68,14 +68,14 @@ export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
         <div className="max-h-[60vh] overflow-y-auto">
         {ingredient.sourceUrl && (
           <div className="px-4 pt-3 text-xs text-[#6b6b67] dark:text-[#8a8a85]">
-            <a href={ingredient.sourceUrl} target="_blank" rel="noreferrer" className="underline">Ficha de Edgard & Cooper</a>
+            <a href={ingredient.sourceUrl} target="_blank" rel="noreferrer" className="underline">{ingredient.sourceLabel ?? 'Ficha del fabricante'}</a>
             <p className="mt-2">{ingredient.nutritionNote}</p>
           </div>
         )}
         <ul className="divide-y divide-black/5 dark:divide-white/5 px-4 pb-2">
           {ROWS.map(({ label, key, unit, decimals }) => {
             const raw = ingredient[key]
-            const estimated = key === 'carb' && !!ingredient.declaredNutrients && raw > 0
+            const estimated = key === 'carb' && !!ingredient.declaredNutrients && !ingredient.declaredNutrients.includes('carb') && raw > 0
             const known = !ingredient.declaredNutrients || ingredient.declaredNutrients.includes(key) || estimated
             const val = known ? `${estimated ? '≈ ' : ''}${raw.toFixed(decimals)}` : 'No declarado'
             return (
