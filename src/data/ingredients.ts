@@ -178,6 +178,21 @@ export const INGREDIENTS: Ingredient[] = [
     declaredNutrients: ['kcal', 'prot', 'fat', 'carb', 'fiber', 'ca', 'phos', 'pot', 'na', 'zn'],
     nutritionNote: 'Valores por 100 g de la ficha oficial de Specific España (1630 kJ = 389,6 kcal; agua 8,5 %). Hidratos (ELN) declarados por el fabricante. Fibra = fibra bruta. La ficha no publica hierro ni vitaminas.',
   },
+  // Naturextra, ficha consultada el 07/10/2026. Pienso para perros prensado en frío. El hierro
+  // figura en los componentes analíticos (contenido total); zinc y vitaminas solo como aditivos,
+  // así que son lo añadido, sin contar lo que aportan los ingredientes.
+  {
+    id: 'naturextra_hepadiet', label: 'Naturextra · Hepadiet Detox Minipellet',
+    group: 'pienso', val: 0, max: 120, step: 1, isOil: false,
+    sourceUrl: 'https://naturextra.com/producto/naturextra-hepadiet-detox-minipellet/',
+    sourceLabel: 'Ficha de Naturextra',
+    kcal: 340, prot: 15, fat: 6, carb: 61.5, fiber: 4,
+    ca: 500, phos: 300, pot: 1000, na: 200, fe: 16, zn: 25,
+    vitA: 330, vitD: 2.75, vitE: 26.8, vitC: 15.5,
+    b1: 0.4, b2: 0.7, b3: 2.35, b6: 0.5, b9: 38, b12: 5.2,
+    declaredNutrients: ['kcal', 'prot', 'fat', 'fiber', 'ca', 'phos', 'pot', 'na', 'fe', 'zn', 'vitA', 'vitD', 'vitE', 'vitC', 'b1', 'b2', 'b3', 'b6', 'b9', 'b12'],
+    nutritionNote: 'Pienso prensado en frío. Valores por 100 g de la ficha de Naturextra (3400 kcal/kg, humedad 9 %). Hidratos estimados por diferencia: 100 − proteína 15 − grasa 6 − fibra 4 − cenizas 4,5 − humedad 9 = 61,5 g/100 g. Fibra = fibra bruta. El hierro es contenido total; el zinc y las vitaminas son solo las cantidades añadidas como aditivos, sin contar las de los ingredientes. Conversiones: vit. A 11 000 UI/kg → 330 µg; vit. D3 1100 UI/kg → 2,75 µg; vit. E 400 mg/kg de acetato de all-rac-alfa-tocoferilo (= 400 UI) → 26,8 mg.',
+  },
   // Fichas oficiales de Edgard & Cooper, consultadas el 29/09/2026.
   // El fabricante no publica micronutrientes ni peso por pieza: portion.grams
   // es un peso fijo propio, no un dato de la ficha.
