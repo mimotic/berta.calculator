@@ -147,6 +147,37 @@ export const INGREDIENTS: Ingredient[] = [
     declaredNutrients: ['kcal', 'prot', 'fat', 'fiber', 'ca', 'phos', 'pot', 'na', 'fe', 'zn', 'vitA', 'vitD', 'vitE'],
     nutritionNote: 'Valores por 100 g de pienso (3984 kcal/kg, humedad 9,5 %). Hidratos estimados por diferencia: 100 − proteína 14 − grasa 18 − fibra 2,4 − cenizas 4 − humedad 9,5 = 52,1 g/100 g. Fibra = fibra bruta; la fibra alimentaria total es 8,1 g. Hierro y zinc son las cantidades añadidas como aditivos (40 y 156 mg/kg), no el total. Conversiones: vit. A 15 500 UI/kg → 465 µg; vit. D3 1000 UI/kg → 2,5 µg; vit. E 500 UI/kg → 33,5 mg. Vitamina C y vitaminas B no declaradas.',
   },
+  // Purina España (Vetcenter), ficha consultada el 07/10/2026. Se usa la tabla de análisis
+  // (contenido total), no la lista de aditivos (cantidades añadidas). Energía NRC 2006, que es
+  // la que usa Purina para su columna /100 kcal. La tabla etiqueta mal algunas unidades:
+  // hierro «24,70 %» y zinc «20,70 mg/kg» son mg/100 g (cuadran con /100 kcal y con los
+  // aditivos de 200 y 185 mg/kg); B12 «233 mg/kg» son µg/kg.
+  {
+    ...UNREPORTED_MICROS,
+    id: 'purina_nf_renal', label: 'Purina · Pro Plan NF Renal Function',
+    group: 'pienso', val: 0, max: 120, step: 1, isOil: false,
+    sourceUrl: 'https://www.vetcenter.purina.es/products/purina-pro-plan-veterinary-diets-canine-nf-renal-function',
+    sourceLabel: 'Ficha de Purina',
+    kcal: 390.4, prot: 13, fat: 14.5, carb: 58.5, fiber: 2,
+    ca: 750, phos: 400, pot: 800, na: 200, fe: 24.7, zn: 20.7,
+    vitA: 603, vitD: 3.57, vitE: 20.4,
+    b1: 2.93, b2: 1.33, b3: 14.09, b12: 23.3,
+    declaredNutrients: ['kcal', 'prot', 'fat', 'carb', 'fiber', 'ca', 'phos', 'pot', 'na', 'fe', 'zn', 'vitA', 'vitD', 'vitE', 'b1', 'b2', 'b3', 'b12'],
+    nutritionNote: 'Valores de la tabla de análisis de Purina por 100 g de pienso (3904 kcal/kg según NRC 2006, la referencia de su columna /100 kcal; con Atwater serían 3735 kcal/kg; humedad 7,5 %). Hidratos declarados por el fabricante. Fibra = fibra bruta. La ficha etiqueta mal algunas unidades: hierro «24,70 %» y zinc «20,70 mg/kg» se leen como mg/100 g, y B12 «233 mg/kg» como µg/kg. Las vitaminas son las analizadas, no las añadidas: vit. A 20 084 UI/kg → 603 µg (la lista de aditivos indica 31 000 UI/kg añadidas); vit. D3 1429 UI/kg → 3,57 µg; vit. E 305 UI/kg → 20,4 mg. Vitamina C, B6 y B9 no declaradas.',
+  },
+  // Specific España, ficha consultada el 07/10/2026. Versión seca para perros. La ficha oficial
+  // declara el zinc como contenido total, pero no publica hierro ni vitaminas.
+  {
+    ...UNREPORTED_MICROS,
+    id: 'specific_ckd', label: 'Specific · CKD Heart & Kidney Support',
+    group: 'pienso', val: 0, max: 120, step: 1, isOil: false,
+    sourceUrl: 'https://www.specific-diets.es/perro/alimento-para-necesidades-especiales/ckd-heart-kidney-support',
+    sourceLabel: 'Ficha de Specific',
+    kcal: 389.6, prot: 13.9, fat: 15.3, carb: 55.9, fiber: 2.4,
+    ca: 450, phos: 270, pot: 740, na: 120, zn: 17.8,
+    declaredNutrients: ['kcal', 'prot', 'fat', 'carb', 'fiber', 'ca', 'phos', 'pot', 'na', 'zn'],
+    nutritionNote: 'Valores por 100 g de la ficha oficial de Specific España (1630 kJ = 389,6 kcal; agua 8,5 %). Hidratos (ELN) declarados por el fabricante. Fibra = fibra bruta. La ficha no publica hierro ni vitaminas.',
+  },
   // Fichas oficiales de Edgard & Cooper, consultadas el 29/09/2026.
   // El fabricante no publica micronutrientes ni peso por pieza: portion.grams
   // es un peso fijo propio, no un dato de la ficha.
