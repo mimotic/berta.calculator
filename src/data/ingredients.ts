@@ -218,6 +218,21 @@ export const INGREDIENTS: Ingredient[] = [
     declaredNutrients: ['kcal', 'prot', 'fat', 'fiber'],
     nutritionNote: 'Hidratos, minerales y vitaminas no declarados. No se calculan los hidratos por diferencia porque la ficha no indica la humedad.',
   },
+  // Specific España, ficha consultada el 14/10/2026. No publica el peso por premio: los 2,5 g
+  // salen de su tabla de equivalencias (10 premios ≈ 360 kJ, p. ej. 22 g de CKD) y de los
+  // ~36 kJ por premio que indican los distribuidores.
+  {
+    ...UNREPORTED_MICROS,
+    id: 'specific_ct_sc', label: 'Specific · CT-SC Special Care Treats',
+    group: 'treats', val: 0, max: 20, step: 1, isOil: false,
+    portion: { singular: 'premio', plural: 'premios', grams: 2.5 },
+    sourceLabel: 'Ficha de Specific',
+    sourceUrl: 'https://www.specific-diets.es/perro/alimento-para-cada-dia/ct-sc-special-care-treats',
+    kcal: 344.4, prot: 14.5, fat: 5.8, carb: 64.6, fiber: 2.5,
+    ca: 240, phos: 310, na: 120,
+    declaredNutrients: ['kcal', 'prot', 'fat', 'carb', 'fiber', 'ca', 'phos', 'na'],
+    nutritionNote: 'Valores por 100 g de la ficha oficial de Specific España (1441 kJ = 344,4 kcal; agua 10,4 %). Hidratos (ELN) declarados por el fabricante. Fibra = fibra bruta. Potasio, hierro, zinc y vitaminas no declarados. Peso por premio estimado en 2,5 g (unas 8,6 kcal): Specific no lo publica, pero cuadra con su tabla de equivalencias con otras dietas.',
+  },
 ]
 
 export function ingredientGrams(ing: Ingredient, quantity: number): number {
