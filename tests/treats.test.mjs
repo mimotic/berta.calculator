@@ -5,7 +5,8 @@ import { saveRecipe, getRecipe, updateRecipe } from '../src/data/recipes.ts'
 
 const bitesId = 'ec_bocaditos_manzana_arandanos'
 const biscuitsId = 'ec_galletas_manzana_arandanos'
-// Fixed catalog weights per unit: 0.9 g per bite, 2.9 g per biscuit.
+const ctScId = 'specific_ct_sc'
+// Fixed catalog weights per unit: 0.9 g per bite, 2.9 g per biscuit, 2.5 g per CT-SC treat.
 const ingredients = INGREDIENTS
 const closeTo = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} ≠ ${expected}`)
 
@@ -44,12 +45,13 @@ test('unit labels, bounds and unreported nutrient flags distinguish treats', () 
 
 test('every unit-based ingredient has a fixed positive weight per unit', () => {
   const unitBased = INGREDIENTS.filter(i => i.portion && i.group === 'treats')
-  assert.deepEqual(unitBased.map(i => i.id), [bitesId, biscuitsId, 'specific_ct_sc'])
+  assert.deepEqual(unitBased.map(i => i.id), [bitesId, biscuitsId, ctScId])
   for (const ing of unitBased) {
     assert.ok(Number.isFinite(ing.portion.grams) && ing.portion.grams > 0, `${ing.id}: ${ing.portion.grams}`)
   }
   closeTo(ingredientGrams(INGREDIENTS.find(i => i.id === bitesId), 10), 9)
   closeTo(ingredientGrams(INGREDIENTS.find(i => i.id === biscuitsId), 2), 5.8)
+  closeTo(ingredientGrams(INGREDIENTS.find(i => i.id === ctScId), 4), 10)
 })
 
 test('saved recipes keep their unit quantities and legacy recipes still load', () => {
