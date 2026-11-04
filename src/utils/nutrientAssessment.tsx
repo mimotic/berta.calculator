@@ -59,11 +59,6 @@ export function buildNutrientAssessment(
   const activeRules = computeActiveRules(pathologies)
   const diffK = r.kcal - target
 
-  // Map NutrientKey to computed per-serving values from calcNutrition
-  const actualValues: Record<NutrientKey, number> = {
-    fat: r.fat, protein: r.prot, phosphorus: r.phos, potassium: r.pot, sodium: r.na, fiber: r.fiber,
-  }
-
   const mineralCards: { key: string; el: ReactElement }[] = []
   const alerts: [AlertType, string][] = []
 
@@ -77,8 +72,7 @@ export function buildNutrientAssessment(
     if (!rule) continue
 
     const meta       = NUTRIENT_META[key]
-    const actual     = actualValues[key]
-    const normalized = getNormalizedValue(actual, r.kcal, rule.basis, meta.kcalFactor)
+    const normalized = getNormalizedValue(r, key, rule.basis)
     const dUnit      = displayUnit(rule.basis, meta.unit)
 
     const inWarnZone = isInWarnZone(normalized, rule)
@@ -127,11 +121,11 @@ export function buildNutrientAssessment(
 
   // Determine valueColor for macro stats cards
   const fatRule  = activeRules.fat
-  const fatNorm  = fatRule ? getNormalizedValue(r.fat, r.kcal, fatRule.basis, NUTRIENT_META.fat.kcalFactor) : null
+  const fatNorm  = fatRule ? getNormalizedValue(r, 'fat', fatRule.basis) : null
   const fatOverLimit = fatRule?.max !== undefined && fatNorm !== null && fatNorm > fatRule.max
 
   const protRule  = activeRules.protein
-  const protNorm  = protRule ? getNormalizedValue(r.prot, r.kcal, protRule.basis, NUTRIENT_META.protein.kcalFactor) : null
+  const protNorm  = protRule ? getNormalizedValue(r, 'protein', protRule.basis) : null
   const protOverLimit = protRule?.max !== undefined && protNorm !== null && protNorm > protRule.max
 
   // Footer notes from active pathologies

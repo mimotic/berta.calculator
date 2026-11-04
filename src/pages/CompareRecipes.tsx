@@ -279,14 +279,8 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
     const meta = NUTRIENT_META[key]
     const rule = rules[key]
     const basis = rule?.basis ?? 'per_100kcal'
-    const normA = getNormalizedValue(
-      key === 'protein' ? rA.prot : key === 'fat' ? rA.fat : key === 'phosphorus' ? rA.phos : key === 'potassium' ? rA.pot : key === 'sodium' ? rA.na : rA.fiber,
-      rA.kcal, basis, meta.kcalFactor,
-    )
-    const normB = getNormalizedValue(
-      key === 'protein' ? rB.prot : key === 'fat' ? rB.fat : key === 'phosphorus' ? rB.phos : key === 'potassium' ? rB.pot : key === 'sodium' ? rB.na : rB.fiber,
-      rB.kcal, basis, meta.kcalFactor,
-    )
+    const normA = getNormalizedValue(rA, key, basis)
+    const normB = getNormalizedValue(rB, key, basis)
     const unit = displayUnit(basis, meta.unit)
     const decimals = basis === 'pct_kcal' || meta.unit === 'g' ? 1 : 0
     const limit = rule

@@ -288,14 +288,42 @@ export type Values = Record<string, number>
 // en sus valores de tabla.
 export const BOILING_RETENTION = 0.7
 
+// Factores de Atwater (kcal/g) para repartir la energía entre macros. Los piensos y
+// treats declaran sus kcal con los modificados de AAFCO/FEDIAF (3,5/3,5/8,5) o con la
+// ecuación NRC 2006; para la comida casera se usan los generales (4/4/9).
+const ATWATER = { prot: 4, carb: 4, fat: 9 }
+const ATWATER_PET_FOOD = { prot: 3.5, carb: 3.5, fat: 8.5 }
+
+// Reparte las kcal declaradas por 100 g de un ingrediente entre proteína, hidratos y
+// grasa. Los factores solo fijan la proporción: el reparto se reescala para que sume
+// exactamente las kcal declaradas, que son las que cuentan en el total de la ración.
+// Si la ficha no declara hidratos, se les asigna la energía que no explican la
+// proteína y la grasa.
+function macroKcal(ing: Ingredient) {
+  const f = ing.group === 'pienso' || ing.group === 'treats' ? ATWATER_PET_FOOD : ATWATER
+  const prot = ing.prot * f.prot
+  const fat  = ing.fat  * f.fat
+  const carbUndeclared = !ing.carb && ing.declaredNutrients !== undefined && !ing.declaredNutrients.includes('carb')
+  const carb = carbUndeclared ? Math.max(0, ing.kcal - prot - fat) : (ing.carb || 0) * f.carb
+  const sum = prot + carb + fat
+  const scale = sum > 0 ? ing.kcal / sum : 0
+  return { prot: prot * scale, carb: carb * scale, fat: fat * scale }
+}
+
 export function calcNutrition(values: Values, ingredients: Ingredient[] = INGREDIENTS) {
   let kcal = 0, prot = 0, fat = 0, carb = 0, phos = 0, pot = 0
   let ca = 0, na = 0, fe = 0, zn = 0, vitA = 0, vitD = 0, vitE = 0, fiber = 0
   let vitC = 0, b1 = 0, b2 = 0, b3 = 0, b6 = 0, b9 = 0, b12 = 0
+  // kcal que aporta cada macro (ver macroKcal); suman kcal
+  let kcalProt = 0, kcalCarb = 0, kcalFat = 0
   for (const ing of ingredients) {
     const g = ingredientGrams(ing, values[ing.id] ?? 0)
     const retention = ing.isRaw ? BOILING_RETENTION : 1
+    const energy = macroKcal(ing)
     kcal  += (g / 100) * ing.kcal
+    kcalProt += (g / 100) * energy.prot
+    kcalCarb += (g / 100) * energy.carb
+    kcalFat  += (g / 100) * energy.fat
     prot  += (g / 100) * ing.prot
     fat   += (g / 100) * ing.fat
     carb  += (g / 100) * (ing.carb || 0)
@@ -317,7 +345,15 @@ export function calcNutrition(values: Values, ingredients: Ingredient[] = INGRED
     b12   += (g / 100) * ing.b12
     fiber += (g / 100) * ing.fiber
   }
-  return { kcal, prot, fat, carb, phos, pot, ca, na, fe, zn, vitA, vitD, vitE, vitC, b1, b2, b3, b6, b9, b12, fiber }
+  return { kcal, kcalProt, kcalCarb, kcalFat, prot, fat, carb, phos, pot, ca, na, fe, zn, vitA, vitD, vitE, vitC, b1, b2, b3, b6, b9, b12, fiber }
 }
 
 export type NutritionResult = ReturnType<typeof calcNutrition>
+
+// % de la energía de la ración que aporta cada macro (% ME). Lo usan tanto el donut
+// de macros como los límites «% ME» de las patologías, así que siempre coinciden.
+export function macroEnergyPct(r: Pick<NutritionResult, 'kcalProt' | 'kcalCarb' | 'kcalFat'>) {
+  const total = r.kcalProt + r.kcalCarb + r.kcalFat
+  const pct = (kcal: number) => (total > 0 ? (kcal / total) * 100 : 0)
+  return { prot: pct(r.kcalProt), carb: pct(r.kcalCarb), fat: pct(r.kcalFat) }
+}

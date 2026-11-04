@@ -1,3 +1,5 @@
+import { macroEnergyPct, type NutritionResult } from './ingredients'
+
 export type PathologyId =
   | 'renal'
   | 'hepatica_estable'
@@ -27,16 +29,20 @@ export type PathologyDef = {
 export type NutrientMeta = {
   label: string
   unit: string
-  kcalFactor?: number  // 4 for protein, 9 for fat — required for pct_kcal conversion
 }
 
 export const NUTRIENT_META: Record<NutrientKey, NutrientMeta> = {
   phosphorus: { label: 'fósforo',   unit: 'mg' },
   potassium:  { label: 'potasio',   unit: 'mg' },
   sodium:     { label: 'sodio',     unit: 'mg' },
-  protein:    { label: 'proteína',  unit: 'g',  kcalFactor: 4 },
-  fat:        { label: 'grasa',     unit: 'g',  kcalFactor: 9 },
+  protein:    { label: 'proteína',  unit: 'g' },
+  fat:        { label: 'grasa',     unit: 'g' },
   fiber:      { label: 'fibra',     unit: 'g' },
+}
+
+// Field of a calcNutrition result holding each nutrient's per-serving amount.
+const AMOUNT_FIELD: Record<NutrientKey, keyof NutritionResult> = {
+  fat: 'fat', protein: 'prot', phosphorus: 'phos', potassium: 'pot', sodium: 'na', fiber: 'fiber',
 }
 
 // All limits are expressed in a declared basis so that they scale with ration size
@@ -124,18 +130,17 @@ export function computeActiveRules(ids: PathologyId[]): Partial<Record<NutrientK
   return merged
 }
 
-// Convert a per-serving nutrient value to the rule's declared basis.
-// kcalFactor: 4 for protein, 9 for fat (only needed for pct_kcal).
-export function getNormalizedValue(
-  actual: number,
-  kcal: number,
-  basis: LimitBasis,
-  kcalFactor?: number,
-): number {
-  if (kcal <= 0) return 0
-  if (basis === 'per_100kcal') return actual / (kcal / 100)
-  if (basis === 'pct_kcal')    return kcalFactor ? (actual * kcalFactor / kcal) * 100 : 0
-  return actual
+// Express a ration's nutrient in the rule's declared basis.
+// pct_kcal reads the energy split from macroEnergyPct — the same one the macro
+// donut shows — so it only applies to protein and fat.
+export function getNormalizedValue(r: NutritionResult, key: NutrientKey, basis: LimitBasis): number {
+  if (r.kcal <= 0) return 0
+  if (basis === 'pct_kcal') {
+    const pct = macroEnergyPct(r)
+    return key === 'protein' ? pct.prot : key === 'fat' ? pct.fat : 0
+  }
+  const amount = r[AMOUNT_FIELD[key]]
+  return basis === 'per_100kcal' ? amount / (r.kcal / 100) : amount
 }
 
 // Returns the display unit string for a nutrient given its basis.

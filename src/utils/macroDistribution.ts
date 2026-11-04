@@ -1,13 +1,13 @@
-import type { NutritionResult } from '../data/ingredients'
+import { macroEnergyPct, type NutritionResult } from '../data/ingredients'
 
-// Reparto de la energía entre macros en % de kcal (factores de Atwater 4/4/9).
+// Reparto de la energía entre macros en % de kcal: el mismo que usan los límites
+// «% ME» de las patologías (macroEnergyPct).
 // range es el intervalo orientativo para un perro adulto sano.
-export function macroDistribution(r: Pick<NutritionResult, 'prot' | 'carb' | 'fat'>) {
-  const macros = [
-    { name: 'Proteína', color: '#5B8DEF', kcal: r.prot * 4, range: '20–30%' },
-    { name: 'Hidratos', color: '#1D9E75', kcal: r.carb * 4, range: '30–50%' },
-    { name: 'Grasas',   color: '#EF9F27', kcal: r.fat * 9,  range: '25–40%' },
+export function macroDistribution(r: Pick<NutritionResult, 'kcalProt' | 'kcalCarb' | 'kcalFat'>) {
+  const pct = macroEnergyPct(r)
+  return [
+    { name: 'Proteína', color: '#5B8DEF', pct: pct.prot, range: '20–30%' },
+    { name: 'Hidratos', color: '#1D9E75', pct: pct.carb, range: '30–50%' },
+    { name: 'Grasas',   color: '#EF9F27', pct: pct.fat,  range: '25–40%' },
   ]
-  const total = macros.reduce((s, m) => s + m.kcal, 0)
-  return macros.map(m => ({ ...m, pct: total > 0 ? (m.kcal / total) * 100 : 0 }))
 }

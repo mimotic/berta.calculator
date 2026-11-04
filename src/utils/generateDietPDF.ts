@@ -288,17 +288,13 @@ export async function generateDietPDF(
 
   // ── Minerales & parámetros ─────────────────────────────────────────────────
   const activeRules = computeActiveRules(pathologies)
-  const actualValues: Record<NutrientKey, number> = {
-    fat: r.fat, protein: r.prot, phosphorus: r.phos, potassium: r.pot, sodium: r.na, fiber: r.fiber,
-  }
 
   const nutrientRows = NUTRIENT_ORDER
     .filter(key => activeRules[key])
     .map(key => {
       const rule = activeRules[key]!
       const meta = NUTRIENT_META[key]
-      const actual = actualValues[key]
-      const normalized = getNormalizedValue(actual, r.kcal, rule.basis, meta.kcalFactor)
+      const normalized = getNormalizedValue(r, key, rule.basis)
       const dUnit = displayUnit(rule.basis, meta.unit)
       const dispVal = rule.basis === 'pct_kcal' || meta.unit === 'g'
         ? normalized.toFixed(1)
