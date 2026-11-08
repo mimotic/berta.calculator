@@ -76,6 +76,16 @@ export const INGREDIENTS: Ingredient[] = [
   // USDA 20027 (almidón de maíz)
   { id:'maicena',         label:'Maicena',            group:'hc',   val:0,  max:80,  step:1,    isOil:false, kcal:381, prot:0.3,  fat:0.1,  phos:13,  pot:3,   carb:91.3, ca:2,   na:9,   fe:0.47, zn:0.06, vitA:0,    vitD:0,    vitE:0,    vitC:0,    b1:0,     b2:0,     b3:0,     b6:0,     b9:0,   b12:0,    fiber:0.9 },
   { id:'pan_sin_sal', label:'Pan sin sal',            group:'hc',   val:0,  max:80,  step:1,    isOil:false, kcal:272, prot:8.8,  fat:3.3,  phos:99,  pot:117, carb:52.2, ca:26,  na:8,   fe:1.20, zn:0.75, vitA:0,    vitD:0,    vitE:0.30, vitC:0,    b1:0.12,  b2:0.09,  b3:1.40,  b6:0.06,  b9:30,  b12:0,    fiber:2.7 },
+  // Etiqueta fotografiada el 08/11/2026: no se ve el nombre de la variedad.
+  // Sal 0,02 g/100 g → sodio 8 mg/100 g (sal = sodio × 2,5).
+  {
+    ...UNREPORTED_MICROS,
+    id: 'pan_etiqueta_394', label: 'Pan (etiqueta 394 kcal)',
+    group: 'hc', val: 0, max: 80, step: 1, isOil: false,
+    kcal: 394, prot: 15, fat: 3.9, carb: 72, fiber: 5.2, na: 8,
+    declaredNutrients: ['kcal', 'prot', 'fat', 'carb', 'fiber', 'na'],
+    nutritionNote: 'Valores por 100 g de la etiqueta de la foto: 1665 kJ / 394 kcal, grasas saturadas 0,5 g, azúcares 3,0 g y sal 0,02 g. El sodio se calcula a partir de la sal: 0,02 g ÷ 2,5 × 1000 = 8 mg. La etiqueta no declara fósforo, potasio, calcio, hierro, zinc ni vitaminas. Las cantidades se introducen en gramos: no se conoce el peso de cada rebanada.',
+  },
   // Macros de etiqueta (Conad Verso Natura, pane azzimo biologico); micros estimados de harina de trigo blanca (USDA)
   { id:'pan_azimo', label:'Pan ácimo',                group:'hc',   val:0,  max:80,  step:1,    isOil:false, kcal:360, prot:9.9,  fat:0.9,  phos:108, pot:107, carb:77,   ca:15,  na:2,   fe:1.17, zn:0.70, vitA:0,    vitD:0,    vitE:0.06, vitC:0,    b1:0.12,  b2:0.04,  b3:1.25,  b6:0.044, b9:26,  b12:0,    fiber:3.1 },
   { id:'pasta',     label:'Pasta cocida',             group:'hc',   val:0,  max:200, step:1,    isOil:false, kcal:131, prot:5.0,  fat:1.1,  phos:56,  pot:44,  carb:25.0, ca:6,   na:1,   fe:1.28, zn:0.50, vitA:0,    vitD:0,    vitE:0.06, vitC:0,    b1:0.02,  b2:0.02,  b3:0.40,  b6:0.049, b9:7,   b12:0,    fiber:1.8 },
@@ -247,7 +257,7 @@ export function formatIngredientQuantity(ing: Ingredient, quantity: number): str
   return `${quantity.toLocaleString('es-ES', { maximumFractionDigits: 2 })} ${ingredientUnit(ing, quantity)}`
 }
 
-export const PARTIAL_NUTRITION_NOTE = 'Cálculo parcial: algunos productos comerciales (treats y piensos) no declaran todos los minerales y vitaminas, y las galletas tampoco declaran hidratos. Los nutrientes no declarados no se suman y no equivalen a cero. Las valoraciones nutricionales pueden estar incompletas.'
+export const PARTIAL_NUTRITION_NOTE = 'Cálculo parcial: algunos ingredientes no declaran todos los nutrientes. Los nutrientes no declarados no se suman y no equivalen a cero. Consulta la ficha de cada ingrediente. Las valoraciones nutricionales pueden estar incompletas.'
 
 export function hasPartialNutrition(ingredients: Ingredient[], values: Values): boolean {
   return ingredients.some(ing => ing.declaredNutrients && (values[ing.id] ?? 0) > 0)

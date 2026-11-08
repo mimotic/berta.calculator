@@ -66,10 +66,12 @@ export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto">
-        {ingredient.sourceUrl && (
+        {(ingredient.sourceUrl || ingredient.nutritionNote) && (
           <div className="px-4 pt-3 text-xs text-[#6b6b67] dark:text-[#8a8a85]">
-            <a href={ingredient.sourceUrl} target="_blank" rel="noreferrer" className="underline">{ingredient.sourceLabel ?? 'Ficha del fabricante'}</a>
-            <p className="mt-2">{ingredient.nutritionNote}</p>
+            {ingredient.sourceUrl && (
+              <a href={ingredient.sourceUrl} target="_blank" rel="noreferrer" className="underline">{ingredient.sourceLabel ?? 'Ficha del fabricante'}</a>
+            )}
+            {ingredient.nutritionNote && <p className="mt-2">{ingredient.nutritionNote}</p>}
           </div>
         )}
         <ul className="divide-y divide-black/5 dark:divide-white/5 px-4 pb-2">
