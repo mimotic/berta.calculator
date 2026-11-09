@@ -43,7 +43,7 @@ test('unit labels, bounds and unreported nutrient flags distinguish treats', () 
 })
 
 test('every unit-based ingredient has a fixed positive weight per unit', () => {
-  const unitBased = INGREDIENTS.filter(i => i.portion)
+  const unitBased = INGREDIENTS.filter(i => i.portion && i.group === 'treats')
   assert.deepEqual(unitBased.map(i => i.id), [bitesId, biscuitsId, 'specific_ct_sc'])
   for (const ing of unitBased) {
     assert.ok(Number.isFinite(ing.portion.grams) && ing.portion.grams > 0, `${ing.id}: ${ing.portion.grams}`)

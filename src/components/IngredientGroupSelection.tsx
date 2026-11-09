@@ -1,4 +1,4 @@
-import { INGREDIENTS, type Ingredient } from '../data/ingredients'
+import { INGREDIENTS, nutritionBasisLabel, isNutrientKnown, SUPPLEMENT_NOTE, type Ingredient } from '../data/ingredients'
 
 type Props = {
   group: Ingredient['group']
@@ -50,6 +50,7 @@ export function IngredientGroupSelection({ group, label, selected, onChange }: P
         </button>
       </div>
 
+      {group === 'suplementos' && <p className="text-xs leading-relaxed text-[#6b6b67] dark:text-[#8a8a85] mb-4">{SUPPLEMENT_NOTE}</p>}
       <div className="flex flex-col gap-2">
         {items.map(ingredient => (
           <label
@@ -65,7 +66,7 @@ export function IngredientGroupSelection({ group, label, selected, onChange }: P
             <span className="flex-1 min-w-0 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <span className="text-[13px] font-serif">{ingredient.label}</span>
               <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono tabular-nums shrink-0">
-                {ingredient.kcal} kcal/100{ingredient.isOil ? 'ml' : 'g'}
+                {isNutrientKnown(ingredient, 'kcal') ? `${ingredient.kcal} kcal ${nutritionBasisLabel(ingredient)}` : 'Energía no declarada'}
               </span>
             </span>
           </label>

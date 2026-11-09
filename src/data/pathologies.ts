@@ -1,4 +1,4 @@
-import { macroEnergyPct, type NutritionResult } from './ingredients'
+import { macroEnergyPct, type NutritionResult, type NutritionKey } from './ingredients'
 
 export type PathologyId =
   | 'renal'
@@ -41,7 +41,7 @@ export const NUTRIENT_META: Record<NutrientKey, NutrientMeta> = {
 }
 
 // Field of a calcNutrition result holding each nutrient's per-serving amount.
-const AMOUNT_FIELD: Record<NutrientKey, keyof NutritionResult> = {
+const AMOUNT_FIELD: Record<NutrientKey, NutritionKey> = {
   fat: 'fat', protein: 'prot', phosphorus: 'phos', potassium: 'pot', sodium: 'na', fiber: 'fiber',
 }
 

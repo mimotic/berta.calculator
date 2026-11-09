@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react'
-import { INGREDIENTS, getIngredientMax, ingredientGrams, ingredientUnit } from '../data/ingredients'
+import { INGREDIENTS, getIngredientMax, ingredientNutritionFactor, ingredientUnit, isNutrientKnown, SUPPLEMENT_NOTE } from '../data/ingredients'
 import type { Ingredient, Values } from '../data/ingredients'
 import { IngredientModal } from './IngredientModal'
 import { Stepper } from './Stepper'
@@ -20,31 +20,36 @@ export function SliderGroup({ label, group, values, onChange, ingredients = INGR
   return (
     <div>
       <div className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] italic mb-1.5 font-serif">{label}</div>
+      {group === 'suplementos' && <p className="text-[11px] leading-relaxed text-[#6b6b67] dark:text-[#8a8a85] mb-3">{SUPPLEMENT_NOTE}</p>}
       {selected && <IngredientModal ingredient={selected} onClose={() => setSelected(null)} />}
       {items.map(ing => {
         const computedMax = targetKcal != null ? getIngredientMax(ing, targetKcal) : ing.max
         const g = values[ing.id] ?? 0
         const sliderMax = Math.max(computedMax, g)
-        const kcal = (ingredientGrams(ing, g) / 100) * ing.kcal
-        const portionNote = ing.portion && `1 ${ing.portion.singular} = ${ing.portion.grams.toLocaleString('es-ES')} g`
+        const kcal = ingredientNutritionFactor(ing, g) * ing.kcal
+        const energyLabel = isNutrientKnown(ing, 'kcal') ? `${kcal.toFixed(1)} kcal` : 'kcal n/d'
+        const stacked = !!ing.portion || !!ing.measure || group === 'suplementos'
+        const supplement = group === 'suplementos'
+        const unit = ing.measure ?? ing.portion
+        const portionNote = unit && (unit.grams !== undefined ? `1 ${unit.singular} = ${unit.grams.toLocaleString('es-ES')} g` : 'Peso por unidad no publicado')
         return (
           <Fragment key={ing.id}>
             {/* Los ingredientes por unidades usan en móvil un bloque apilado; en desktop, la misma fila con slider que el resto. */}
-            {ing.portion && (
-              <div className="mb-4 md:hidden">
+            {stacked && (
+              <div className={supplement ? 'mb-4' : 'mb-4 md:hidden'}>
                 <button type="button" onClick={() => setSelected(ing)} className="text-[13px] text-left font-serif hover:underline cursor-pointer" title="Ver valores analíticos">
                   {ing.label}
                 </button>
                 <div className="flex items-center gap-3 mt-2">
                   <div className="w-60 max-w-full">
-                    <Stepper value={g} onChange={v => onChange(ing.id, v)} min={0} max={sliderMax} step={1} unit={ingredientUnit(ing, g)} label={`Cantidad de ${ing.label}`} wholeUnits />
+                    <Stepper value={g} onChange={v => onChange(ing.id, v)} min={0} max={sliderMax} step={ing.step} unit={ingredientUnit(ing, g)} label={`Cantidad de ${ing.label}`} wholeUnits={ing.step === 1} />
                   </div>
-                  <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono whitespace-nowrap">{kcal.toFixed(1)} kcal</span>
+                  <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono whitespace-nowrap">{energyLabel}</span>
                 </div>
-                <p className="mt-2 text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono">{portionNote}</p>
+                {portionNote && <p className="mt-2 text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono">{portionNote}</p>}
               </div>
             )}
-            <div className={`${ing.portion ? 'hidden md:flex' : 'flex'} items-center gap-1.25 mb-2.5 md:gap-2.5`}>
+            <div className={`${supplement ? 'hidden' : stacked ? 'hidden md:flex' : 'flex'} items-center gap-1.25 mb-2.5 md:gap-2.5`}>
               <div className="w-41.25 max-[520px]:w-32.5 shrink-0">
                 <button
                   type="button"
@@ -66,7 +71,7 @@ export function SliderGroup({ label, group, values, onChange, ingredients = INGR
                     min={0}
                     max={sliderMax}
                     step={ing.step}
-                    unit={ing.isOil ? 'ml' : 'g'}
+                    unit={ingredientUnit(ing, g)}
                     label={`Cantidad de ${ing.label}`}
                   />
                 </div>
@@ -91,7 +96,7 @@ export function SliderGroup({ label, group, values, onChange, ingredients = INGR
                 ) : ing.isOil ? `${g.toFixed(2)} ml` : `${g} g`}
               </span>
               <span className="w-11 text-right text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono max-[520px]:hidden">
-                {kcal.toFixed(1)}k
+                {energyLabel}
               </span>
             </div>
           </Fragment>

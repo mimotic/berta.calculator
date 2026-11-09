@@ -1,3 +1,4 @@
+import { nutritionText, weightText, calciumRatioText, isMissing } from '../utils/nutritionAvailability'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import '../index.css'
@@ -335,7 +336,7 @@ export default function FoodCalculator() {
 
   const diffK     = r.kcal - TARGET
   const pct       = Math.min(100, (r.kcal / TARGET) * 100)
-  const kcalColor = Math.abs(diffK) <= 8 ? '#1D9E75' : diffK < 0 ? '#EF9F27' : '#E24B4A'
+  const kcalColor = isMissing(r, 'kcal') ? '#9b9b97' : Math.abs(diffK) <= 8 ? '#1D9E75' : diffK < 0 ? '#EF9F27' : '#E24B4A'
   const totalG    = activeIngredients.reduce((s, i) => s + ingredientGrams(i, values[i.id] ?? 0), 0)
 
   const pathologyChip = pathologies.length > 0
@@ -447,12 +448,12 @@ export default function FoodCalculator() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="col-span-2">
-                  <StatCard value={r.kcal.toFixed(1)} valueColor={kcalColor} label="kcal" barPct={pct} barColor={kcalColor} barLabel={`obj. ${TARGET}`} />
+                  <StatCard value={nutritionText(r, 'kcal', 1)} valueColor={kcalColor} label="kcal" barPct={isMissing(r, 'kcal') ? undefined : pct} barColor={kcalColor} barLabel={`obj. ${TARGET}`} />
                 </div>
-                <StatCard value={r.prot.toFixed(1)} valueColor={protOverLimit ? '#E24B4A' : undefined} label="proteína g" />
-                <StatCard value={r.fat.toFixed(2)} valueColor={fatOverLimit ? '#E24B4A' : undefined} label="grasa g" />
-                <StatCard value={r.carb.toFixed(1)} label="hidratos g" />
-                <StatCard value={totalG.toFixed(0)} label="peso total g" />
+                <StatCard value={nutritionText(r, 'prot', 1)} valueColor={protOverLimit ? '#E24B4A' : undefined} label="proteína g" />
+                <StatCard value={nutritionText(r, 'fat', 2)} valueColor={fatOverLimit ? '#E24B4A' : undefined} label="grasa g" />
+                <StatCard value={nutritionText(r, 'carb', 1)} label="hidratos g" />
+                <StatCard value={weightText(r, totalG)} label="peso total g" />
               </div>
             </div>
 
@@ -506,24 +507,24 @@ export default function FoodCalculator() {
                 <>
                   <ul className="divide-y divide-black/5 dark:divide-white/5 mt-3">
                     {[
-                      { label: 'Calcio',       value: r.ca.toFixed(1),    unit: 'mg', ref: range(1000, 1250) },
-                      { label: 'Fósforo',      value: r.phos.toFixed(1),  unit: 'mg', ref: range(750, 1000) },
-                      { label: 'Ratio Ca:P',   value: r.phos > 0 ? `${(r.ca / r.phos).toFixed(2)}:1` : '—', unit: '', ref: '1:1 – 2:1' },
-                      { label: 'Sodio',        value: r.na.toFixed(1),    unit: 'mg', ref: range(200, 250) },
-                      { label: 'Potasio',      value: r.pot.toFixed(1),   unit: 'mg', ref: range(1000, 1250) },
-                      { label: 'Hierro',       value: r.fe.toFixed(2),    unit: 'mg', ref: range(7.5, 9, 1) },
-                      { label: 'Zinc',         value: r.zn.toFixed(2),    unit: 'mg', ref: range(15, 18, 1) },
-                      { label: 'Vitamina A',   value: r.vitA.toFixed(0),  unit: 'µg', ref: range(455, 525) },
-                      { label: 'Vitamina D',   value: r.vitD.toFixed(2),  unit: 'µg', ref: range(3.4, 4.0, 1) },
-                      { label: 'Vitamina E',   value: r.vitE.toFixed(2),  unit: 'mg', ref: range(7.5, 9, 1) },
-                      { label: 'Vitamina C',   value: r.vitC.toFixed(1),  unit: 'mg', ref: '—' },
-                      { label: 'Tiamina (B1)', value: r.b1.toFixed(2),    unit: 'mg', ref: range(0.54, 0.56, 2) },
-                      { label: 'Riboflavina (B2)', value: r.b2.toFixed(2), unit: 'mg', ref: range(1.3, 1.5, 1) },
-                      { label: 'Niacina (B3)', value: r.b3.toFixed(1),    unit: 'mg', ref: range(4.25, 4.25, 1) },
-                      { label: 'Vitamina B6',  value: r.b6.toFixed(2),    unit: 'mg', ref: range(0.375, 0.375, 2) },
-                      { label: 'Folato (B9)',  value: r.b9.toFixed(0),    unit: 'µg', ref: range(67.5, 67.5) },
-                      { label: 'Vitamina B12', value: r.b12.toFixed(2),   unit: 'µg', ref: range(8.4, 8.8, 1) },
-                      { label: 'Fibra',        value: r.fiber.toFixed(1), unit: 'g',  ref: '2–4,5 % MS' },
+                      { label: 'Calcio',       value: nutritionText(r, 'ca', 1),    unit: 'mg', ref: range(1000, 1250) },
+                      { label: 'Fósforo',      value: nutritionText(r, 'phos', 1),  unit: 'mg', ref: range(750, 1000) },
+                      { label: 'Ratio Ca:P',   value: calciumRatioText(r), unit: '', ref: '1:1 – 2:1' },
+                      { label: 'Sodio',        value: nutritionText(r, 'na', 1),    unit: 'mg', ref: range(200, 250) },
+                      { label: 'Potasio',      value: nutritionText(r, 'pot', 1),   unit: 'mg', ref: range(1000, 1250) },
+                      { label: 'Hierro',       value: nutritionText(r, 'fe', 2),    unit: 'mg', ref: range(7.5, 9, 1) },
+                      { label: 'Zinc',         value: nutritionText(r, 'zn', 2),    unit: 'mg', ref: range(15, 18, 1) },
+                      { label: 'Vitamina A',   value: nutritionText(r, 'vitA', 0),  unit: 'µg', ref: range(455, 525) },
+                      { label: 'Vitamina D',   value: nutritionText(r, 'vitD', 2),  unit: 'µg', ref: range(3.4, 4.0, 1) },
+                      { label: 'Vitamina E',   value: nutritionText(r, 'vitE', 2),  unit: 'mg', ref: range(7.5, 9, 1) },
+                      { label: 'Vitamina C',   value: nutritionText(r, 'vitC', 1),  unit: 'mg', ref: '—' },
+                      { label: 'Tiamina (B1)', value: nutritionText(r, 'b1', 2),    unit: 'mg', ref: range(0.54, 0.56, 2) },
+                      { label: 'Riboflavina (B2)', value: nutritionText(r, 'b2', 2), unit: 'mg', ref: range(1.3, 1.5, 1) },
+                      { label: 'Niacina (B3)', value: nutritionText(r, 'b3', 1),    unit: 'mg', ref: range(4.25, 4.25, 1) },
+                      { label: 'Vitamina B6',  value: nutritionText(r, 'b6', 2),    unit: 'mg', ref: range(0.375, 0.375, 2) },
+                      { label: 'Folato (B9)',  value: nutritionText(r, 'b9', 0),    unit: 'µg', ref: range(67.5, 67.5) },
+                      { label: 'Vitamina B12', value: nutritionText(r, 'b12', 2),   unit: 'µg', ref: range(8.4, 8.8, 1) },
+                      { label: 'Fibra',        value: nutritionText(r, 'fiber', 1), unit: 'g',  ref: '2–4,5 % MS' },
                     ].map(({ label, value, unit, ref }) => (
                       <li key={label} className="flex items-baseline justify-between py-2 text-[13px] gap-3">
                         <div className="flex flex-col min-w-0">

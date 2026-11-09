@@ -1,3 +1,4 @@
+import { hasMacroDistribution } from '../utils/nutritionAvailability'
 import { calcNutrition, ingredientGrams, type Ingredient } from '../data/ingredients'
 import { macroDistribution } from '../utils/macroDistribution'
 
@@ -20,6 +21,7 @@ function DonutSeg({ len, offset, color }: { len: number; offset: number; color: 
 }
 
 export function MacroDonut({ r }: { r: ReturnType<typeof calcNutrition> }) {
+  if (!hasMacroDistribution(r)) return <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85]">Distribución no disponible: faltan datos de energía o macronutrientes.</p>
   const C = DONUT_C
   const legend = macroDistribution(r)
   const hasData = legend.some(m => m.pct > 0)
@@ -67,10 +69,13 @@ const WEIGHT_GROUPS: { group: Ingredient['group']; name: string; color: string }
   { group: 'fruta',   name: 'Frutas',   color: '#C2559C' },
   { group: 'fat',     name: 'Grasas',   color: '#EF9F27' },
   { group: 'pienso',  name: 'Pienso',   color: '#A5703F' },
+  { group: 'suplementos', name: 'Suplementos', color: '#3E9F9A' },
   { group: 'treats',  name: 'Treats',   color: '#9270B8' },
 ]
 
 export function WeightDonut({ ingredients, values }: { ingredients: Ingredient[]; values: Record<string, number> }) {
+  const r = calcNutrition(values, ingredients)
+  if (r.unknownWeight) return <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85]">Distribución no disponible: se desconoce el peso de algún suplemento.</p>
   const sumGroup = (group: Ingredient['group']) =>
     ingredients.filter(i => i.group === group).reduce((s, i) => s + ingredientGrams(i, values[i.id] ?? 0), 0)
 

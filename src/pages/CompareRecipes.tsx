@@ -1,3 +1,4 @@
+import { nutritionText, weightText, calciumRatioText, hasCalciumRatio, isMissing, canAssess, type AmountKey } from '../utils/nutritionAvailability'
 import { Link, useSearchParams } from 'react-router'
 import '../index.css'
 import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, ingredientUnit, hasPartialNutrition, PARTIAL_NUTRITION_NOTE, type NutritionResult } from '../data/ingredients'
@@ -18,7 +19,7 @@ import { ALERT_CLASS, buildNutrientAssessment, ruleColor } from '../utils/nutrie
 
 const NUTRIENT_ORDER: NutrientKey[] = ['phosphorus', 'potassium', 'sodium', 'protein', 'fat', 'fiber']
 
-const MICROS: { key: keyof NutritionResult; label: string; unit: string; decimals: number }[] = [
+const MICROS: { key: AmountKey; label: string; unit: string; decimals: number }[] = [
   { key: 'ca',    label: 'Calcio',           unit: 'mg', decimals: 1 },
   { key: 'phos',  label: 'Fósforo',          unit: 'mg', decimals: 1 },
   { key: 'na',    label: 'Sodio',            unit: 'mg', decimals: 1 },
@@ -262,17 +263,18 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
     a.pathologies.every(p => b.pathologies.includes(p))
 
   const kcalColor = (r: NutritionResult, target: number) => {
+    if (isMissing(r, 'kcal')) return '#9b9b97'
     const diff = r.kcal - target
     return Math.abs(diff) <= 8 ? '#1D9E75' : diff < 0 ? '#EF9F27' : '#E24B4A'
   }
 
-  const macroRows: { label: string; a: number; b: number; decimals: number; unit: string; colorA?: string; colorB?: string }[] = [
+  const macroRows: { label: string; a: number; b: number; decimals: number; unit: string; colorA?: string; colorB?: string; key?: AmountKey | 'weight' }[] = [
     { label: 'Objetivo', a: a.kcalTarget, b: b.kcalTarget, decimals: 0, unit: 'kcal' },
-    { label: 'Energía', a: rA.kcal, b: rB.kcal, decimals: 1, unit: 'kcal', colorA: kcalColor(rA, a.kcalTarget), colorB: kcalColor(rB, b.kcalTarget) },
-    { label: 'Proteína', a: rA.prot, b: rB.prot, decimals: 1, unit: 'g', colorA: assessA.protOverLimit ? '#E24B4A' : undefined, colorB: assessB.protOverLimit ? '#E24B4A' : undefined },
-    { label: 'Grasa', a: rA.fat, b: rB.fat, decimals: 2, unit: 'g', colorA: assessA.fatOverLimit ? '#E24B4A' : undefined, colorB: assessB.fatOverLimit ? '#E24B4A' : undefined },
-    { label: 'Hidratos', a: rA.carb, b: rB.carb, decimals: 1, unit: 'g' },
-    { label: 'Peso total', a: totalA, b: totalB, decimals: 0, unit: 'g' },
+    { label: 'Energía', key: 'kcal', a: rA.kcal, b: rB.kcal, decimals: 1, unit: 'kcal', colorA: kcalColor(rA, a.kcalTarget), colorB: kcalColor(rB, b.kcalTarget) },
+    { label: 'Proteína', key: 'prot', a: rA.prot, b: rB.prot, decimals: 1, unit: 'g', colorA: assessA.protOverLimit ? '#E24B4A' : undefined, colorB: assessB.protOverLimit ? '#E24B4A' : undefined },
+    { label: 'Grasa', key: 'fat', a: rA.fat, b: rB.fat, decimals: 2, unit: 'g', colorA: assessA.fatOverLimit ? '#E24B4A' : undefined, colorB: assessB.fatOverLimit ? '#E24B4A' : undefined },
+    { label: 'Hidratos', key: 'carb', a: rA.carb, b: rB.carb, decimals: 1, unit: 'g' },
+    { label: 'Peso total', key: 'weight', a: totalA, b: totalB, decimals: 0, unit: 'g' },
   ]
 
   const ruleRows = NUTRIENT_ORDER.map(key => {
@@ -291,8 +293,9 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
     return {
       key, label: meta.label, unit, decimals, limit,
       a: normA, b: normB,
-      colorA: rule ? ruleColor(normA, rule) : undefined,
-      colorB: rule ? ruleColor(normB, rule) : undefined,
+      availableA: canAssess(rA, key, basis), availableB: canAssess(rB, key, basis),
+      colorA: rule && canAssess(rA, key, basis) ? ruleColor(normA, rule) : undefined,
+      colorB: rule && canAssess(rB, key, basis) ? ruleColor(normB, rule) : undefined,
     }
   })
 
@@ -356,13 +359,13 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
               {macroRows.map(row => (
                 <li key={row.label} className={`${COLS} items-baseline py-2 text-[13px]`}>
                   <span className="font-serif">{row.label}</span>
-                  <span className="font-mono tabular-nums text-right whitespace-nowrap" style={{ color: row.colorA ?? 'inherit' }}>
-                    {row.a.toFixed(row.decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{row.unit}</span>
+                  <span className="font-mono tabular-nums text-right break-words" style={{ color: row.colorA ?? 'inherit' }}>
+                    {row.key === 'weight' ? weightText(rA, row.a) : row.key ? nutritionText(rA, row.key, row.decimals) : row.a.toFixed(row.decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{row.unit}</span>
                   </span>
-                  <span className="font-mono tabular-nums text-right whitespace-nowrap" style={{ color: row.colorB ?? 'inherit' }}>
-                    {row.b.toFixed(row.decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{row.unit}</span>
+                  <span className="font-mono tabular-nums text-right break-words" style={{ color: row.colorB ?? 'inherit' }}>
+                    {row.key === 'weight' ? weightText(rB, row.b) : row.key ? nutritionText(rB, row.key, row.decimals) : row.b.toFixed(row.decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{row.unit}</span>
                   </span>
-                  <span className="text-right"><DeltaCell a={row.a} b={row.b} decimals={row.decimals} /></span>
+                  <span className="text-right">{(row.key === 'weight' ? rA.unknownWeight || rB.unknownWeight : row.key && (isMissing(rA, row.key) || isMissing(rB, row.key))) ? '—' : <DeltaCell a={row.a} b={row.b} decimals={row.decimals} />}</span>
                 </li>
               ))}
             </ul>
@@ -386,6 +389,7 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
       {/* Rule-based nutrients */}
       <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl p-5">
         <SectionTitle>Minerales y parámetros</SectionTitle>
+        {(rA.missingNutrients.length > 0 || rB.missingNutrients.length > 0) && <p className="text-xs mb-2">N/D: no disponible por datos incompletos. No se calculan diferencias entre valores parciales.</p>}
         <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono mb-3">
           {unionPathologies.length === 0
             ? 'valores normalizados por 100 kcal · sin patologías activas'
@@ -407,9 +411,9 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
                 {row.label.charAt(0).toUpperCase() + row.label.slice(1)}
                 <span className="block md:inline text-[10px] font-mono text-[#9a9a95] dark:text-[#6b6b67] md:ml-1.5">{row.unit}</span>
               </span>
-              <span className="font-mono tabular-nums text-right" style={{ color: row.colorA ?? 'inherit' }}>{row.a.toFixed(row.decimals)}</span>
-              <span className="font-mono tabular-nums text-right" style={{ color: row.colorB ?? 'inherit' }}>{row.b.toFixed(row.decimals)}</span>
-              <span className="text-right"><DeltaCell a={row.a} b={row.b} decimals={row.decimals} /></span>
+              <span className="font-mono tabular-nums text-right" style={{ color: row.colorA ?? 'inherit' }}>{row.availableA ? row.a.toFixed(row.decimals) : 'N/D'}</span>
+              <span className="font-mono tabular-nums text-right" style={{ color: row.colorB ?? 'inherit' }}>{row.availableB ? row.b.toFixed(row.decimals) : 'N/D'}</span>
+              <span className="text-right">{row.availableA && row.availableB ? <DeltaCell a={row.a} b={row.b} decimals={row.decimals} /> : '—'}</span>
               <span className="font-mono tabular-nums text-right text-[11px] text-[#6b6b67] dark:text-[#8a8a85] whitespace-nowrap">{row.limit ?? '—'}</span>
             </li>
           ))}
@@ -447,10 +451,10 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
         <ul className="divide-y divide-black/5 dark:divide-white/5">
           <li className={`${COLS} items-baseline py-2 text-[13px]`}>
             <span className="font-serif">Ratio Ca:P</span>
-            <span className="font-mono tabular-nums text-right">{rA.phos > 0 ? `${(rA.ca / rA.phos).toFixed(2)}:1` : '—'}</span>
-            <span className="font-mono tabular-nums text-right">{rB.phos > 0 ? `${(rB.ca / rB.phos).toFixed(2)}:1` : '—'}</span>
+            <span className="font-mono tabular-nums text-right">{calciumRatioText(rA)}</span>
+            <span className="font-mono tabular-nums text-right">{calciumRatioText(rB)}</span>
             <span className="text-right">
-              {rA.phos > 0 && rB.phos > 0
+              {hasCalciumRatio(rA) && hasCalciumRatio(rB)
                 ? <DeltaCell a={rA.ca / rA.phos} b={rB.ca / rB.phos} decimals={2} />
                 : <span className="font-mono text-[11px] text-[#9a9a95] dark:text-[#6b6b67]">—</span>}
             </span>
@@ -458,13 +462,13 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
           {MICROS.map(({ key, label, unit, decimals }) => (
             <li key={key} className={`${COLS} items-baseline py-2 text-[13px]`}>
               <span className="font-serif">{label}</span>
-              <span className="font-mono tabular-nums text-right whitespace-nowrap">
-                {rA[key].toFixed(decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>
+              <span className="font-mono tabular-nums text-right break-words">
+                {nutritionText(rA, key, decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>
               </span>
-              <span className="font-mono tabular-nums text-right whitespace-nowrap">
-                {rB[key].toFixed(decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>
+              <span className="font-mono tabular-nums text-right break-words">
+                {nutritionText(rB, key, decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>
               </span>
-              <span className="text-right"><DeltaCell a={rA[key]} b={rB[key]} decimals={decimals} /></span>
+              <span className="text-right">{isMissing(rA, key) || isMissing(rB, key) ? '—' : <DeltaCell a={rA[key]} b={rB[key]} decimals={decimals} />}</span>
             </li>
           ))}
         </ul>

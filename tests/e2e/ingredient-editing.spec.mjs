@@ -4,7 +4,7 @@ import { INGREDIENTS } from '../../src/data/ingredients.ts'
 const selectionKey = 'foodCalculator.selectedIngredients'
 const valuesKey = 'foodCalculator.values'
 const recipesKey = 'foodCalculator.recipes'
-const groups = ['Hidratos', 'Verduras', 'Frutas', 'Proteína', 'Grasa', 'Pienso comercial', 'Treats']
+const groups = ['Hidratos', 'Verduras', 'Frutas', 'Proteína', 'Grasa', 'Pienso comercial', 'Treats', 'Suplementos']
 const initialIds = ['arroz', 'manzana', 'pollo', 'aceite']
 const initialValues = { arroz: 40, manzana: 10, pollo: 30, aceite: 2 }
 

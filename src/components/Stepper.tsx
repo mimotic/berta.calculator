@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 type StepperProps = {
   value: number
   onChange: (v: number) => void
@@ -11,10 +13,17 @@ type StepperProps = {
 }
 
 export function Stepper({ value, onChange, min, max, step, unit, label = 'Cantidad', wholeUnits = false, disabled = false }: StepperProps) {
+  // Preserve intermediate decimal text (e.g. '0.' or '0,') while editing.
+  // Converting it back to a numeric value on each keystroke would turn 0.5 into 5.
+  const [draft, setDraft] = useState<string | null>(null)
   const clamp = (v: number) => Math.min(max, Math.max(min, v))
   const round = (v: number) => +v.toFixed(2)
-  const dec = () => onChange(clamp(round(value - step)))
-  const inc = () => onChange(clamp(round(value + step)))
+  const commit = (next: number) => {
+    setDraft(null)
+    onChange(clamp(wholeUnits ? Math.round(next) : next))
+  }
+  const dec = () => commit(round(value - step))
+  const inc = () => commit(round(value + step))
   return (
     <div className="flex items-center border border-black/15 dark:border-white/15 rounded-md bg-white dark:bg-[#1a1a18] overflow-hidden focus-within:border-black/40 dark:focus-within:border-white/40 transition-colors">
       <button type="button" onClick={dec} disabled={disabled || value <= min} aria-label={`Reducir ${label}`} className="w-9 h-10 shrink-0 text-lg text-[#6b6b67] dark:text-[#9a9a95] hover:bg-black/5 dark:hover:bg-white/5 font-mono disabled:opacity-40 disabled:cursor-not-allowed">−</button>
@@ -23,9 +32,16 @@ export function Stepper({ value, onChange, min, max, step, unit, label = 'Cantid
         inputMode={wholeUnits ? 'numeric' : 'decimal'}
         aria-label={label}
         disabled={disabled}
-        value={String(value)}
+        value={draft ?? String(value)}
+        onFocus={() => setDraft(String(value))}
+        onBlur={() => {
+          const parsed = Number((draft ?? String(value)).replace(',', '.'))
+          commit(Number.isFinite(parsed) ? parsed : value)
+        }}
         onChange={e => {
           const raw = e.target.value
+          if (!/^\d*[.,]?\d*$/.test(raw)) return
+          setDraft(raw)
           if (raw === '') {
             onChange(min)
             return

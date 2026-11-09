@@ -1,3 +1,4 @@
+import { nutritionText, weightText, calciumRatioText, isMissing, canAssess, hasMacroDistribution } from './nutritionAvailability'
 import { jsPDF } from 'jspdf'
 import logoUrl from '../assets/berta_logo.png'
 import type { Values, NutritionResult } from '../data/ingredients'
@@ -65,6 +66,12 @@ function strokeArc(doc: jsPDF, cx: number, cy: number, radius: number, fromDeg: 
 // 20 mm de alto, lo mismo que las dos filas de la rejilla de macros.
 // (x, y) es la esquina superior izquierda; right, el borde derecho de la leyenda.
 function drawMacroDonut(doc: jsPDF, r: NutritionResult, x: number, y: number, right: number) {
+  if (!hasMacroDistribution(r)) {
+    doc.setFontSize(8)
+    setColor(doc, MUTED)
+    doc.text('No disponible: datos parciales', x, y + 10)
+    return
+  }
   const macros = macroDistribution(r)
   const radius = 8.8
   const cx = x + 10.2
@@ -257,23 +264,23 @@ export async function generateDietPDF(
   drawMacroDonut(doc, r, chartX, y, pageW - margin)
 
   const diffK = r.kcal - target
-  const kcalColor = Math.abs(diffK) <= 8 ? GREEN : diffK < 0 ? ORANGE : RED
+  const kcalColor = isMissing(r, 'kcal') ? '#9b9b97' : Math.abs(diffK) <= 8 ? GREEN : diffK < 0 ? ORANGE : RED
   const totalG = activeIngredients.reduce((s, i) => s + ingredientGrams(i, values[i.id] ?? 0), 0)
 
   const macros = [
-    { label: 'kcal', value: r.kcal.toFixed(1), color: kcalColor },
-    { label: 'proteína g', value: r.prot.toFixed(1), color: BRAND },
-    { label: 'grasa g', value: r.fat.toFixed(2), color: BRAND },
-    { label: 'hidratos g', value: r.carb.toFixed(1), color: BRAND },
-    { label: 'fibra g', value: r.fiber.toFixed(1), color: BRAND },
-    { label: 'peso total g', value: totalG.toFixed(0), color: BRAND },
+    { label: 'kcal', value: nutritionText(r, 'kcal', 1), color: kcalColor },
+    { label: 'proteína g', value: nutritionText(r, 'prot', 1), color: BRAND },
+    { label: 'grasa g', value: nutritionText(r, 'fat', 2), color: BRAND },
+    { label: 'hidratos g', value: nutritionText(r, 'carb', 1), color: BRAND },
+    { label: 'fibra g', value: nutritionText(r, 'fiber', 1), color: BRAND },
+    { label: 'peso total g', value: weightText(r, totalG), color: BRAND },
   ]
 
   macros.forEach((m, i) => {
     const cx = margin + (i % 3) * macroColW
     const cy = y + Math.floor(i / 3) * 10
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(13)
+    doc.setFontSize(m.value.length > 12 ? 8 : 13)
     setColor(doc, m.color)
     doc.text(m.value, cx, cy + 5)
     doc.setFont('helvetica', 'normal')
@@ -294,6 +301,9 @@ export async function generateDietPDF(
     .map(key => {
       const rule = activeRules[key]!
       const meta = NUTRIENT_META[key]
+      if (!canAssess(r, key, rule.basis)) {
+        return { label: `${meta.label} ${displayUnit(rule.basis, meta.unit)}`, value: 'No disponible', range: 'datos parciales', color: MUTED }
+      }
       const normalized = getNormalizedValue(r, key, rule.basis)
       const dUnit = displayUnit(rule.basis, meta.unit)
       const dispVal = rule.basis === 'pct_kcal' || meta.unit === 'g'
@@ -342,24 +352,24 @@ export async function generateDietPDF(
 
   // ── Micronutrientes ────────────────────────────────────────────────────────
   const micros = [
-    { label: 'Calcio',       value: r.ca.toFixed(1),    unit: 'mg' },
-    { label: 'Fósforo',      value: r.phos.toFixed(1),  unit: 'mg' },
-    { label: 'Ratio Ca:P',   value: r.phos > 0 ? `${(r.ca / r.phos).toFixed(2)}:1` : '—', unit: '' },
-    { label: 'Sodio',        value: r.na.toFixed(1),    unit: 'mg' },
-    { label: 'Potasio',      value: r.pot.toFixed(1),   unit: 'mg' },
-    { label: 'Hierro',       value: r.fe.toFixed(2),    unit: 'mg' },
-    { label: 'Zinc',         value: r.zn.toFixed(2),    unit: 'mg' },
-    { label: 'Vitamina A',   value: r.vitA.toFixed(0),  unit: 'µg' },
-    { label: 'Vitamina D',   value: r.vitD.toFixed(2),  unit: 'µg' },
-    { label: 'Vitamina E',   value: r.vitE.toFixed(2),  unit: 'mg' },
-    { label: 'Vitamina C',   value: r.vitC.toFixed(1),  unit: 'mg' },
-    { label: 'Tiamina (B1)', value: r.b1.toFixed(2),    unit: 'mg' },
-    { label: 'Riboflavina (B2)', value: r.b2.toFixed(2), unit: 'mg' },
-    { label: 'Niacina (B3)', value: r.b3.toFixed(1),    unit: 'mg' },
-    { label: 'Vitamina B6',  value: r.b6.toFixed(2),    unit: 'mg' },
-    { label: 'Folato (B9)',  value: r.b9.toFixed(0),    unit: 'µg' },
-    { label: 'Vitamina B12', value: r.b12.toFixed(2),   unit: 'µg' },
-    { label: 'Fibra',        value: r.fiber.toFixed(1), unit: 'g'  },
+    { label: 'Calcio',       value: nutritionText(r, 'ca', 1),    unit: 'mg' },
+    { label: 'Fósforo',      value: nutritionText(r, 'phos', 1),  unit: 'mg' },
+    { label: 'Ratio Ca:P',   value: calciumRatioText(r), unit: '' },
+    { label: 'Sodio',        value: nutritionText(r, 'na', 1),    unit: 'mg' },
+    { label: 'Potasio',      value: nutritionText(r, 'pot', 1),   unit: 'mg' },
+    { label: 'Hierro',       value: nutritionText(r, 'fe', 2),    unit: 'mg' },
+    { label: 'Zinc',         value: nutritionText(r, 'zn', 2),    unit: 'mg' },
+    { label: 'Vitamina A',   value: nutritionText(r, 'vitA', 0),  unit: 'µg' },
+    { label: 'Vitamina D',   value: nutritionText(r, 'vitD', 2),  unit: 'µg' },
+    { label: 'Vitamina E',   value: nutritionText(r, 'vitE', 2),  unit: 'mg' },
+    { label: 'Vitamina C',   value: nutritionText(r, 'vitC', 1),  unit: 'mg' },
+    { label: 'Tiamina (B1)', value: nutritionText(r, 'b1', 2),    unit: 'mg' },
+    { label: 'Riboflavina (B2)', value: nutritionText(r, 'b2', 2), unit: 'mg' },
+    { label: 'Niacina (B3)', value: nutritionText(r, 'b3', 1),    unit: 'mg' },
+    { label: 'Vitamina B6',  value: nutritionText(r, 'b6', 2),    unit: 'mg' },
+    { label: 'Folato (B9)',  value: nutritionText(r, 'b9', 0),    unit: 'µg' },
+    { label: 'Vitamina B12', value: nutritionText(r, 'b12', 2),   unit: 'µg' },
+    { label: 'Fibra',        value: nutritionText(r, 'fiber', 1), unit: 'g'  },
   ]
 
   const microCols = 4

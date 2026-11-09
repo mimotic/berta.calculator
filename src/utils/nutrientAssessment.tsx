@@ -1,3 +1,4 @@
+import { canAssess, isMissing } from './nutritionAvailability'
 import type { ReactElement } from 'react'
 import type { NutritionResult } from '../data/ingredients'
 import {
@@ -63,7 +64,8 @@ export function buildNutrientAssessment(
   const alerts: [AlertType, string][] = []
 
   // kcal alert is always shown
-  if (Math.abs(diffK) <= 5)   alerts.push(['ok',     `✓ Calorías en objetivo (${r.kcal.toFixed(1)} kcal)`])
+  if (isMissing(r, 'kcal')) alerts.push(['warn', 'Energía parcial: no se puede valorar el objetivo calórico.'])
+  else if (Math.abs(diffK) <= 5)   alerts.push(['ok',     `✓ Calorías en objetivo (${r.kcal.toFixed(1)} kcal)`])
   else if (diffK < 0)         alerts.push(['warn',   `Faltan ${Math.abs(diffK).toFixed(1)} kcal para llegar a ${target}`])
   else                        alerts.push(['danger', `${diffK.toFixed(1)} kcal por encima del objetivo`])
 
@@ -72,6 +74,11 @@ export function buildNutrientAssessment(
     if (!rule) continue
 
     const meta       = NUTRIENT_META[key]
+    if (!canAssess(r, key, rule.basis)) {
+      mineralCards.push({ key, el: <StatCard value="No disponible" label={`${meta.label}: datos incompletos`} /> })
+      alerts.push(['warn', `${meta.label}: no se puede valorar con los datos disponibles.`])
+      continue
+    }
     const normalized = getNormalizedValue(r, key, rule.basis)
     const dUnit      = displayUnit(rule.basis, meta.unit)
 
@@ -121,11 +128,11 @@ export function buildNutrientAssessment(
 
   // Determine valueColor for macro stats cards
   const fatRule  = activeRules.fat
-  const fatNorm  = fatRule ? getNormalizedValue(r, 'fat', fatRule.basis) : null
+  const fatNorm  = fatRule && canAssess(r, 'fat', fatRule.basis) ? getNormalizedValue(r, 'fat', fatRule.basis) : null
   const fatOverLimit = fatRule?.max !== undefined && fatNorm !== null && fatNorm > fatRule.max
 
   const protRule  = activeRules.protein
-  const protNorm  = protRule ? getNormalizedValue(r, 'protein', protRule.basis) : null
+  const protNorm  = protRule && canAssess(r, 'protein', protRule.basis) ? getNormalizedValue(r, 'protein', protRule.basis) : null
   const protOverLimit = protRule?.max !== undefined && protNorm !== null && protNorm > protRule.max
 
   // Footer notes from active pathologies

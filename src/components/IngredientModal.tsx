@@ -1,3 +1,4 @@
+import { nutritionBasisLabel, isNutrientKnown } from '../data/ingredients'
 import type { Ingredient, NutritionKey } from '../data/ingredients'
 
 interface IngredientModalProps {
@@ -32,6 +33,7 @@ const ROWS: { label: string; key: NutritionKey; unit: string; decimals: number }
 export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
   return (
     <div
+      role="dialog" aria-modal="true" aria-label={`Valores analíticos: ${ingredient.label}`}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
       onClick={onClose}
     >
@@ -48,7 +50,7 @@ export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
               {ingredient.label}
             </h2>
             <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono mt-0.5">
-              por 100 g{ingredient.isOil ? ' / ml' : ''}
+              {nutritionBasisLabel(ingredient)}
             </p>
             {ingredient.portion && (
               <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono mt-1">
@@ -66,11 +68,14 @@ export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto">
-        {(ingredient.sourceUrl || ingredient.nutritionNote) && (
+        {(ingredient.sourceUrl || ingredient.additionalSources || ingredient.nutritionNote) && (
           <div className="px-4 pt-3 text-xs text-[#6b6b67] dark:text-[#8a8a85]">
             {ingredient.sourceUrl && (
               <a href={ingredient.sourceUrl} target="_blank" rel="noreferrer" className="underline">{ingredient.sourceLabel ?? 'Ficha del fabricante'}</a>
             )}
+            {ingredient.additionalSources?.map(source => (
+              <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="block mt-1 underline">{source.label}</a>
+            ))}
             {ingredient.nutritionNote && <p className="mt-2">{ingredient.nutritionNote}</p>}
           </div>
         )}
@@ -78,11 +83,14 @@ export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
           {ROWS.map(({ label, key, unit, decimals }) => {
             const raw = ingredient[key]
             const estimated = key === 'carb' && !!ingredient.declaredNutrients && !ingredient.declaredNutrients.includes('carb') && raw > 0
-            const known = !ingredient.declaredNutrients || ingredient.declaredNutrients.includes(key) || estimated
-            const val = known ? `${estimated ? '≈ ' : ''}${raw.toFixed(decimals)}` : 'No declarado'
+            const known = isNutrientKnown(ingredient, key)
+            const val = known ? `${estimated ? '≈ ' : ''}${raw.toFixed(decimals)}` : ingredient.nutrientNotes?.[key] ? 'Sin convertir' : 'No declarado'
             return (
               <li key={key} className="flex items-baseline justify-between py-2 text-[13px]">
-                <span className="font-serif text-[#1a1a18] dark:text-[#e8e6e0]">{label}</span>
+                <span className="font-serif text-[#1a1a18] dark:text-[#e8e6e0]">{label}
+                  {ingredient.partialNutrients?.includes(key) && <span className="block text-[10px] text-[#6b6b67] dark:text-[#8a8a85]">Aporte de aditivos; total desconocido</span>}
+                  {ingredient.nutrientNotes?.[key] && <span className="block max-w-44 text-[10px] text-[#6b6b67] dark:text-[#8a8a85]">{ingredient.nutrientNotes[key]}</span>}
+                </span>
                 <span className="font-mono tabular-nums">
                   {val}
                   {known && <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>}

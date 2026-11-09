@@ -1,7 +1,9 @@
+import { SUPPLEMENTS } from './supplements.ts'
+
 export interface Ingredient {
   id: string
   label: string
-  group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat' | 'pienso' | 'treats'
+  group: 'hc' | 'verdura' | 'fruta' | 'prot' | 'fat' | 'pienso' | 'treats' | 'suplementos'
   val: number
   max: number
   step: number
@@ -9,12 +11,19 @@ export interface Ingredient {
   // Las cantidades de estos ingredientes se guardan en unidades, no en gramos;
   // grams es el peso fijo de una unidad.
   portion?: { singular: string; plural: string; grams: number }
+  // Medidas cuya base no es 100 g (p. ej. nutrientes por comprimido o por ml).
+  // No se presupone que 1 ml o 1 comprimido pesen 1 g.
+  measure?: { singular: string; plural: string; nutritionBasis: number; grams?: number }
   sourceUrl?: string
+  additionalSources?: { label: string; url: string }[]
   // Texto del enlace a la ficha del fabricante (por defecto «Ficha del fabricante»).
   sourceLabel?: string
   // Los ceros de campos no publicados no representan ausencia del nutriente.
   declaredNutrients?: NutritionKey[]
+  // Aportes de aditivos, no análisis total del nutriente en el producto.
+  partialNutrients?: NutritionKey[]
   nutritionNote?: string
+  nutrientNotes?: Partial<Record<NutritionKey, string>>
   // true en variantes crudas: se hervirán después, así que se les aplica la
   // pérdida de minerales por lixiviación (BOILING_RETENTION). Los ingredientes
   // cocidos ya tienen esas pérdidas descontadas en sus valores.
@@ -52,6 +61,7 @@ export const INGREDIENT_GROUPS: { group: Ingredient['group']; label: string }[] 
   { group: 'fat', label: 'Grasa' },
   { group: 'pienso', label: 'Pienso comercial' },
   { group: 'treats', label: 'Treats' },
+  { group: 'suplementos', label: 'Suplementos' },
 ]
 
 const UNREPORTED_MICROS = {
@@ -243,19 +253,39 @@ export const INGREDIENTS: Ingredient[] = [
     declaredNutrients: ['kcal', 'prot', 'fat', 'carb', 'fiber', 'ca', 'phos', 'na'],
     nutritionNote: 'Valores por 100 g de la ficha oficial de Specific España (1441 kJ = 344,4 kcal; agua 10,4 %). Hidratos (ELN) declarados por el fabricante. Fibra = fibra bruta. Potasio, hierro, zinc y vitaminas no declarados. Peso por premio estimado en 2,5 g (unas 8,6 kcal): Specific no lo publica, pero cuadra con su tabla de equivalencias con otras dietas.',
   },
+  ...SUPPLEMENTS,
 ]
 
 export function ingredientGrams(ing: Ingredient, quantity: number): number {
+  if (ing.measure) return quantity * (ing.measure.grams ?? 0)
   return ing.portion ? quantity * ing.portion.grams : quantity
 }
 
 export function ingredientUnit(ing: Ingredient, quantity: number): string {
-  return ing.portion ? (quantity === 1 ? ing.portion.singular : ing.portion.plural) : ing.isOil ? 'ml' : 'g'
+  const unit = ing.measure ?? ing.portion
+  return unit ? (quantity === 1 ? unit.singular : unit.plural) : ing.isOil ? 'ml' : 'g'
 }
 
 export function formatIngredientQuantity(ing: Ingredient, quantity: number): string {
   return `${quantity.toLocaleString('es-ES', { maximumFractionDigits: 2 })} ${ingredientUnit(ing, quantity)}`
 }
+
+export function ingredientNutritionFactor(ing: Ingredient, quantity: number): number {
+  return ing.measure ? quantity / ing.measure.nutritionBasis : ingredientGrams(ing, quantity) / 100
+}
+
+export function nutritionBasisLabel(ing: Ingredient): string {
+  return ing.measure ? `por ${ing.measure.nutritionBasis} ${ingredientUnit(ing, ing.measure.nutritionBasis)}` : `por 100 ${ing.isOil ? 'ml' : 'g'}`
+}
+
+export function isNutrientKnown(ing: Ingredient, key: NutritionKey): boolean {
+  // Conserva los hidratos estimados y documentados de algunos treats existentes.
+  return !ing.declaredNutrients || ing.declaredNutrients.includes(key) || (key === 'carb' && ing.carb > 0)
+}
+
+export const NUTRITION_KEYS: NutritionKey[] = ['kcal', 'prot', 'fat', 'carb', 'fiber', 'phos', 'pot', 'ca', 'na', 'fe', 'zn', 'vitA', 'vitD', 'vitE', 'vitC', 'b1', 'b2', 'b3', 'b6', 'b9', 'b12']
+
+export const SUPPLEMENT_NOTE = 'Introduce solo la cantidad indicada por tu veterinario. Los controles no son una recomendación de dosis. No se descuentan nutrientes por posibles efectos de los suplementos.'
 
 export const PARTIAL_NUTRITION_NOTE = 'Cálculo parcial: algunos ingredientes no declaran todos los nutrientes. Los nutrientes no declarados no se suman y no equivalen a cero. Consulta la ficha de cada ingrediente. Las valoraciones nutricionales pueden estar incompletas.'
 
@@ -284,7 +314,7 @@ const KCAL_RANGES: { upTo: number; factor: number }[] = [
 const MAX_HEADROOM = 1.3
 
 export function getIngredientMax(ing: Ingredient, targetKcal: number): number {
-  if (ing.portion) return ing.max
+  if (ing.portion || ing.measure || ing.group === 'suplementos') return ing.max
   const range = KCAL_RANGES.find(r => targetKcal < r.upTo) ?? KCAL_RANGES[KCAL_RANGES.length - 1]
   const raw = ing.max * range.factor * MAX_HEADROOM
   return Math.max(ing.step, Math.round(raw / ing.step) * ing.step)
@@ -310,7 +340,7 @@ const ATWATER_PET_FOOD = { prot: 3.5, carb: 3.5, fat: 8.5 }
 // Si la ficha no declara hidratos, se les asigna la energía que no explican la
 // proteína y la grasa.
 function macroKcal(ing: Ingredient) {
-  const f = ing.group === 'pienso' || ing.group === 'treats' ? ATWATER_PET_FOOD : ATWATER
+  const f = ing.group === 'pienso' || ing.group === 'treats' || ing.group === 'suplementos' ? ATWATER_PET_FOOD : ATWATER
   const prot = ing.prot * f.prot
   const fat  = ing.fat  * f.fat
   const carbUndeclared = !ing.carb && ing.declaredNutrients !== undefined && !ing.declaredNutrients.includes('carb')
@@ -326,36 +356,42 @@ export function calcNutrition(values: Values, ingredients: Ingredient[] = INGRED
   let vitC = 0, b1 = 0, b2 = 0, b3 = 0, b6 = 0, b9 = 0, b12 = 0
   // kcal que aporta cada macro (ver macroKcal); suman kcal
   let kcalProt = 0, kcalCarb = 0, kcalFat = 0
+  const missingNutrients = new Set<NutritionKey>()
+  let unknownWeight = false
   for (const ing of ingredients) {
-    const g = ingredientGrams(ing, values[ing.id] ?? 0)
+    const quantity = values[ing.id] ?? 0
+    if (quantity <= 0) continue
+    for (const key of NUTRITION_KEYS) if (!isNutrientKnown(ing, key) || ing.partialNutrients?.includes(key)) missingNutrients.add(key)
+    if (ing.measure && ing.measure.grams === undefined) unknownWeight = true
+    const factor = ingredientNutritionFactor(ing, quantity)
     const retention = ing.isRaw ? BOILING_RETENTION : 1
     const energy = macroKcal(ing)
-    kcal  += (g / 100) * ing.kcal
-    kcalProt += (g / 100) * energy.prot
-    kcalCarb += (g / 100) * energy.carb
-    kcalFat  += (g / 100) * energy.fat
-    prot  += (g / 100) * ing.prot
-    fat   += (g / 100) * ing.fat
-    carb  += (g / 100) * (ing.carb || 0)
-    phos  += (g / 100) * ing.phos * retention
-    pot   += (g / 100) * ing.pot  * retention
-    ca    += (g / 100) * ing.ca
-    na    += (g / 100) * ing.na
-    fe    += (g / 100) * ing.fe
-    zn    += (g / 100) * ing.zn
-    vitA  += (g / 100) * ing.vitA
-    vitD  += (g / 100) * ing.vitD
-    vitE  += (g / 100) * ing.vitE
-    vitC  += (g / 100) * (ing.vitC || 0)
-    b1    += (g / 100) * (ing.b1 || 0)
-    b2    += (g / 100) * (ing.b2 || 0)
-    b3    += (g / 100) * (ing.b3 || 0)
-    b6    += (g / 100) * (ing.b6 || 0)
-    b9    += (g / 100) * (ing.b9 || 0)
-    b12   += (g / 100) * ing.b12
-    fiber += (g / 100) * ing.fiber
+    kcal  += factor * ing.kcal
+    kcalProt += factor * energy.prot
+    kcalCarb += factor * energy.carb
+    kcalFat  += factor * energy.fat
+    prot  += factor * ing.prot
+    fat   += factor * ing.fat
+    carb  += factor * (ing.carb || 0)
+    phos  += factor * ing.phos * retention
+    pot   += factor * ing.pot  * retention
+    ca    += factor * ing.ca
+    na    += factor * ing.na
+    fe    += factor * ing.fe
+    zn    += factor * ing.zn
+    vitA  += factor * ing.vitA
+    vitD  += factor * ing.vitD
+    vitE  += factor * ing.vitE
+    vitC  += factor * (ing.vitC || 0)
+    b1    += factor * (ing.b1 || 0)
+    b2    += factor * (ing.b2 || 0)
+    b3    += factor * (ing.b3 || 0)
+    b6    += factor * (ing.b6 || 0)
+    b9    += factor * (ing.b9 || 0)
+    b12   += factor * ing.b12
+    fiber += factor * ing.fiber
   }
-  return { kcal, kcalProt, kcalCarb, kcalFat, prot, fat, carb, phos, pot, ca, na, fe, zn, vitA, vitD, vitE, vitC, b1, b2, b3, b6, b9, b12, fiber }
+  return { kcal, kcalProt, kcalCarb, kcalFat, prot, fat, carb, phos, pot, ca, na, fe, zn, vitA, vitD, vitE, vitC, b1, b2, b3, b6, b9, b12, fiber, missingNutrients: [...missingNutrients], unknownWeight }
 }
 
 export type NutritionResult = ReturnType<typeof calcNutrition>
