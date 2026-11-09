@@ -8,6 +8,7 @@ const closeTo = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e
 
 test('photographed bread is a separate carbohydrate ingredient measured in grams', () => {
   assert.ok(bread)
+  assert.equal(bread.label, 'Pan Recondo')
   assert.equal(INGREDIENTS.filter(ingredient => ingredient.id === breadId).length, 1)
   assert.equal(bread.group, 'hc')
   assert.equal(bread.isOil, false)

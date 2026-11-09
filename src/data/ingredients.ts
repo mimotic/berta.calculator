@@ -80,7 +80,7 @@ export const INGREDIENTS: Ingredient[] = [
   // Sal 0,02 g/100 g → sodio 8 mg/100 g (sal = sodio × 2,5).
   {
     ...UNREPORTED_MICROS,
-    id: 'pan_etiqueta_394', label: 'Pan (etiqueta 394 kcal)',
+    id: 'pan_etiqueta_394', label: 'Pan Recondo',
     group: 'hc', val: 0, max: 80, step: 1, isOil: false,
     kcal: 394, prot: 15, fat: 3.9, carb: 72, fiber: 5.2, na: 8,
     declaredNutrients: ['kcal', 'prot', 'fat', 'carb', 'fiber', 'na'],
