@@ -13,6 +13,7 @@ import { MacroDonut, WeightDonut } from '../components/MacroDonut'
 import { SliderGroup } from '../components/SliderGroup'
 import { Header } from '../components/Header'
 import { IngredientsWizard } from '../components/IngredientsWizard'
+import { IngredientsEditor } from '../components/IngredientsEditor'
 import { PathologyWizard } from '../components/PathologyWizard'
 
 const STORAGE_KEY = 'foodCalculator.kcalTarget'
@@ -258,7 +259,6 @@ export default function FoodCalculator() {
       try { localStorage.setItem(INGREDIENTS_STORAGE_KEY, JSON.stringify(ids)) } catch { /* storage unavailable */ }
     }
     setSelectedIds(ids)
-    setEditingIngredients(false)
   }
 
   if (target === null || editingGoal) {
@@ -281,12 +281,16 @@ export default function FoodCalculator() {
     )
   }
 
-  if (selectedIds === null || editingIngredients) {
+  if (selectedIds === null) {
+    return <IngredientsWizard initial={[]} onSubmit={commitIngredients} />
+  }
+
+  if (editingIngredients) {
     return (
-      <IngredientsWizard
-        initial={selectedIds ?? []}
-        onSubmit={commitIngredients}
-        onCancel={editingIngredients ? () => setEditingIngredients(false) : undefined}
+      <IngredientsEditor
+        selectedIds={selectedIds}
+        onSave={commitIngredients}
+        onClose={() => setEditingIngredients(false)}
       />
     )
   }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { INGREDIENTS, INGREDIENT_GROUPS } from '../data/ingredients'
+import { INGREDIENT_GROUPS } from '../data/ingredients'
 import { Header } from './Header'
+import { IngredientGroupSelection } from './IngredientGroupSelection'
 
 const STEPS = INGREDIENT_GROUPS.map(({ group, label }, index) => ({
   group, title: label, subtitle: `paso ${index + 1} · ${label.toLowerCase()}`,
@@ -17,28 +18,7 @@ export function IngredientsWizard({ initial, onSubmit, onCancel }: Props) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initial))
 
   const current = STEPS[step]
-  const items = INGREDIENTS.filter(i => i.group === current.group)
   const isLast = step === STEPS.length - 1
-
-  const toggle = (id: string) => {
-    setSelected(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const setAll = (checked: boolean) => {
-    setSelected(prev => {
-      const next = new Set(prev)
-      for (const ing of items) {
-        if (checked) next.add(ing.id)
-        else next.delete(ing.id)
-      }
-      return next
-    })
-  }
 
   return (
     <div className="font-serif bg-[#f9f8f6] dark:bg-[#0f0f0e] text-[#1a1a18] dark:text-[#e8e6e0] min-h-screen py-8 px-4 transition-colors">
@@ -57,49 +37,12 @@ export function IngredientsWizard({ initial, onSubmit, onCancel }: Props) {
         </header>
 
         <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl p-5">
-          <div className="flex items-baseline justify-between gap-3 mb-4">
-            <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] font-mono">
-              {current.title}
-            </div>
-            <div className="flex items-center gap-2 text-[11px] font-mono text-[#6b6b67] dark:text-[#8a8a85] shrink-0">
-              <button
-                onClick={() => setAll(true)}
-                className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
-              >
-                marcar todo
-              </button>
-              <span>·</span>
-              <button
-                onClick={() => setAll(false)}
-                className="underline hover:text-[#1a1a18] dark:hover:text-[#e8e6e0] transition-colors cursor-pointer"
-              >
-                desmarcar todo
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {items.map(ing => {
-              const checked = selected.has(ing.id)
-              return (
-                <label
-                  key={ing.id}
-                  className="flex items-center gap-3 py-2 px-3 border border-black/10 dark:border-white/10 rounded-md cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggle(ing.id)}
-                    className="accent-black dark:accent-white w-4 h-4 shrink-0"
-                  />
-                  <span className="text-[13px] font-serif flex-1">{ing.label}</span>
-                  <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono tabular-nums shrink-0">
-                    {ing.kcal} kcal/100{ing.isOil ? 'ml' : 'g'}
-                  </span>
-                </label>
-              )
-            })}
-          </div>
+          <IngredientGroupSelection
+            group={current.group}
+            label={current.title}
+            selected={selected}
+            onChange={setSelected}
+          />
 
           <div className="flex gap-2 mt-5">
             {step > 0 ? (

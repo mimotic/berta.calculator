@@ -12,7 +12,7 @@ npm run preview   # Preview production build locally
 npm run deploy    # Build and deploy to GitHub Pages
 ```
 
-No test suite is configured.
+Run `npm test` for nutrition and ingredient-selection unit tests. Run `npm run test:e2e` for the production-build browser regression suite (desktop and mobile dark mode); first install its browser with `npx playwright install chromium`. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to use an existing Chromium executable.
 
 ## Architecture
 
