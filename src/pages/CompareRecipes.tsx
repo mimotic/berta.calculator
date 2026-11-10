@@ -1,20 +1,19 @@
-import { nutritionText, weightText, calciumRatioText, hasCalciumRatio, isMissing, canAssess, type AmountKey } from '../utils/nutritionAvailability'
+import { NO_DATA, nutritionText, isIncomplete, isMissing, weightText, isWeightIncomplete, calciumRatioText, isCalciumRatioIncomplete, hasCalciumRatio, evaluateRule, kcalColor, type AmountKey } from '../utils/nutritionAvailability'
 import { Link, useSearchParams } from 'react-router'
 import '../index.css'
-import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, ingredientUnit, hasPartialNutrition, PARTIAL_NUTRITION_NOTE, type NutritionResult } from '../data/ingredients'
+import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, ingredientUnit, type NutritionResult } from '../data/ingredients'
 import { loadRecipes, type SavedRecipe } from '../data/recipes'
 import {
   PATHOLOGY_DEFS,
   NUTRIENT_META,
   computeActiveRules,
-  getNormalizedValue,
-  displayUnit,
   type NutrientKey,
   type PathologyId,
 } from '../data/pathologies'
 import { Header } from '../components/Header'
 import { MacroDonut } from '../components/MacroDonut'
-import { ALERT_CLASS, buildNutrientAssessment, ruleColor } from '../utils/nutrientAssessment'
+import { IncompleteDataNote, IncompleteTag } from '../components/IncompleteData'
+import { ALERT_CLASS, buildNutrientAssessment } from '../utils/nutrientAssessment'
 
 
 const NUTRIENT_ORDER: NutrientKey[] = ['phosphorus', 'potassium', 'sodium', 'protein', 'fat', 'fiber']
@@ -68,6 +67,25 @@ function DeltaCell({ a, b, decimals }: { a: number; b: number; decimals: number 
       className={`font-mono tabular-nums text-[11px] ${sign === 0 ? 'text-[#9a9a95] dark:text-[#6b6b67]' : 'text-[#6b6b67] dark:text-[#8a8a85]'}`}
     >
       {text}
+    </span>
+  )
+}
+
+type Cell = { text: string; incomplete: boolean; complete: boolean }
+
+// Texto de un total de la receta. complete: sin datos que falten, así que admite diferencias.
+function amountOf(r: NutritionResult, key: AmountKey | 'weight' | undefined, value: number, decimals: number): Cell {
+  if (key === 'weight') return { text: weightText(r, value), incomplete: isWeightIncomplete(r, value), complete: !r.unknownWeight }
+  if (key) return { text: nutritionText(r, key, decimals), incomplete: isIncomplete(r, key), complete: !isMissing(r, key) }
+  return { text: value.toFixed(decimals), incomplete: false, complete: true }
+}
+
+function AmountValue({ text, incomplete, unit, color, className = '' }: { text: string; incomplete: boolean; unit?: string; color?: string; className?: string }) {
+  return (
+    <span className={`font-mono tabular-nums text-right ${className}`} style={{ color: color ?? 'inherit' }}>
+      {text}
+      {unit && text !== NO_DATA && <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>}
+      {incomplete && <IncompleteTag className="block" />}
     </span>
   )
 }
@@ -262,12 +280,6 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
     a.pathologies.length === b.pathologies.length &&
     a.pathologies.every(p => b.pathologies.includes(p))
 
-  const kcalColor = (r: NutritionResult, target: number) => {
-    if (isMissing(r, 'kcal')) return '#9b9b97'
-    const diff = r.kcal - target
-    return Math.abs(diff) <= 8 ? '#1D9E75' : diff < 0 ? '#EF9F27' : '#E24B4A'
-  }
-
   const macroRows: { label: string; a: number; b: number; decimals: number; unit: string; colorA?: string; colorB?: string; key?: AmountKey | 'weight' }[] = [
     { label: 'Objetivo', a: a.kcalTarget, b: b.kcalTarget, decimals: 0, unit: 'kcal' },
     { label: 'Energía', key: 'kcal', a: rA.kcal, b: rB.kcal, decimals: 1, unit: 'kcal', colorA: kcalColor(rA, a.kcalTarget), colorB: kcalColor(rB, b.kcalTarget) },
@@ -277,34 +289,30 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
     { label: 'Peso total', key: 'weight', a: totalA, b: totalB, decimals: 0, unit: 'g' },
   ]
 
+  // Valor de cada receta en la base de la regla (sin patología: por 100 kcal, sin color).
   const ruleRows = NUTRIENT_ORDER.map(key => {
     const meta = NUTRIENT_META[key]
     const rule = rules[key]
-    const basis = rule?.basis ?? 'per_100kcal'
-    const normA = getNormalizedValue(rA, key, basis)
-    const normB = getNormalizedValue(rB, key, basis)
-    const unit = displayUnit(basis, meta.unit)
-    const decimals = basis === 'pct_kcal' || meta.unit === 'g' ? 1 : 0
+    const evA = evaluateRule(rA, key, rule ?? { basis: 'per_100kcal' })
+    const evB = evaluateRule(rB, key, rule ?? { basis: 'per_100kcal' })
+    const decimals = (rule?.basis ?? 'per_100kcal') === 'pct_kcal' || meta.unit === 'g' ? 1 : 0
     const limit = rule
       ? rule.min !== undefined && rule.max !== undefined
         ? `${rule.min}–${rule.max}`
         : rule.max !== undefined ? `máx ${rule.max}` : `mín ${rule.min}`
       : null
     return {
-      key, label: meta.label, unit, decimals, limit,
-      a: normA, b: normB,
-      availableA: canAssess(rA, key, basis), availableB: canAssess(rB, key, basis),
-      colorA: rule && canAssess(rA, key, basis) ? ruleColor(normA, rule) : undefined,
-      colorB: rule && canAssess(rB, key, basis) ? ruleColor(normB, rule) : undefined,
+      key, label: meta.label, unit: evA.unit, decimals, limit, evA, evB,
+      colorA: rule && evA.available ? evA.color : undefined,
+      colorB: rule && evB.available ? evB.color : undefined,
     }
   })
 
   return (
     <div className="flex flex-col gap-4">
 
-      {(hasPartialNutrition(usedA, a.values) || hasPartialNutrition(usedB, b.values)) && (
-        <p className="text-xs leading-relaxed text-[#6b6b67] dark:text-[#8a8a85]">{PARTIAL_NUTRITION_NOTE}</p>
-      )}
+      {/* union solo contiene ingredientes usados en A o en B: basta una cantidad positiva */}
+      <IncompleteDataNote ingredients={union} values={Object.fromEntries(union.map(i => [i.id, 1]))} />
       {/* Ingredients */}
       <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl p-5">
         <SectionTitle>Ingredientes</SectionTitle>
@@ -356,18 +364,18 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
             <SectionTitle>Energía y macros</SectionTitle>
             <ColumnHeads a={a} b={b} />
             <ul className="divide-y divide-black/5 dark:divide-white/5">
-              {macroRows.map(row => (
-                <li key={row.label} className={`${COLS} items-baseline py-2 text-[13px]`}>
-                  <span className="font-serif">{row.label}</span>
-                  <span className="font-mono tabular-nums text-right break-words" style={{ color: row.colorA ?? 'inherit' }}>
-                    {row.key === 'weight' ? weightText(rA, row.a) : row.key ? nutritionText(rA, row.key, row.decimals) : row.a.toFixed(row.decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{row.unit}</span>
-                  </span>
-                  <span className="font-mono tabular-nums text-right break-words" style={{ color: row.colorB ?? 'inherit' }}>
-                    {row.key === 'weight' ? weightText(rB, row.b) : row.key ? nutritionText(rB, row.key, row.decimals) : row.b.toFixed(row.decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{row.unit}</span>
-                  </span>
-                  <span className="text-right">{(row.key === 'weight' ? rA.unknownWeight || rB.unknownWeight : row.key && (isMissing(rA, row.key) || isMissing(rB, row.key))) ? '—' : <DeltaCell a={row.a} b={row.b} decimals={row.decimals} />}</span>
-                </li>
-              ))}
+              {macroRows.map(row => {
+                const cellA = amountOf(rA, row.key, row.a, row.decimals)
+                const cellB = amountOf(rB, row.key, row.b, row.decimals)
+                return (
+                  <li key={row.label} className={`${COLS} items-baseline py-2 text-[13px]`}>
+                    <span className="font-serif">{row.label}</span>
+                    <AmountValue {...cellA} unit={row.unit} color={row.colorA} className="wrap-break-word" />
+                    <AmountValue {...cellB} unit={row.unit} color={row.colorB} className="wrap-break-word" />
+                    <span className="text-right">{cellA.complete && cellB.complete ? <DeltaCell a={row.a} b={row.b} decimals={row.decimals} /> : '—'}</span>
+                  </li>
+                )
+              })}
             </ul>
           </div>
           <div className="p-5 bg-[#fafaf7] dark:bg-[#141412] border-t md:border-t-0 md:border-l border-black/10 dark:border-white/10">
@@ -389,7 +397,9 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
       {/* Rule-based nutrients */}
       <div className="bg-white dark:bg-[#1a1a18] border border-black/10 dark:border-white/10 rounded-xl p-5">
         <SectionTitle>Minerales y parámetros</SectionTitle>
-        {(rA.missingNutrients.length > 0 || rB.missingNutrients.length > 0) && <p className="text-xs mb-2">N/D: no disponible por datos incompletos. No se calculan diferencias entre valores parciales.</p>}
+        {(rA.missingNutrients.length > 0 || rB.missingNutrients.length > 0) && (
+          <p className="text-xs mb-2">«incompleto»: el valor solo suma los ingredientes con datos. No se calculan diferencias entre valores incompletos.</p>
+        )}
         <p className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono mb-3">
           {unionPathologies.length === 0
             ? 'valores normalizados por 100 kcal · sin patologías activas'
@@ -411,9 +421,13 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
                 {row.label.charAt(0).toUpperCase() + row.label.slice(1)}
                 <span className="block md:inline text-[10px] font-mono text-[#9a9a95] dark:text-[#6b6b67] md:ml-1.5">{row.unit}</span>
               </span>
-              <span className="font-mono tabular-nums text-right" style={{ color: row.colorA ?? 'inherit' }}>{row.availableA ? row.a.toFixed(row.decimals) : 'N/D'}</span>
-              <span className="font-mono tabular-nums text-right" style={{ color: row.colorB ?? 'inherit' }}>{row.availableB ? row.b.toFixed(row.decimals) : 'N/D'}</span>
-              <span className="text-right">{row.availableA && row.availableB ? <DeltaCell a={row.a} b={row.b} decimals={row.decimals} /> : '—'}</span>
+              <AmountValue text={row.evA.text} incomplete={row.evA.available && row.evA.incomplete} color={row.colorA} />
+              <AmountValue text={row.evB.text} incomplete={row.evB.available && row.evB.incomplete} color={row.colorB} />
+              <span className="text-right">
+                {row.evA.available && row.evB.available && !row.evA.incomplete && !row.evB.incomplete
+                  ? <DeltaCell a={row.evA.normalized} b={row.evB.normalized} decimals={row.decimals} />
+                  : '—'}
+              </span>
               <span className="font-mono tabular-nums text-right text-[11px] text-[#6b6b67] dark:text-[#8a8a85] whitespace-nowrap">{row.limit ?? '—'}</span>
             </li>
           ))}
@@ -451,8 +465,8 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
         <ul className="divide-y divide-black/5 dark:divide-white/5">
           <li className={`${COLS} items-baseline py-2 text-[13px]`}>
             <span className="font-serif">Ratio Ca:P</span>
-            <span className="font-mono tabular-nums text-right">{calciumRatioText(rA)}</span>
-            <span className="font-mono tabular-nums text-right">{calciumRatioText(rB)}</span>
+            <AmountValue text={calciumRatioText(rA)} incomplete={isCalciumRatioIncomplete(rA)} />
+            <AmountValue text={calciumRatioText(rB)} incomplete={isCalciumRatioIncomplete(rB)} />
             <span className="text-right">
               {hasCalciumRatio(rA) && hasCalciumRatio(rB)
                 ? <DeltaCell a={rA.ca / rA.phos} b={rB.ca / rB.phos} decimals={2} />
@@ -462,12 +476,8 @@ function Comparison({ a, b }: { a: SavedRecipe; b: SavedRecipe }) {
           {MICROS.map(({ key, label, unit, decimals }) => (
             <li key={key} className={`${COLS} items-baseline py-2 text-[13px]`}>
               <span className="font-serif">{label}</span>
-              <span className="font-mono tabular-nums text-right break-words">
-                {nutritionText(rA, key, decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>
-              </span>
-              <span className="font-mono tabular-nums text-right break-words">
-                {nutritionText(rB, key, decimals)}<span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>
-              </span>
+              <AmountValue {...amountOf(rA, key, rA[key], decimals)} unit={unit} className="wrap-break-word" />
+              <AmountValue {...amountOf(rB, key, rB[key], decimals)} unit={unit} className="wrap-break-word" />
               <span className="text-right">{isMissing(rA, key) || isMissing(rB, key) ? '—' : <DeltaCell a={rA[key]} b={rB[key]} decimals={decimals} />}</span>
             </li>
           ))}

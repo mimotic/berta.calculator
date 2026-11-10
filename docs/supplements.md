@@ -18,7 +18,8 @@ El modelo anterior usa nutrientes por 100 g y `portion.grams` para porciones de 
 - `declaredNutrients`: nutrientes con cantidades publicadas y comparables a las unidades de la aplicación. Los ceros de los otros campos son valores internos, no ausencia del nutriente.
 - `partialNutrients`: aportaciones de aditivos que no constituyen un análisis total del producto.
 - `nutrientNotes`: cantidades que no se convierten sin información adicional, como vitamina E en UI sin forma química y sales vitamínicas.
-- `missingNutrients`: nutrientes cuyo total es desconocido en una ración. Se conservan las sumas conocidas, se identifican como parciales y se desactivan valoraciones, cocientes y diferencias que requieren datos completos.
+- `estimatedNutrients`: nutrientes no declarados por el fabricante pero estimados de una tabla de composición citada en la ficha. Cuentan como conocidos y la ficha los muestra con «≈».
+- `missingNutrients` / `missingBy`: nutrientes cuyo total es desconocido en una ración y los ingredientes a los que les falta el dato. Se muestran las sumas conocidas, marcadas como «incompleto», con un aviso de qué falta y de qué ingrediente. Las valoraciones incompletas conservan el rojo o el ámbar que el valor conocido ya justifica, pero nunca se dan por correctas (sin verde ni «✓»). En el comparador no se calculan diferencias entre valores incompletos. Si ningún ingrediente aporta un dato conocido, se muestra «Sin datos», nunca cero.
 
 Los quelantes y otros efectos alegados de los suplementos no restan fósforo ni otros nutrientes de la dieta calculada. Los pesos de carbonato cálcico, acetato cálcico o sorbato potásico no equivalen a calcio o potasio elemental. No se convierte glicina o colágeno en proteína bruta, ni compuestos de fibra en fibra total.
 

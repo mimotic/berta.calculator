@@ -60,12 +60,30 @@ test('controls render decimal grams, ml and fractional tablets with unknown kcal
   assert.match(html, /kcal n\/d/)
 })
 
-test('partial supplements cannot cause a reassuring renal or calorie assessment', () => {
+test('partial supplements show the known values with a warning, never a reassuring assessment', () => {
   const r = calcNutrition({ arroz: 100, nutratop_gastro_plus: 1 })
   const assessment = buildNutrientAssessment(r, 130, ['renal'])
   assert.equal(assessment.alerts.some(([type]) => type === 'ok'), false)
-  assert.ok(assessment.alerts.some(([, text]) => /Energía parcial/.test(text)))
-  assert.ok(assessment.alerts.some(([, text]) => /fósforo: no se puede valorar/.test(text)))
+  assert.ok(assessment.alerts.some(([type, text]) => type === 'warn' && text === 'Calorías en objetivo con los datos conocidos (130.0 kcal) · incompleto: faltan datos de energía de Nutratop Gastro Plus'))
+  // Rice alone: 35 mg phosphorus in 130 kcal → 27 mg/100 kcal, shown but not confirmed.
+  assert.ok(assessment.alerts.some(([type, text]) => type === 'warn' && /^Fósforo 27 mg\/100kcal — incompleto: faltan datos de fósforo y energía de Nutratop Gastro Plus$/.test(text)))
   const html = assessment.mineralCards.map(card => renderToStaticMarkup(card.el)).join('')
-  assert.match(html, /No disponible/)
+  assert.match(html, />27</)
+  assert.match(html, /incompleto/)
+  assert.doesNotMatch(html, /No disponible|Sin datos/)
+})
+
+test('only supplements without data: no invented values', () => {
+  const assessment = buildNutrientAssessment(calcNutrition({ nutratop_gastro_plus: 1 }), 130, ['renal'])
+  assert.equal(assessment.alerts.some(([type]) => type === 'ok'), false)
+  assert.ok(assessment.alerts.some(([, text]) => text === 'Energía: sin datos (Nutratop Gastro Plus)'))
+  assert.ok(assessment.alerts.some(([, text]) => text === 'Fósforo: sin datos (Nutratop Gastro Plus)'))
+  const html = assessment.mineralCards.map(card => renderToStaticMarkup(card.el)).join('')
+  assert.match(html, /Sin datos/)
+})
+
+test('incomplete data already over the limit still raise the danger alert', () => {
+  const r = calcNutrition({ pollo: 200, nutratop_gastro_plus: 1 })
+  const assessment = buildNutrientAssessment(r, 300, ['renal'])
+  assert.ok(assessment.alerts.some(([type, text]) => type === 'danger' && /^Fósforo \d+ mg\/100kcal — supera el límite de 100mg\/100kcal · incompleto: /.test(text)))
 })

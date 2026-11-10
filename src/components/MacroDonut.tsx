@@ -1,8 +1,13 @@
-import { hasMacroDistribution } from '../utils/nutritionAvailability'
+import type { ReactNode } from 'react'
+import { describeMissing, listJoin, macroSplitMissing } from '../utils/nutritionAvailability'
 import { calcNutrition, ingredientGrams, type Ingredient } from '../data/ingredients'
 import { macroDistribution } from '../utils/macroDistribution'
 
 const DONUT_C = 2 * Math.PI * 40
+
+function IncompleteNote({ children }: { children: ReactNode }) {
+  return <p className="w-full text-[11px] leading-relaxed font-serif text-[#854f0b] dark:text-[#e8b980]">Incompleto: {children}.</p>
+}
 
 function DonutSeg({ len, offset, color }: { len: number; offset: number; color: string }) {
   return (
@@ -21,13 +26,15 @@ function DonutSeg({ len, offset, color }: { len: number; offset: number; color: 
 }
 
 export function MacroDonut({ r }: { r: ReturnType<typeof calcNutrition> }) {
-  if (!hasMacroDistribution(r)) return <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85]">Distribución no disponible: faltan datos de energía o macronutrientes.</p>
   const C = DONUT_C
   const legend = macroDistribution(r)
   const hasData = legend.some(m => m.pct > 0)
+  // Con datos incompletos el reparto es el de la energía conocida.
+  const missing = macroSplitMissing(r)
 
   return (
     <div className="flex flex-col items-center gap-5">
+      {missing.length > 0 && <IncompleteNote>{describeMissing(r, missing)}</IncompleteNote>}
       <svg width="140" height="140" viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="40" fill="none" className="stroke-[#e5e2dc] dark:stroke-[#2a2826]" strokeWidth="10" />
         {hasData && legend.map(({ name, color, pct }, i) => {
@@ -74,8 +81,8 @@ const WEIGHT_GROUPS: { group: Ingredient['group']; name: string; color: string }
 ]
 
 export function WeightDonut({ ingredients, values }: { ingredients: Ingredient[]; values: Record<string, number> }) {
-  const r = calcNutrition(values, ingredients)
-  if (r.unknownWeight) return <p className="text-xs text-[#6b6b67] dark:text-[#8a8a85]">Distribución no disponible: se desconoce el peso de algún suplemento.</p>
+  // Los suplementos en ml o comprimidos sin peso publicado no entran en el reparto.
+  const { unknownWeightBy } = calcNutrition(values, ingredients)
   const sumGroup = (group: Ingredient['group']) =>
     ingredients.filter(i => i.group === group).reduce((s, i) => s + ingredientGrams(i, values[i.id] ?? 0), 0)
 
@@ -93,6 +100,9 @@ export function WeightDonut({ ingredients, values }: { ingredients: Ingredient[]
 
   return (
     <div className="flex flex-col items-center gap-5">
+      {unknownWeightBy.length > 0 && (
+        <IncompleteNote>no incluye el peso de {listJoin(unknownWeightBy, 3)} (no se conoce su peso por ml o comprimido)</IncompleteNote>
+      )}
       <svg width="140" height="140" viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="40" fill="none" className="stroke-[#e5e2dc] dark:stroke-[#2a2826]" strokeWidth="10" />
         {total > 0 && legend.map(({ group, len, offset, color }) => (

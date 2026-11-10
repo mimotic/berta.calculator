@@ -1,3 +1,5 @@
+import { IncompleteTag } from './IncompleteData'
+
 interface StatCardProps {
   value: string
   valueColor?: string
@@ -5,15 +7,18 @@ interface StatCardProps {
   barPct?: number
   barColor?: string
   barLabel?: string
+  /** The value only adds up the ingredients with data. */
+  incomplete?: boolean
 }
 
-export function StatCard({ value, valueColor, label, barPct, barColor, barLabel }: StatCardProps) {
+export function StatCard({ value, valueColor, label, barPct, barColor, barLabel, incomplete = false }: StatCardProps) {
   return (
     <div className="bg-[#f2f0ec] dark:bg-[#242220] rounded-[6px] py-3 px-[0.6rem] text-center">
       <div className={`${value.length > 10 ? 'text-xs leading-snug break-words' : 'text-xl leading-none'} font-mono font-bold`} style={{ color: valueColor ?? 'inherit' }}>
         {value}
       </div>
       <div className="text-[10px] text-[#6b6b67] dark:text-[#8a8a85] mt-1 font-serif">{label}</div>
+      {incomplete && <IncompleteTag className="block mt-0.5" />}
       {barPct != null && (
         <>
           <div className="h-[3px] rounded-sm bg-black/10 dark:bg-white/10 overflow-hidden mt-1.5">

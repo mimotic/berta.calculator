@@ -25,10 +25,12 @@ test('supplements accept fractions with their own units and survive reload and r
     ['Condrovet Force HA · perros', '0.5'], ['Prolivet Small', '0.5'],
   ]) await input(page, label).fill(quantity)
 
-  await expect(page.getByText('Energía parcial: no se puede valorar el objetivo calórico.')).toBeVisible()
+  // Known values stay visible, flagged as incomplete; nothing is reported as OK.
+  await expect(page.getByText(/^Faltan 74\.2 kcal para llegar a 210 · incompleto: faltan datos de energía de V-Integra Renal, /)).toBeVisible()
   await expect(page.getByText('✓ Calorías en objetivo', { exact: false })).toHaveCount(0)
-  await expect(page.getByText(/fósforo: no se puede valorar/)).toBeVisible()
-  await expect(page.getByText('Distribución no disponible: se desconoce el peso de algún suplemento.')).toBeVisible()
+  await expect(page.getByText(/^Fósforo \d+ mg\/100kcal — incompleto: faltan datos de /)).toBeVisible()
+  await expect(page.getByText(/^Incompleto: no incluye el peso de Nutratop Gastro Plus, Condrovet Force HA · perros y Prolivet Small/)).toBeVisible()
+  await expect(page.getByText('No disponible', { exact: false })).toHaveCount(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 
   await page.reload()
@@ -56,7 +58,8 @@ test('modal shows verified bases, unknown calories and real zero phosphorus', as
   await dialog.getByRole('button', { name: 'Cerrar', exact: true }).click()
   await page.getByRole('button', { name: 'V-Integra Renal', exact: true }).filter({ visible: true }).click()
   await expect(dialog.getByText('por 100 g', { exact: true })).toBeVisible()
-  await expect(dialog.getByText('Fósforo', { exact: true }).locator('..')).toContainText('0 mg')
+  // The value and its unit are separate elements: «0» + «mg».
+  await expect(dialog.getByText('Fósforo', { exact: true }).locator('..')).toContainText(/^Fósforo\s*0\s*mg$/)
   await dialog.getByRole('button', { name: 'Cerrar', exact: true }).click()
 })
 
@@ -71,7 +74,7 @@ test('supplement group can be removed and restored without losing stored amounts
   await page.getByRole('button', { name: 'desmarcar todo', exact: true }).click()
   await page.getByRole('button', { name: 'Guardar y volver a grupos', exact: true }).click()
   await page.getByRole('button', { name: 'Volver a la calculadora', exact: true }).click()
-  await expect(page.getByText('Energía parcial:', { exact: false })).toHaveCount(0)
+  await expect(page.getByText('incompleto', { exact: false })).toHaveCount(0)
   await page.getByRole('button', { name: /^editar ingredientes/ }).click()
   await page.getByRole('button', { name: /^Suplementos 0 de 9/ }).click()
   await page.getByRole('checkbox', { name: /^Adiva Gastric Small/ }).check()

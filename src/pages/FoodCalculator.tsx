@@ -1,13 +1,14 @@
-import { nutritionText, weightText, calciumRatioText, isMissing } from '../utils/nutritionAvailability'
+import { NO_DATA, amountCell, nutritionText, isIncomplete, weightText, isWeightIncomplete, calciumRatioText, isCalciumRatioIncomplete, kcalColor as kcalStatusColor } from '../utils/nutritionAvailability'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import '../index.css'
-import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams, hasPartialNutrition, PARTIAL_NUTRITION_NOTE } from '../data/ingredients'
+import { INGREDIENTS, INGREDIENT_GROUPS, calcNutrition, ingredientGrams } from '../data/ingredients'
 import type { Values } from '../data/ingredients'
 import { getRecipe, saveRecipe, updateRecipe, type SavedRecipe } from '../data/recipes'
 import { type PathologyId, PATHOLOGY_DEFS } from '../data/pathologies'
 import { generateDietPDF } from '../utils/generateDietPDF'
 import { StatCard } from '../components/StatCard'
+import { IncompleteDataNote, IncompleteTag } from '../components/IncompleteData'
 import { NutrientRulesPanel } from '../components/NutrientRulesPanel'
 import { buildNutrientAssessment } from '../utils/nutrientAssessment'
 import { MacroDonut, WeightDonut } from '../components/MacroDonut'
@@ -334,9 +335,8 @@ export default function FoodCalculator() {
     setJustSaved(true)
   }
 
-  const diffK     = r.kcal - TARGET
   const pct       = Math.min(100, (r.kcal / TARGET) * 100)
-  const kcalColor = isMissing(r, 'kcal') ? '#9b9b97' : Math.abs(diffK) <= 8 ? '#1D9E75' : diffK < 0 ? '#EF9F27' : '#E24B4A'
+  const kcalColor = kcalStatusColor(r, TARGET)
   const totalG    = activeIngredients.reduce((s, i) => s + ingredientGrams(i, values[i.id] ?? 0), 0)
 
   const pathologyChip = pathologies.length > 0
@@ -439,21 +439,19 @@ export default function FoodCalculator() {
           <div className="bg-black/10 dark:bg-white/10 max-[720px]:hidden min-[721px]:row-span-2"></div>
 
           <div className="p-5 bg-[#fafaf7] dark:bg-[#141412] flex flex-col gap-5 max-[720px]:order-2 min-[721px]:row-span-2">
-            {hasPartialNutrition(activeIngredients, values) && (
-              <p className="text-xs leading-relaxed text-[#6b6b67] dark:text-[#8a8a85]">{PARTIAL_NUTRITION_NOTE}</p>
-            )}
+            <IncompleteDataNote ingredients={activeIngredients} values={values} />
             <div>
               <div className="text-[10px] font-bold tracking-widest uppercase text-[#6b6b67] dark:text-[#8a8a85] mb-4 font-mono">
                 Energía y macros
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="col-span-2">
-                  <StatCard value={nutritionText(r, 'kcal', 1)} valueColor={kcalColor} label="kcal" barPct={isMissing(r, 'kcal') ? undefined : pct} barColor={kcalColor} barLabel={`obj. ${TARGET}`} />
+                  <StatCard value={nutritionText(r, 'kcal', 1)} valueColor={kcalColor} label="kcal" barPct={pct} barColor={kcalColor} barLabel={`obj. ${TARGET}`} incomplete={isIncomplete(r, 'kcal')} />
                 </div>
-                <StatCard value={nutritionText(r, 'prot', 1)} valueColor={protOverLimit ? '#E24B4A' : undefined} label="proteína g" />
-                <StatCard value={nutritionText(r, 'fat', 2)} valueColor={fatOverLimit ? '#E24B4A' : undefined} label="grasa g" />
-                <StatCard value={nutritionText(r, 'carb', 1)} label="hidratos g" />
-                <StatCard value={weightText(r, totalG)} label="peso total g" />
+                <StatCard value={nutritionText(r, 'prot', 1)} valueColor={protOverLimit ? '#E24B4A' : undefined} label="proteína g" incomplete={isIncomplete(r, 'prot')} />
+                <StatCard value={nutritionText(r, 'fat', 2)} valueColor={fatOverLimit ? '#E24B4A' : undefined} label="grasa g" incomplete={isIncomplete(r, 'fat')} />
+                <StatCard value={nutritionText(r, 'carb', 1)} label="hidratos g" incomplete={isIncomplete(r, 'carb')} />
+                <StatCard value={weightText(r, totalG)} label="peso total g" incomplete={isWeightIncomplete(r, totalG)} />
               </div>
             </div>
 
@@ -507,25 +505,25 @@ export default function FoodCalculator() {
                 <>
                   <ul className="divide-y divide-black/5 dark:divide-white/5 mt-3">
                     {[
-                      { label: 'Calcio',       value: nutritionText(r, 'ca', 1),    unit: 'mg', ref: range(1000, 1250) },
-                      { label: 'Fósforo',      value: nutritionText(r, 'phos', 1),  unit: 'mg', ref: range(750, 1000) },
-                      { label: 'Ratio Ca:P',   value: calciumRatioText(r), unit: '', ref: '1:1 – 2:1' },
-                      { label: 'Sodio',        value: nutritionText(r, 'na', 1),    unit: 'mg', ref: range(200, 250) },
-                      { label: 'Potasio',      value: nutritionText(r, 'pot', 1),   unit: 'mg', ref: range(1000, 1250) },
-                      { label: 'Hierro',       value: nutritionText(r, 'fe', 2),    unit: 'mg', ref: range(7.5, 9, 1) },
-                      { label: 'Zinc',         value: nutritionText(r, 'zn', 2),    unit: 'mg', ref: range(15, 18, 1) },
-                      { label: 'Vitamina A',   value: nutritionText(r, 'vitA', 0),  unit: 'µg', ref: range(455, 525) },
-                      { label: 'Vitamina D',   value: nutritionText(r, 'vitD', 2),  unit: 'µg', ref: range(3.4, 4.0, 1) },
-                      { label: 'Vitamina E',   value: nutritionText(r, 'vitE', 2),  unit: 'mg', ref: range(7.5, 9, 1) },
-                      { label: 'Vitamina C',   value: nutritionText(r, 'vitC', 1),  unit: 'mg', ref: '—' },
-                      { label: 'Tiamina (B1)', value: nutritionText(r, 'b1', 2),    unit: 'mg', ref: range(0.54, 0.56, 2) },
-                      { label: 'Riboflavina (B2)', value: nutritionText(r, 'b2', 2), unit: 'mg', ref: range(1.3, 1.5, 1) },
-                      { label: 'Niacina (B3)', value: nutritionText(r, 'b3', 1),    unit: 'mg', ref: range(4.25, 4.25, 1) },
-                      { label: 'Vitamina B6',  value: nutritionText(r, 'b6', 2),    unit: 'mg', ref: range(0.375, 0.375, 2) },
-                      { label: 'Folato (B9)',  value: nutritionText(r, 'b9', 0),    unit: 'µg', ref: range(67.5, 67.5) },
-                      { label: 'Vitamina B12', value: nutritionText(r, 'b12', 2),   unit: 'µg', ref: range(8.4, 8.8, 1) },
-                      { label: 'Fibra',        value: nutritionText(r, 'fiber', 1), unit: 'g',  ref: '2–4,5 % MS' },
-                    ].map(({ label, value, unit, ref }) => (
+                      { label: 'Calcio',       ...amountCell(r, 'ca', 1),    unit: 'mg', ref: range(1000, 1250) },
+                      { label: 'Fósforo',      ...amountCell(r, 'phos', 1),  unit: 'mg', ref: range(750, 1000) },
+                      { label: 'Ratio Ca:P',   value: calciumRatioText(r), incomplete: isCalciumRatioIncomplete(r), unit: '', ref: '1:1 – 2:1' },
+                      { label: 'Sodio',        ...amountCell(r, 'na', 1),    unit: 'mg', ref: range(200, 250) },
+                      { label: 'Potasio',      ...amountCell(r, 'pot', 1),   unit: 'mg', ref: range(1000, 1250) },
+                      { label: 'Hierro',       ...amountCell(r, 'fe', 2),    unit: 'mg', ref: range(7.5, 9, 1) },
+                      { label: 'Zinc',         ...amountCell(r, 'zn', 2),    unit: 'mg', ref: range(15, 18, 1) },
+                      { label: 'Vitamina A',   ...amountCell(r, 'vitA', 0),  unit: 'µg', ref: range(455, 525) },
+                      { label: 'Vitamina D',   ...amountCell(r, 'vitD', 2),  unit: 'µg', ref: range(3.4, 4.0, 1) },
+                      { label: 'Vitamina E',   ...amountCell(r, 'vitE', 2),  unit: 'mg', ref: range(7.5, 9, 1) },
+                      { label: 'Vitamina C',   ...amountCell(r, 'vitC', 1),  unit: 'mg', ref: '—' },
+                      { label: 'Tiamina (B1)', ...amountCell(r, 'b1', 2),    unit: 'mg', ref: range(0.54, 0.56, 2) },
+                      { label: 'Riboflavina (B2)', ...amountCell(r, 'b2', 2), unit: 'mg', ref: range(1.3, 1.5, 1) },
+                      { label: 'Niacina (B3)', ...amountCell(r, 'b3', 1),    unit: 'mg', ref: range(4.25, 4.25, 1) },
+                      { label: 'Vitamina B6',  ...amountCell(r, 'b6', 2),    unit: 'mg', ref: range(0.375, 0.375, 2) },
+                      { label: 'Folato (B9)',  ...amountCell(r, 'b9', 0),    unit: 'µg', ref: range(67.5, 67.5) },
+                      { label: 'Vitamina B12', ...amountCell(r, 'b12', 2),   unit: 'µg', ref: range(8.4, 8.8, 1) },
+                      { label: 'Fibra',        ...amountCell(r, 'fiber', 1), unit: 'g',  ref: '2–4,5 % MS' },
+                    ].map(({ label, value, incomplete, unit, ref }) => (
                       <li key={label} className="flex items-baseline justify-between py-2 text-[13px] gap-3">
                         <div className="flex flex-col min-w-0">
                           <span className="font-serif text-[#1a1a18] dark:text-[#e8e6e0]">{label}</span>
@@ -533,9 +531,10 @@ export default function FoodCalculator() {
                             ref {ref}{unit && ref !== '—' && ` ${unit}`}
                           </span>
                         </div>
-                        <span className="font-mono tabular-nums whitespace-nowrap">
+                        <span className="font-mono tabular-nums whitespace-nowrap text-right">
                           {value}
-                          {unit && <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>}
+                          {unit && value !== NO_DATA && <span className="text-[11px] text-[#6b6b67] dark:text-[#8a8a85] ml-1">{unit}</span>}
+                          {incomplete && <IncompleteTag className="block" />}
                         </span>
                       </li>
                     ))}

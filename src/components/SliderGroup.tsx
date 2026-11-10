@@ -28,6 +28,8 @@ export function SliderGroup({ label, group, values, onChange, ingredients = INGR
         const sliderMax = Math.max(computedMax, g)
         const kcal = ingredientNutritionFactor(ing, g) * ing.kcal
         const energyLabel = isNutrientKnown(ing, 'kcal') ? `${kcal.toFixed(1)} kcal` : 'kcal n/d'
+        // La columna de la fila de escritorio es estrecha: formato corto para que no se parta.
+        const energyShort = isNutrientKnown(ing, 'kcal') ? `${kcal.toFixed(1)}k` : 'n/d'
         const stacked = !!ing.portion || !!ing.measure || group === 'suplementos'
         const supplement = group === 'suplementos'
         const unit = ing.measure ?? ing.portion
@@ -95,8 +97,8 @@ export function SliderGroup({ label, group, values, onChange, ingredients = INGR
                   </>
                 ) : ing.isOil ? `${g.toFixed(2)} ml` : `${g} g`}
               </span>
-              <span className="w-11 text-right text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono max-[520px]:hidden">
-                {energyLabel}
+              <span className="w-11 text-right text-[11px] text-[#6b6b67] dark:text-[#8a8a85] font-mono whitespace-nowrap max-[520px]:hidden" title={energyLabel}>
+                {energyShort}
               </span>
             </div>
           </Fragment>

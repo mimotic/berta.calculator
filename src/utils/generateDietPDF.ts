@@ -1,15 +1,13 @@
-import { nutritionText, weightText, calciumRatioText, isMissing, canAssess, hasMacroDistribution } from './nutritionAvailability'
+import { NO_DATA, nutritionText, isIncomplete, weightText, isWeightIncomplete, calciumRatioText, isCalciumRatioIncomplete, macroSplitMissing, evaluateRule, incompleteIngredients, kcalColor } from './nutritionAvailability'
 import { jsPDF } from 'jspdf'
 import logoUrl from '../assets/berta_logo.png'
-import type { Values, NutritionResult } from '../data/ingredients'
-import { INGREDIENT_GROUPS, ingredientGrams, formatIngredientQuantity, hasPartialNutrition, PARTIAL_NUTRITION_NOTE, type Ingredient } from '../data/ingredients'
+import type { Values, NutritionResult, NutritionKey } from '../data/ingredients'
+import { INGREDIENT_GROUPS, ingredientGrams, formatIngredientQuantity, PARTIAL_NUTRITION_NOTE, type Ingredient } from '../data/ingredients'
 import type { PathologyId, NutrientKey } from '../data/pathologies'
 import {
   PATHOLOGY_DEFS,
   NUTRIENT_META,
   computeActiveRules,
-  getNormalizedValue,
-  displayUnit,
 } from '../data/pathologies'
 import { macroDistribution } from './macroDistribution'
 
@@ -17,10 +15,10 @@ const NUTRIENT_ORDER: NutrientKey[] = ['phosphorus', 'potassium', 'sodium', 'pro
 
 const BRAND = '#1a1a18'
 const MUTED = '#6b6b67'
-const GREEN = '#1D9E75'
-const ORANGE = '#EF9F27'
-const RED = '#E24B4A'
 const TRACK = '#e5e2dc'
+
+// En el PDF los valores incompletos (solo suman los ingredientes con datos) llevan *.
+const star = (incomplete: boolean) => (incomplete ? '*' : '')
 
 function hexToRgb(hex: string): [number, number, number] {
   const r = parseInt(hex.slice(1, 3), 16)
@@ -66,13 +64,15 @@ function strokeArc(doc: jsPDF, cx: number, cy: number, radius: number, fromDeg: 
 // 20 mm de alto, lo mismo que las dos filas de la rejilla de macros.
 // (x, y) es la esquina superior izquierda; right, el borde derecho de la leyenda.
 function drawMacroDonut(doc: jsPDF, r: NutritionResult, x: number, y: number, right: number) {
-  if (!hasMacroDistribution(r)) {
+  const macros = macroDistribution(r)
+  if (!macros.some(m => m.pct > 0)) {
     doc.setFontSize(8)
     setColor(doc, MUTED)
-    doc.text('No disponible: datos parciales', x, y + 10)
+    doc.text(NO_DATA, x, y + 10)
     return
   }
-  const macros = macroDistribution(r)
+  // Con datos incompletos, el reparto es el de la energía conocida (marcado con *).
+  const mark = macroSplitMissing(r).length > 0 ? '*' : ''
   const radius = 8.8
   const cx = x + 10.2
   const cy = y + 10.2
@@ -107,7 +107,7 @@ function drawMacroDonut(doc: jsPDF, r: NutritionResult, x: number, y: number, ri
     setColor(doc, BRAND)
     doc.text(m.name, legendX + 3.5, ly)
     doc.setFont('helvetica', 'bold')
-    doc.text(`${m.pct.toFixed(1)}%`, right, ly, { align: 'right' })
+    doc.text(`${m.pct.toFixed(1)}%${mark}`, right, ly, { align: 'right' })
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(6)
     setColor(doc, MUTED)
@@ -238,11 +238,15 @@ export async function generateDietPDF(
   drawHRule(doc, y)
   y += 7
 
-  if (hasPartialNutrition(activeIngredients, values)) {
+  const gaps = incompleteIngredients(activeIngredients, values)
+  if (gaps.length > 0) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
     setColor(doc, MUTED)
-    const lines = doc.splitTextToSize(PARTIAL_NUTRITION_NOTE, pageW - margin * 2)
+    const lines: string[] = [
+      ...doc.splitTextToSize(`${PARTIAL_NUTRITION_NOTE} En este PDF se marcan con *.`, pageW - margin * 2),
+      ...gaps.flatMap(({ label, gaps }) => doc.splitTextToSize(`· ${label}: faltan ${gaps}.`, pageW - margin * 2)),
+    ]
     ensureSpace(lines.length * 4)
     doc.text(lines, margin, y)
     y += lines.length * 4 + 5
@@ -263,17 +267,16 @@ export async function generateDietPDF(
 
   drawMacroDonut(doc, r, chartX, y, pageW - margin)
 
-  const diffK = r.kcal - target
-  const kcalColor = isMissing(r, 'kcal') ? '#9b9b97' : Math.abs(diffK) <= 8 ? GREEN : diffK < 0 ? ORANGE : RED
   const totalG = activeIngredients.reduce((s, i) => s + ingredientGrams(i, values[i.id] ?? 0), 0)
+  const amount = (key: NutritionKey, decimals: number) => `${nutritionText(r, key, decimals)}${star(isIncomplete(r, key))}`
 
   const macros = [
-    { label: 'kcal', value: nutritionText(r, 'kcal', 1), color: kcalColor },
-    { label: 'proteína g', value: nutritionText(r, 'prot', 1), color: BRAND },
-    { label: 'grasa g', value: nutritionText(r, 'fat', 2), color: BRAND },
-    { label: 'hidratos g', value: nutritionText(r, 'carb', 1), color: BRAND },
-    { label: 'fibra g', value: nutritionText(r, 'fiber', 1), color: BRAND },
-    { label: 'peso total g', value: weightText(r, totalG), color: BRAND },
+    { label: 'kcal', value: amount('kcal', 1), color: kcalColor(r, target) },
+    { label: 'proteína g', value: amount('prot', 1), color: BRAND },
+    { label: 'grasa g', value: amount('fat', 2), color: BRAND },
+    { label: 'hidratos g', value: amount('carb', 1), color: BRAND },
+    { label: 'fibra g', value: amount('fiber', 1), color: BRAND },
+    { label: 'peso total g', value: `${weightText(r, totalG)}${star(isWeightIncomplete(r, totalG))}`, color: BRAND },
   ]
 
   macros.forEach((m, i) => {
@@ -299,29 +302,13 @@ export async function generateDietPDF(
   const nutrientRows = NUTRIENT_ORDER
     .filter(key => activeRules[key])
     .map(key => {
-      const rule = activeRules[key]!
-      const meta = NUTRIENT_META[key]
-      if (!canAssess(r, key, rule.basis)) {
-        return { label: `${meta.label} ${displayUnit(rule.basis, meta.unit)}`, value: 'No disponible', range: 'datos parciales', color: MUTED }
+      const ev = evaluateRule(r, key, activeRules[key]!)
+      return {
+        label: `${NUTRIENT_META[key].label} ${ev.unit}`,
+        value: `${ev.text}${star(ev.available && ev.incomplete)}`,
+        range: ev.barLabel,
+        color: ev.available ? ev.color : MUTED,
       }
-      const normalized = getNormalizedValue(r, key, rule.basis)
-      const dUnit = displayUnit(rule.basis, meta.unit)
-      const dispVal = rule.basis === 'pct_kcal' || meta.unit === 'g'
-        ? normalized.toFixed(1)
-        : normalized.toFixed(0)
-      const inWarnZone = rule.warn !== undefined
-        ? normalized >= rule.warn
-        : rule.max !== undefined && normalized > rule.max * 0.85
-      let color = GREEN
-      if (rule.max !== undefined && normalized > rule.max) color = RED
-      else if (inWarnZone) color = ORANGE
-      else if (rule.min !== undefined && normalized < rule.min) color = ORANGE
-      const barLabel = rule.min !== undefined && rule.max !== undefined
-        ? `${rule.min}–${rule.max}${dUnit}`
-        : rule.warn !== undefined && rule.max !== undefined
-        ? `${rule.warn}–${rule.max}${dUnit}`
-        : rule.max !== undefined ? `límite ${rule.max}${dUnit}` : `mín ${rule.min}${dUnit}`
-      return { label: `${meta.label} ${dUnit}`, value: `${dispVal}`, range: barLabel, color }
     })
 
   if (nutrientRows.length > 0) {
@@ -351,25 +338,30 @@ export async function generateDietPDF(
   }
 
   // ── Micronutrientes ────────────────────────────────────────────────────────
+  // Valor, unidad (salvo «Sin datos») y * si es incompleto.
+  const micro = (key: NutritionKey, decimals: number, unit: string) => {
+    const text = nutritionText(r, key, decimals)
+    return `${text}${text === NO_DATA ? '' : ` ${unit}`}${star(isIncomplete(r, key))}`
+  }
   const micros = [
-    { label: 'Calcio',       value: nutritionText(r, 'ca', 1),    unit: 'mg' },
-    { label: 'Fósforo',      value: nutritionText(r, 'phos', 1),  unit: 'mg' },
-    { label: 'Ratio Ca:P',   value: calciumRatioText(r), unit: '' },
-    { label: 'Sodio',        value: nutritionText(r, 'na', 1),    unit: 'mg' },
-    { label: 'Potasio',      value: nutritionText(r, 'pot', 1),   unit: 'mg' },
-    { label: 'Hierro',       value: nutritionText(r, 'fe', 2),    unit: 'mg' },
-    { label: 'Zinc',         value: nutritionText(r, 'zn', 2),    unit: 'mg' },
-    { label: 'Vitamina A',   value: nutritionText(r, 'vitA', 0),  unit: 'µg' },
-    { label: 'Vitamina D',   value: nutritionText(r, 'vitD', 2),  unit: 'µg' },
-    { label: 'Vitamina E',   value: nutritionText(r, 'vitE', 2),  unit: 'mg' },
-    { label: 'Vitamina C',   value: nutritionText(r, 'vitC', 1),  unit: 'mg' },
-    { label: 'Tiamina (B1)', value: nutritionText(r, 'b1', 2),    unit: 'mg' },
-    { label: 'Riboflavina (B2)', value: nutritionText(r, 'b2', 2), unit: 'mg' },
-    { label: 'Niacina (B3)', value: nutritionText(r, 'b3', 1),    unit: 'mg' },
-    { label: 'Vitamina B6',  value: nutritionText(r, 'b6', 2),    unit: 'mg' },
-    { label: 'Folato (B9)',  value: nutritionText(r, 'b9', 0),    unit: 'µg' },
-    { label: 'Vitamina B12', value: nutritionText(r, 'b12', 2),   unit: 'µg' },
-    { label: 'Fibra',        value: nutritionText(r, 'fiber', 1), unit: 'g'  },
+    { label: 'Calcio',       value: micro('ca', 1, 'mg') },
+    { label: 'Fósforo',      value: micro('phos', 1, 'mg') },
+    { label: 'Ratio Ca:P',   value: `${calciumRatioText(r)}${star(isCalciumRatioIncomplete(r))}` },
+    { label: 'Sodio',        value: micro('na', 1, 'mg') },
+    { label: 'Potasio',      value: micro('pot', 1, 'mg') },
+    { label: 'Hierro',       value: micro('fe', 2, 'mg') },
+    { label: 'Zinc',         value: micro('zn', 2, 'mg') },
+    { label: 'Vitamina A',   value: micro('vitA', 0, 'µg') },
+    { label: 'Vitamina D',   value: micro('vitD', 2, 'µg') },
+    { label: 'Vitamina E',   value: micro('vitE', 2, 'mg') },
+    { label: 'Vitamina C',   value: micro('vitC', 1, 'mg') },
+    { label: 'Tiamina (B1)', value: micro('b1', 2, 'mg') },
+    { label: 'Riboflavina (B2)', value: micro('b2', 2, 'mg') },
+    { label: 'Niacina (B3)', value: micro('b3', 1, 'mg') },
+    { label: 'Vitamina B6',  value: micro('b6', 2, 'mg') },
+    { label: 'Folato (B9)',  value: micro('b9', 0, 'µg') },
+    { label: 'Vitamina B12', value: micro('b12', 2, 'µg') },
+    { label: 'Fibra',        value: micro('fiber', 1, 'g') },
   ]
 
   const microCols = 4
@@ -389,7 +381,7 @@ export async function generateDietPDF(
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(9)
     setColor(doc, BRAND)
-    doc.text(`${m.value}${m.unit ? ' ' + m.unit : ''}`, cx, cy + 4)
+    doc.text(m.value, cx, cy + 4)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(7)
     setColor(doc, MUTED)

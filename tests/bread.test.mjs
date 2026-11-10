@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { INGREDIENTS, calcNutrition, ingredientGrams, ingredientUnit, hasPartialNutrition } from '../src/data/ingredients.ts'
+import { INGREDIENTS, calcNutrition, ingredientGrams, ingredientUnit, hasPartialNutrition, isNutrientKnown, isNutrientEstimated } from '../src/data/ingredients.ts'
 
 const breadId = 'pan_etiqueta_394'
 const bread = INGREDIENTS.find(ingredient => ingredient.id === breadId)
@@ -34,19 +34,39 @@ test('bread nutrition scales by the entered weight and combines with other ingre
   for (const [nutrient, expected] of Object.entries({ kcal: 228.5, prot: 6.45, fat: 1.275, carb: 46.2, fiber: 1.7, na: 3 })) {
     closeTo(result[nutrient], expected)
   }
-  // Unknown bread minerals must not be populated from a different bread.
-  closeTo(result.phos, 35)
-  closeTo(result.pot, 35)
+  // Estimated bread minerals (CIQUAL 7310 adjusted for added gluten), not boiled.
+  closeTo(result.phos, 35 + 0.25 * 118)
+  closeTo(result.pot, 35 + 0.25 * 181)
+  assert.equal(result.missingNutrients.includes('phos'), false)
 })
 
-test('unreported bread nutrients stay explicitly unknown and trigger the partial calculation notice', () => {
+test('undeclared bread minerals are reference estimates; vitamins stay unknown', () => {
   assert.deepEqual(bread.declaredNutrients, ['kcal', 'prot', 'fat', 'carb', 'fiber', 'na'])
-  for (const nutrient of ['phos', 'pot', 'ca', 'fe', 'zn', 'vitA', 'vitD', 'vitE', 'vitC', 'b1', 'b2', 'b3', 'b6', 'b9', 'b12']) {
-    assert.equal(bread.declaredNutrients.includes(nutrient), false)
+  assert.deepEqual(bread.estimatedNutrients, ['phos', 'pot', 'ca', 'fe', 'zn'])
+  // CIQUAL 2025 7310 (P 110, K 186, Ca 25.1, Fe 1.4, Zn 0.94 mg; protein 11.6 g) mixed with
+  // vital wheat gluten (USDA 168147: protein 75.16 g; P 260, K 100, Ca 142, Fe 5.2, Zn 0.85 mg)
+  // up to the label's 15 g of protein.
+  const gluten = (15 - 11.6) / (75.16 - 11.6)
+  const mix = (biscotte, glutenValue) => biscotte * (1 - gluten) + glutenValue * gluten
+  for (const [nutrient, expected, decimals] of [['phos', mix(110, 260), 0], ['pot', mix(186, 100), 0], ['ca', mix(25.1, 142), 0], ['fe', mix(1.4, 5.2), 1], ['zn', mix(0.94, 0.85), 2]]) {
+    assert.equal(bread[nutrient], +expected.toFixed(decimals), nutrient)
+    assert.equal(isNutrientKnown(bread, nutrient), true)
+    assert.equal(isNutrientEstimated(bread, nutrient), true)
+  }
+  assert.equal(isNutrientEstimated(bread, 'na'), false)
+  for (const nutrient of ['vitA', 'vitD', 'vitE', 'vitC', 'b1', 'b2', 'b3', 'b6', 'b9', 'b12']) {
+    assert.equal(isNutrientKnown(bread, nutrient), false)
     assert.equal(bread[nutrient], 0)
   }
   assert.equal(hasPartialNutrition(INGREDIENTS, { [breadId]: 1 }), true)
   assert.equal(hasPartialNutrition(INGREDIENTS, { [breadId]: 0, arroz: 100 }), false)
+})
+
+test('bread note names the product and explains the mineral estimates', () => {
+  assert.match(bread.sourceUrl, /briochepasquier\.es\/productos\/recondo\/.*pan-tostado-sin-sal/)
+  assert.match(bread.nutritionNote, /Pan tostado sin sal añadida/)
+  assert.match(bread.nutritionNote, /CIQUAL 2025 \(código 7310/)
+  assert.match(bread.nutritionNote, /gluten/)
 })
 
 test('bread note preserves label details outside the calculator nutrient fields', () => {

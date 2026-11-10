@@ -20,6 +20,9 @@ export interface Ingredient {
   sourceLabel?: string
   // Los ceros de campos no publicados no representan ausencia del nutriente.
   declaredNutrients?: NutritionKey[]
+  // No declarados por el fabricante, pero estimados de una tabla de composición
+  // (ver nutritionNote): cuentan como conocidos y la ficha los marca con «≈».
+  estimatedNutrients?: NutritionKey[]
   // Aportes de aditivos, no análisis total del nutriente en el producto.
   partialNutrients?: NutritionKey[]
   nutritionNote?: string
@@ -86,15 +89,25 @@ export const INGREDIENTS: Ingredient[] = [
   // USDA 20027 (almidón de maíz)
   { id:'maicena',         label:'Maicena',            group:'hc',   val:0,  max:80,  step:1,    isOil:false, kcal:381, prot:0.3,  fat:0.1,  phos:13,  pot:3,   carb:91.3, ca:2,   na:9,   fe:0.47, zn:0.06, vitA:0,    vitD:0,    vitE:0,    vitC:0,    b1:0,     b2:0,     b3:0,     b6:0,     b9:0,   b12:0,    fiber:0.9 },
   { id:'pan_sin_sal', label:'Pan sin sal',            group:'hc',   val:0,  max:80,  step:1,    isOil:false, kcal:272, prot:8.8,  fat:3.3,  phos:99,  pot:117, carb:52.2, ca:26,  na:8,   fe:1.20, zn:0.75, vitA:0,    vitD:0,    vitE:0.30, vitC:0,    b1:0.12,  b2:0.09,  b3:1.40,  b6:0.06,  b9:30,  b12:0,    fiber:2.7 },
-  // Etiqueta fotografiada el 08/11/2026: no se ve el nombre de la variedad.
+  // Recondo «Pan tostado sin sal añadida, sin azúcares añadidos» (Brioche Pasquier, EAN 8410706003908).
+  // Macros: etiqueta fotografiada el 08/11/2026, idéntica a la ficha oficial.
   // Sal 0,02 g/100 g → sodio 8 mg/100 g (sal = sodio × 2,5).
+  // Minerales no declarados: CIQUAL 2025, 7310 «Biscotte, sans sel ajouté» (análisis 2023:
+  // P 110, K 186, Ca 25,1, Fe 1,4, Zn 0,94 mg; proteína 11,6 g), ajustado al gluten añadido
+  // hasta los 15 g de proteína de la etiqueta con gluten vital USDA 168147 (proteína 75,16 g;
+  // P 260, K 100, Ca 142, Fe 5,2, Zn 0,85 mg): fracción de gluten 5,35 %.
   {
     ...UNREPORTED_MICROS,
     id: 'pan_etiqueta_394', label: 'Pan Recondo',
     group: 'hc', val: 0, max: 80, step: 1, isOil: false,
     kcal: 394, prot: 15, fat: 3.9, carb: 72, fiber: 5.2, na: 8,
+    phos: 118, pot: 181, ca: 31, fe: 1.6, zn: 0.94,
     declaredNutrients: ['kcal', 'prot', 'fat', 'carb', 'fiber', 'na'],
-    nutritionNote: 'Valores por 100 g de la etiqueta de la foto: 1665 kJ / 394 kcal, grasas saturadas 0,5 g, azúcares 3,0 g y sal 0,02 g. El sodio se calcula a partir de la sal: 0,02 g ÷ 2,5 × 1000 = 8 mg. La etiqueta no declara fósforo, potasio, calcio, hierro, zinc ni vitaminas. Las cantidades se introducen en gramos: no se conoce el peso de cada rebanada.',
+    estimatedNutrients: ['phos', 'pot', 'ca', 'fe', 'zn'],
+    sourceUrl: 'https://www.briochepasquier.es/productos/recondo/desayuno/pan-tostado-sin-sal-y-sin-azucares',
+    sourceLabel: 'Ficha de Recondo (Brioche Pasquier)',
+    additionalSources: [{ label: 'Tabla CIQUAL 2025 (ANSES), alimento 7310', url: 'https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.57745/RDMHWY' }],
+    nutritionNote: 'Pan tostado sin sal añadida y sin azúcares añadidos. Valores por 100 g de la etiqueta, iguales a los de la ficha oficial: 1665 kJ / 394 kcal, grasas saturadas 0,5 g, azúcares 3,0 g y sal 0,02 g. El sodio se calcula a partir de la sal: 0,02 g ÷ 2,5 × 1000 = 8 mg. Ingredientes: harina de trigo 88 %, gluten de trigo, aceite de girasol alto oleico 2,9 %, levadura y ácido ascórbico. La etiqueta no declara minerales ni vitaminas. Fósforo, potasio, calcio, hierro y zinc (≈) son estimaciones: análisis de la biscotte sin sal añadida de la tabla CIQUAL 2025 (código 7310: fósforo 110 mg, potasio 186 mg), corregido por el gluten añadido, porque este pan declara 15 g de proteína frente a 11,6 g. El fósforo real puede quedar entre unos 110 y 150 mg. Vitaminas desconocidas. Las cantidades se introducen en gramos: no se conoce el peso de cada rebanada.',
   },
   // Macros de etiqueta (Conad Verso Natura, pane azzimo biologico); micros estimados de harina de trigo blanca (USDA)
   { id:'pan_azimo', label:'Pan ácimo',                group:'hc',   val:0,  max:80,  step:1,    isOil:false, kcal:360, prot:9.9,  fat:0.9,  phos:108, pot:107, carb:77,   ca:15,  na:2,   fe:1.17, zn:0.70, vitA:0,    vitD:0,    vitE:0.06, vitC:0,    b1:0.12,  b2:0.04,  b3:1.25,  b6:0.044, b9:26,  b12:0,    fiber:3.1 },
@@ -280,17 +293,29 @@ export function nutritionBasisLabel(ing: Ingredient): string {
 
 export function isNutrientKnown(ing: Ingredient, key: NutritionKey): boolean {
   // Conserva los hidratos estimados y documentados de algunos treats existentes.
-  return !ing.declaredNutrients || ing.declaredNutrients.includes(key) || (key === 'carb' && ing.carb > 0)
+  return !ing.declaredNutrients || ing.declaredNutrients.includes(key) || isNutrientEstimated(ing, key)
+}
+
+/** Valor no declarado por el fabricante sino estimado (la ficha lo muestra con «≈»). */
+export function isNutrientEstimated(ing: Ingredient, key: NutritionKey): boolean {
+  if (ing.estimatedNutrients?.includes(key)) return true
+  return key === 'carb' && !!ing.declaredNutrients && !ing.declaredNutrients.includes('carb') && ing.carb > 0
 }
 
 export const NUTRITION_KEYS: NutritionKey[] = ['kcal', 'prot', 'fat', 'carb', 'fiber', 'phos', 'pot', 'ca', 'na', 'fe', 'zn', 'vitA', 'vitD', 'vitE', 'vitC', 'b1', 'b2', 'b3', 'b6', 'b9', 'b12']
 
+// Nutrientes cuyo total se desconoce en este ingrediente: no declarados, o declarados
+// solo como aporte de aditivos (partialNutrients).
+export function unknownNutrients(ing: Ingredient): NutritionKey[] {
+  return NUTRITION_KEYS.filter(key => !isNutrientKnown(ing, key) || !!ing.partialNutrients?.includes(key))
+}
+
 export const SUPPLEMENT_NOTE = 'Introduce solo la cantidad indicada por tu veterinario. Los controles no son una recomendación de dosis. No se descuentan nutrientes por posibles efectos de los suplementos.'
 
-export const PARTIAL_NUTRITION_NOTE = 'Cálculo parcial: algunos ingredientes no declaran todos los nutrientes. Los nutrientes no declarados no se suman y no equivalen a cero. Consulta la ficha de cada ingrediente. Las valoraciones nutricionales pueden estar incompletas.'
+export const PARTIAL_NUTRITION_NOTE = 'Datos incompletos: los valores marcados como «incompleto» solo suman los ingredientes que declaran ese nutriente, así que el total real puede ser mayor. Un nutriente no declarado no equivale a cero, y las valoraciones con datos incompletos nunca se dan por correctas.'
 
 export function hasPartialNutrition(ingredients: Ingredient[], values: Values): boolean {
-  return ingredients.some(ing => ing.declaredNutrients && (values[ing.id] ?? 0) > 0)
+  return ingredients.some(ing => (values[ing.id] ?? 0) > 0 && unknownNutrients(ing).length > 0)
 }
 
 // kcal ranges: upTo is exclusive upper bound (Infinity = no limit)
@@ -356,13 +381,15 @@ export function calcNutrition(values: Values, ingredients: Ingredient[] = INGRED
   let vitC = 0, b1 = 0, b2 = 0, b3 = 0, b6 = 0, b9 = 0, b12 = 0
   // kcal que aporta cada macro (ver macroKcal); suman kcal
   let kcalProt = 0, kcalCarb = 0, kcalFat = 0
-  const missingNutrients = new Set<NutritionKey>()
-  let unknownWeight = false
+  // Ingredientes de la ración sin dato (o con dato parcial) de cada nutriente: sus
+  // totales son solo la parte conocida.
+  const missingBy: Partial<Record<NutritionKey, string[]>> = {}
+  const unknownWeightBy: string[] = []
   for (const ing of ingredients) {
     const quantity = values[ing.id] ?? 0
     if (quantity <= 0) continue
-    for (const key of NUTRITION_KEYS) if (!isNutrientKnown(ing, key) || ing.partialNutrients?.includes(key)) missingNutrients.add(key)
-    if (ing.measure && ing.measure.grams === undefined) unknownWeight = true
+    for (const key of unknownNutrients(ing)) (missingBy[key] ??= []).push(ing.label)
+    if (ing.measure && ing.measure.grams === undefined) unknownWeightBy.push(ing.label)
     const factor = ingredientNutritionFactor(ing, quantity)
     const retention = ing.isRaw ? BOILING_RETENTION : 1
     const energy = macroKcal(ing)
@@ -391,7 +418,11 @@ export function calcNutrition(values: Values, ingredients: Ingredient[] = INGRED
     b12   += factor * ing.b12
     fiber += factor * ing.fiber
   }
-  return { kcal, kcalProt, kcalCarb, kcalFat, prot, fat, carb, phos, pot, ca, na, fe, zn, vitA, vitD, vitE, vitC, b1, b2, b3, b6, b9, b12, fiber, missingNutrients: [...missingNutrients], unknownWeight }
+  const missingNutrients = NUTRITION_KEYS.filter(key => missingBy[key])
+  return {
+    kcal, kcalProt, kcalCarb, kcalFat, prot, fat, carb, phos, pot, ca, na, fe, zn, vitA, vitD, vitE, vitC, b1, b2, b3, b6, b9, b12, fiber,
+    missingNutrients, missingBy, unknownWeight: unknownWeightBy.length > 0, unknownWeightBy,
+  }
 }
 
 export type NutritionResult = ReturnType<typeof calcNutrition>

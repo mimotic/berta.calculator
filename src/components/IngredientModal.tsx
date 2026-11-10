@@ -1,4 +1,4 @@
-import { nutritionBasisLabel, isNutrientKnown } from '../data/ingredients'
+import { nutritionBasisLabel, isNutrientKnown, isNutrientEstimated } from '../data/ingredients'
 import type { Ingredient, NutritionKey } from '../data/ingredients'
 
 interface IngredientModalProps {
@@ -82,7 +82,7 @@ export function IngredientModal({ ingredient, onClose }: IngredientModalProps) {
         <ul className="divide-y divide-black/5 dark:divide-white/5 px-4 pb-2">
           {ROWS.map(({ label, key, unit, decimals }) => {
             const raw = ingredient[key]
-            const estimated = key === 'carb' && !!ingredient.declaredNutrients && !ingredient.declaredNutrients.includes('carb') && raw > 0
+            const estimated = isNutrientEstimated(ingredient, key)
             const known = isNutrientKnown(ingredient, key)
             const val = known ? `${estimated ? '≈ ' : ''}${raw.toFixed(decimals)}` : ingredient.nutrientNotes?.[key] ? 'Sin convertir' : 'No declarado'
             return (

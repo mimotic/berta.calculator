@@ -27,7 +27,7 @@ Run `npm test` for nutrition and ingredient-selection unit tests. Run `npm run t
 
 **State:** `useState`/`useEffect` + `localStorage` for persistence. No global state library. Kcal target and selected ingredients survive page reloads via localStorage.
 
-**Static ingredient data** lives in `src/data/ingredients.ts`, with supplements in `src/data/supplements.ts`. Some products have partial nutrition; never treat an undeclared field as a known zero. See `docs/supplements.md` for measurement bases and source/version handling. Max slider values scale with the kcal target via `KCAL_RANGES` step multipliers (`src/data/ingredients.ts`).
+**Static ingredient data** lives in `src/data/ingredients.ts`, with supplements in `src/data/supplements.ts`. Some products have partial nutrition; never treat an undeclared field as a known zero. Totals with missing data show the known part marked «incompleto» plus a warning naming the ingredients (`src/utils/nutritionAvailability.ts`); incomplete assessments are never shown as OK. Values estimated from a composition table go in `estimatedNutrients` (shown with «≈»). See `docs/supplements.md` for measurement bases and source/version handling. Max slider values scale with the kcal target via `KCAL_RANGES` step multipliers (`src/data/ingredients.ts`).
 
 **Nutrient alerts** use hardcoded thresholds:
 - Phosphorus (renal rule): green <50 mg/100kcal, warn 50–100, alert >100 (a 30% reduction factor is applied to phosphorus and potassium of raw ingredients only — `isRaw` flag — to model boiling losses; cooked ingredients' data already reflects those losses).
