@@ -226,6 +226,25 @@ export const INGREDIENTS: Ingredient[] = [
     declaredNutrients: ['kcal', 'prot', 'fat', 'fiber', 'ca', 'phos', 'pot', 'na', 'fe', 'zn', 'vitA', 'vitD', 'vitE', 'vitC', 'b1', 'b2', 'b3', 'b6', 'b9', 'b12'],
     nutritionNote: 'Pienso prensado en frío. Valores por 100 g de la ficha de Naturextra (3400 kcal/kg, humedad 9 %). Hidratos estimados por diferencia: 100 − proteína 15 − grasa 6 − fibra 4 − cenizas 4,5 − humedad 9 = 61,5 g/100 g. Fibra = fibra bruta. El hierro es contenido total; el zinc y las vitaminas son solo las cantidades añadidas como aditivos, sin contar las de los ingredientes. Conversiones: vit. A 11 000 UI/kg → 330 µg; vit. D3 1100 UI/kg → 2,75 µg; vit. E 400 mg/kg de acetato de all-rac-alfa-tocoferilo (= 400 UI) → 26,8 mg.',
   },
+  // Nath España, ficha consultada el 16/11/2026. Pienso seco para perros adultos con insuficiencia
+  // renal crónica. La ficha imprime «Grasa bruta 170%» (igual en la web portuguesa): se usa 17 %,
+  // la única lectura que cuadra con sus 3760 kcal/kg. Hierro, zinc y vitaminas solo figuran como
+  // aditivos (cantidades añadidas), así que son aportes parciales, no el total del pienso.
+  // Vit. E: el código 3a700 es acetato de all-rac-alfa-tocoferilo y el Reglamento (UE) 2023/341
+  // fija 1 mg = 1 UI.
+  {
+    id: 'nath_renal', label: 'Nath · Veterinary Diets Renal',
+    group: 'pienso', val: 0, max: 120, step: 1, isOil: false,
+    sourceUrl: 'https://www.nathpetfood.es/producto/nath-veterinary-diets-renal-pienso-para-perros/',
+    sourceLabel: 'Ficha de Nath',
+    kcal: 376, prot: 15, fat: 17, carb: 50.6, fiber: 2.8,
+    ca: 600, phos: 240, pot: 450, na: 200, fe: 6, zn: 13,
+    vitA: 630, vitD: 2.5, vitE: 67, vitC: 50,
+    b1: 1, b2: 1.3, b3: 9, b6: 0.6, b9: 200, b12: 12,
+    declaredNutrients: ['kcal', 'prot', 'fat', 'fiber', 'ca', 'phos', 'pot', 'na', 'fe', 'zn', 'vitA', 'vitD', 'vitE', 'vitC', 'b1', 'b2', 'b3', 'b6', 'b9', 'b12'],
+    partialNutrients: ['fe', 'zn', 'vitA', 'vitD', 'vitE', 'vitC', 'b1', 'b2', 'b3', 'b6', 'b9', 'b12'],
+    nutritionNote: 'Pienso seco para perros adultos con insuficiencia renal crónica. Valores por 100 g de la ficha de Nath (3760 kcal/kg, humedad 10 %). La ficha imprime «Grasa bruta 170%», una errata: se usa 17 %, porque con esa grasa los factores de Atwater modificados dan 3741 kcal/kg, casi los 3760 declarados. Hidratos estimados por diferencia: 100 − proteína 15 − grasa 17 − fibra 2,8 − cenizas 4,6 − humedad 10 = 50,6 g/100 g. Fibra = fibra bruta. Hierro, zinc y vitaminas solo figuran como aditivos: son las cantidades añadidas, sin contar las de los ingredientes. Conversiones: vit. A 21 000 UI/kg → 630 µg; vit. D3 1000 UI/kg → 2,5 µg; vit. E 1000 mg/kg de acetato de all-rac-alfa-tocoferilo (código 3a700, = 1000 UI) → 67 mg. Las vitaminas B1, B6 y C se toman como cantidades de vitamina, tal como las nombra la ficha.',
+  },
   // Fichas oficiales de Edgard & Cooper, consultadas el 29/09/2026.
   // El fabricante no publica micronutrientes ni peso por pieza: portion.grams
   // es un peso fijo propio, no un dato de la ficha.
