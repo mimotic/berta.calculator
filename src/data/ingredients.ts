@@ -165,19 +165,24 @@ export const INGREDIENTS: Ingredient[] = [
     b1: 3.1, b2: 1.01, b3: 10.6, b6: 1.03, b9: 376, b12: 21,
     nutritionNote: 'Valores de la ficha oficial de Hill\'s España por 100 g de pienso (3348 kcal/kg, humedad 8 %). Fibra = fibra bruta; la fibra alimentaria total es 5,5 g. Conversiones: vit. A 8626 UI/kg → 259 µg; vit. D 705 UI/kg → 1,76 µg; vit. E 577 UI/kg → 38,7 mg.',
   },
-  // Hill's España, ficha consultada el 27/11/2026.
+  // Etiqueta del envase z/d Mini fotografiado el 27/11/2026; cifras por 100 g tal cual.
   {
     ...UNREPORTED_MICROS,
     id: 'hills_zd_mini', label: "Hill's · Prescription Diet z/d Mini",
     group: 'pienso', val: 0, max: 120, step: 1, isOil: false,
     sourceUrl: 'https://www.hillspet.es/dog-food/prescription-diet-zd-small-bites-food-sensitivities-dry',
-    sourceLabel: "Ficha de Hill's",
-    kcal: 353.4, prot: 17.6, fat: 14.4, carb: 48, fiber: 6.5,
-    ca: 850, phos: 510, pot: 690, na: 240, fe: 9.47, zn: 14.7,
-    vitA: 342.63, vitD: 1.965, vitE: 82.6, vitC: 11.5,
-    declaredNutrients: ['kcal', 'prot', 'fat', 'carb', 'fiber', 'ca', 'phos', 'pot', 'na', 'fe', 'zn', 'vitA', 'vitD', 'vitE', 'vitC'],
+    sourceLabel: "Ficha de referencia de Hill's (distinta de la etiqueta)",
+    kcal: 353.4, prot: 17.9, fat: 13.8, carb: 48, fiber: 6.1,
+    ca: 730, phos: 490, pot: 670, na: 240, fe: 9.48, zn: 14.7,
+    vitA: 557.82, vitD: 1.8375, vitE: 83.2, vitC: 11.6,
+    declaredNutrients: ['prot', 'fat', 'fiber', 'ca', 'phos', 'pot', 'na', 'fe', 'zn', 'vitA', 'vitD', 'vitE', 'vitC'],
+    estimatedNutrients: ['kcal', 'carb'],
     partialNutrients: ['fe', 'zn'],
-    nutritionNote: 'La tabla del pienso con un 8 % de humedad indica 3534 kcal/kg y un 48 % de hidratos (ELN). La fibra indicada es fibra bruta. Las vitaminas E y C proceden de los componentes analíticos (826 y 115 mg/kg, respectivamente). El hierro y el zinc corresponden a las cantidades añadidas como aditivos.',
+    nutrientNotes: {
+      kcal: 'Referencia de Hill’s. No figura en la foto de este envase.',
+      carb: 'ELN de referencia de Hill’s. No figura en la foto de este envase.',
+    },
+    nutritionNote: 'Valores de la etiqueta del envase fotografiado. Fuente de proteína: hidrolizado de hígado de pollo (25 %); fuente de hidratos: almidón de maíz. Fibra = fibra bruta. Hierro y zinc son solo las cantidades añadidas como aditivos (94,8 y 147 mg/kg). La energía (3534 kcal/kg) y los hidratos (48 % ELN) se conservan como referencias aproximadas de la ficha web de z/d Mini, cuyo análisis difiere del envase.',
   },
   // Royal Canin España, ficha consultada el 03/10/2026. La web oficial solo declara macros,
   // Ca, P, K, Na y los aditivos nutricionales; energía, humedad y vitamina E salen de la

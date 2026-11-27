@@ -69,19 +69,21 @@ test('additive-only micronutrients mark totals incomplete but not the renal asse
   assert.equal(phosphorus.zone, 'warn') // 240 mg / 376 kcal ≈ 64 mg/100 kcal
 })
 
-test("Hill's z/d Mini scales its as-fed analysis to a 50 g portion", () => {
+test("Hill's z/d Mini scales the package analysis to a 50 g portion", () => {
   const kibble = INGREDIENTS.find(ingredient => ingredient.id === 'hills_zd_mini')
   assert.ok(kibble)
   assert.equal(kibble.group, 'pienso')
   assert.equal(ingredientUnit(kibble, 50), 'g')
-  assert.equal(isNutrientEstimated(kibble, 'carb'), false)
+  assert.equal(isNutrientEstimated(kibble, 'kcal'), true)
+  assert.equal(isNutrientEstimated(kibble, 'carb'), true)
+  assert.equal(isNutrientEstimated(kibble, 'phos'), false)
 
   const result = calcNutrition({ [kibble.id]: 50 })
   const expected = {
-    kcal: 176.7, prot: 8.8, fat: 7.2, carb: 24, fiber: 3.25,
-    ca: 425, phos: 255, pot: 345, na: 120,
-    fe: 94.7 / 20, zn: 147 / 20,
-    vitA: 11421 * 0.3 / 20, vitD: 786 * 0.025 / 20, vitE: 826 / 20, vitC: 115 / 20,
+    kcal: 176.7, prot: 8.95, fat: 6.9, carb: 24, fiber: 3.05,
+    ca: 365, phos: 245, pot: 335, na: 120,
+    fe: 94.8 / 20, zn: 147 / 20,
+    vitA: 18594 * 0.3 / 20, vitD: 735 * 0.025 / 20, vitE: 832 / 20, vitC: 116 / 20,
   }
   for (const [nutrient, value] of Object.entries(expected)) closeTo(result[nutrient], value)
   closeTo(result.kcalProt + result.kcalCarb + result.kcalFat, result.kcal)
